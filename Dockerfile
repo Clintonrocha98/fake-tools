@@ -12,13 +12,19 @@ WORKDIR /app
 COPY composer.json composer.lock ./
 COPY app-modules ./app-modules
 
+# The `composer:2` image is a minimal dependency-resolution tool, not the
+# runtime — it never executes app code, so it doesn't ship `ext-intl`/`ext-exif`
+# the way the `dunglas/frankenphp` runtime stage does (see its
+# `install-php-extensions` list below). Scoped to those two so a genuinely
+# missing extension elsewhere still fails the build loudly.
 RUN composer install \
     --no-dev \
     --no-interaction \
     --no-progress \
     --no-scripts \
     --optimize-autoloader \
-    --ignore-platform-reqs
+    --ignore-platform-req=ext-intl \
+    --ignore-platform-req=ext-exif
 
 # ---------------------------------------------------------------------------
 # Frontend assets — Tailwind's Filament theme imports CSS straight out of
@@ -32,8 +38,16 @@ COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
 
 COPY --from=vendor /app/vendor ./vendor
+COPY app ./app
+COPY app-modules ./app-modules
 COPY resources ./resources
 COPY vite.config.js ./
+
+# Tailwind v4 `@source` globs point at app/, app-modules/*/resources/views and
+# storage/framework/views — a Tailwind scan of a directory that does not exist
+# yields no error and no classes, so every source tree it names must be present
+# before `bun run build`, not just resources/.
+RUN mkdir -p storage/framework/views
 
 RUN bun run build
 
@@ -48,6 +62,7 @@ RUN install-php-extensions \
     intl \
     gd \
     zip \
+    exif \
     pcntl \
     opcache
 
@@ -64,12 +79,14 @@ RUN chmod +x /usr/local/bin/fake-binance-entrypoint
 # travar a chave no build evita exigir configuração extra do dev do
 # consumidor para o `docker compose up` funcionar de primeira.
 #
-# APP_ENV=production apesar de este ser um servidor de dev: `composer install`
-# roda sem --dev, e o DatabaseSeeder padrão do scaffold só cria um usuário
-# admin via factory (dependente de fakerphp/faker, pacote de dev) quando
-# isLocal() — em "local" o seed automático do entrypoint quebraria.
+# APP_ENV=local (nunca production): `URL::forceHttps()` e o prefill de login
+# do painel (App\Filament\Shared\Pages\LoginPage) ficam ligados a
+# isProduction() (app/Providers/AppServiceProvider.php), e o FrankenPHP aqui
+# só serve HTTP puro em :8080 — em "production" toda URL absoluta viraria
+# https:// e o painel não carregaria.
 ENV APP_NAME="Fake Binance" \
-    APP_ENV=production \
+    APP_ENV=local \
+    APP_URL=http://localhost:8080 \
     APP_DEBUG=false \
     APP_KEY=base64:uQcyFJ7QyCFaqb0MmokJ/swwR2CrGQqnsRPcYEvqz3A= \
     APP_TIMEZONE=Etc/UTC \
@@ -85,6 +102,15 @@ ENV APP_NAME="Fake Binance" \
     FILESYSTEM_DISK=local \
     MAIL_MAILER=log \
     SERVER_NAME=":8080"
+
+# Assets publicados do Filament (public/js|css/filament/**) são artefatos de
+# build, ignorados no .gitignore e no .dockerignore: sem este passo explícito
+# a imagem serve um painel com JS/CSS 404, porque a stage `vendor` roda
+# `composer install --no-scripts` (pula o `filament:upgrade` do
+# post-autoload-dump) e nenhuma outra stage os gera.
+RUN mkdir -p storage/framework/views storage/framework/cache/data storage/framework/sessions storage/logs \
+    && php artisan package:discover --ansi \
+    && php artisan filament:assets --ansi
 
 EXPOSE 8080
 
