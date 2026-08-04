@@ -21,6 +21,9 @@ use Illuminate\Support\Carbon;
  * @property FiatOrderStatus|null $forced_status
  * @property string|null $forced_wire_status
  * @property string|null $brcode
+ * @property bool $frozen
+ * @property int|null $brcode_delay_reads
+ * @property int $brcode_reads_count
  * @property Carbon|null $credited_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -43,12 +46,23 @@ final class FiatOrder extends BaseModel
         return $this->forced_status ?? $this->status;
     }
 
+    /**
+     * O brcode só sai na wire depois de `brcode_delay_reads` releituras — antes
+     * disso, mesmo com `brcode` já persistido, a leitura enxerga `null`. `null`
+     * em `brcode_delay_reads` preserva o comportamento default (brcode imediato).
+     */
+    public function brcodeVisible(): bool
+    {
+        return $this->brcode_delay_reads === null || $this->brcode_reads_count > $this->brcode_delay_reads;
+    }
+
     protected function casts(): array
     {
         return [
             'amount' => 'decimal:18',
             'status' => FiatOrderStatus::class,
             'forced_status' => FiatOrderStatus::class,
+            'frozen' => 'boolean',
             'credited_at' => 'datetime',
         ];
     }

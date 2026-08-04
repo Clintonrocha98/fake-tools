@@ -11,7 +11,9 @@ use JsonSerializable;
 /**
  * O shape EXATO de um item de GET /sapi/v1/capital/withdraw/history — `applyTime`
  * é sempre UTC (a Binance real nunca converte para o timezone do chamador; quem lê
- * é `treasury:reconcile-offramp-withdraws`, uma máquina, não uma tela).
+ * é `treasury:reconcile-offramp-withdraws`, uma máquina, não uma tela). `status`
+ * ecoa `raw_status_override` quando setado — vocabulário fora de `WithdrawStatus`
+ * (0-6), cenário do painel para provar o fail-closed do monolito consumidor.
  */
 final readonly class WithdrawHistoryRow implements JsonSerializable
 {
@@ -39,7 +41,7 @@ final readonly class WithdrawHistoryRow implements JsonSerializable
             address: $withdrawal->address,
             amount: LedgerAmount::wire((string) $withdrawal->amount),
             transactionFee: LedgerAmount::wire((string) $withdrawal->transaction_fee),
-            status: $withdrawal->status->value,
+            status: $withdrawal->raw_status_override ?? $withdrawal->status->value,
             txId: $withdrawal->tx_id,
             info: $withdrawal->info,
             applyTime: $withdrawal->applied_at->clone()->utc()->format('Y-m-d H:i:s'),

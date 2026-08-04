@@ -23,6 +23,8 @@ use Illuminate\Support\Carbon;
  * @property WithdrawStatus $status
  * @property string|null $tx_id
  * @property string|null $info
+ * @property bool $frozen
+ * @property int|null $raw_status_override
  * @property Carbon $applied_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -39,6 +41,7 @@ final class Withdrawal extends BaseModel
             'amount' => 'decimal:18',
             'transaction_fee' => 'decimal:18',
             'status' => WithdrawStatus::class,
+            'frozen' => 'boolean',
             'applied_at' => 'datetime',
         ];
     }

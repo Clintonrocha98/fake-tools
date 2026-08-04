@@ -10,7 +10,9 @@ use He4rt\Venue\Spot\Models\SpotOrder;
 /**
  * O shape FULL que `SpotOrderResponse::fromResponse()` do monolito consumidor
  * lê — `fills` só aparece no POST (execução), nunca no GET de releitura
- * ({@see toWireArray()} recebe essa distinção como parâmetro).
+ * ({@see toWireArray()} recebe essa distinção como parâmetro). `status` ecoa
+ * `raw_status_override` quando setado — vocabulário fora de `OrderStatus`,
+ * cenário do painel para provar o fail-closed do monolito consumidor.
  */
 final readonly class SpotOrderView
 {
@@ -30,7 +32,7 @@ final readonly class SpotOrderView
             'symbol' => $this->order->symbol,
             'orderId' => $this->order->order_id,
             'clientOrderId' => $this->order->client_order_id,
-            'status' => $this->order->status->value,
+            'status' => $this->order->raw_status_override ?? $this->order->status->value,
             'side' => $this->order->side->value,
             'type' => $this->order->type,
             'executedQty' => LedgerAmount::wire((string) $this->order->executed_qty),
