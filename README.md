@@ -93,3 +93,64 @@ Access admin panel (SuperAdmin required): `/admin` (create via tinker or seed).
 - Docs: Use Laravel/Filament v4 guides.
 
 For contributions, follow Laravel standards.
+
+## Fake Binance Venue — Container
+
+This repo also ships a **fake Binance venue**: a sandbox server the `brd-digital`
+monolith points at instead of the real Binance API in local/dev environments (see
+`app-modules/venue`). It runs as its own container, built from the root `Dockerfile`
+(FrankenPHP) with SQLite persisted on a named volume so state survives a restart.
+
+### Running it locally
+
+```bash
+docker compose up fake-binance
+```
+
+The entrypoint runs migrations and seeds automatically on first boot (a marker on
+the volume prevents re-seeding — and clobbering — an already-evolved ledger on every
+restart). The container exposes the app on `http://localhost:8080`.
+
+### Env contract with the consumer
+
+The monolith configures its own `BINANCE_API_KEY` / `BINANCE_API_SECRET` to match
+whatever this container is running with:
+
+| Env (fake-binance) | Meaning |
+| --- | --- |
+| `FAKE_BINANCE_API_KEY` / `FAKE_BINANCE_API_SECRET` | The pair the monolith configures as `BINANCE_API_KEY` / `BINANCE_API_SECRET` in dev. |
+| `FAKE_BINANCE_SEED_BALANCES` | Starting ledger balances. |
+| Fiat / withdraw auto-advance cadences | a definir no ticket do painel. |
+
+Override the defaults via the compose `environment:` block or a shell-exported env
+before `docker compose up` (`FAKE_BINANCE_API_KEY=... docker compose up fake-binance`).
+
+### Pointing the monolith at it
+
+On the `brd-digital` side, add the fake to the same Docker network and point
+`BINANCE_BASE_URL` at its service name:
+
+```yaml
+# docker-compose.override.yml on the brd-digital side
+services:
+  app:
+    environment:
+      BINANCE_BASE_URL: http://fake-binance:8080
+      BINANCE_API_KEY: fake-binance-local-key
+      BINANCE_API_SECRET: fake-binance-local-secret
+    networks:
+      - dev-sycorax
+
+networks:
+  dev-sycorax:
+    external: true
+```
+
+(`dev-sycorax` is this repo's compose network — join it as `external` from the
+monolith's own compose so container-name DNS resolution works both ways.)
+
+### Published image
+
+Tagged releases (`vX.Y.Z`) and pushes to `main` publish
+`ghcr.io/<owner>/fake-binance` via `.github/workflows/publish-image.yml`, so the
+consumer's deployed dev environment can pull the image instead of building it.
