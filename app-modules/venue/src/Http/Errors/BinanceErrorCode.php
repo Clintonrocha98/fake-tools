@@ -9,9 +9,12 @@ use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
 
 /**
- * Os códigos de erro da Binance que a camada de assinatura do fake sabe emitir —
- * o subconjunto coberto por este ticket. Os valores replicam exatamente os códigos
- * negativos documentados pela Binance (ver Error Codes na doc oficial).
+ * Os códigos de erro da Binance que o fake sabe emitir. As cinco primeiras são
+ * o subconjunto de assinatura — negativos, exatamente como a doc oficial de
+ * Error Codes. As seis fiat cobrem POST /sapi/v1/fiat/deposit e GET
+ * /sapi/v1/fiat/get-order-detail (legacy-docs Fiat Deposit): toda recusa fiat
+ * é HTTP 200 (ver {@see self::httpStatus()}), nunca um HTTP de erro — só a
+ * assinatura (família spot/wallet OU fiat) usa 400/401. Ver ADR-0001.
  */
 enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
 {
@@ -21,6 +24,13 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
     case ApiKeyMissing = -2_014;
     case ApiKeyInvalid = -2_015;
 
+    case FiatServiceNotEnabled = 100_001;
+    case FiatDepositLimitExceeded = -16_007;
+    case FiatKycRequired = -16_009;
+    case FiatCurrencyOrMethodUnsupported = -16_010;
+    case FiatOrderNotFound = -16_011;
+    case FiatChannelUnavailable = -16_012;
+
     public function defaultMessage(): string
     {
         return match ($this) {
@@ -29,6 +39,12 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::MandatoryParameterMissing => 'A mandatory parameter was not sent, was empty/null, or malformed.',
             self::ApiKeyMissing => 'API-key format invalid.',
             self::ApiKeyInvalid => 'Invalid API-key, IP, or permissions for action.',
+            self::FiatServiceNotEnabled => 'fiat service not enabled',
+            self::FiatDepositLimitExceeded => 'fiat deposit limit exceeded',
+            self::FiatKycRequired => 'KYC verification required',
+            self::FiatCurrencyOrMethodUnsupported => 'unsupported fiat currency or payment method',
+            self::FiatOrderNotFound => 'fiat order not found',
+            self::FiatChannelUnavailable => 'no payment channel available',
         };
     }
 
@@ -37,6 +53,8 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidSignature, self::TimestampOutOfWindow, self::MandatoryParameterMissing => 400,
             self::ApiKeyMissing, self::ApiKeyInvalid => 401,
+            self::FiatServiceNotEnabled, self::FiatDepositLimitExceeded, self::FiatKycRequired,
+            self::FiatCurrencyOrMethodUnsupported, self::FiatOrderNotFound, self::FiatChannelUnavailable => 200,
         };
     }
 
@@ -48,6 +66,12 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::MandatoryParameterMissing => 'Parâmetro obrigatório ausente',
             self::ApiKeyMissing => 'API key ausente',
             self::ApiKeyInvalid => 'API key inválida',
+            self::FiatServiceNotEnabled => 'Serviço fiat desabilitado',
+            self::FiatDepositLimitExceeded => 'Limite de depósito excedido',
+            self::FiatKycRequired => 'KYC pendente',
+            self::FiatCurrencyOrMethodUnsupported => 'Moeda ou método não suportado',
+            self::FiatOrderNotFound => 'Ordem fiat inexistente',
+            self::FiatChannelUnavailable => 'Canal de pagamento indisponível',
         };
     }
 
@@ -58,6 +82,12 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::TimestampOutOfWindow => 'warning',
             self::MandatoryParameterMissing => 'warning',
             self::ApiKeyMissing, self::ApiKeyInvalid => 'danger',
+            self::FiatServiceNotEnabled => 'danger',
+            self::FiatDepositLimitExceeded => 'warning',
+            self::FiatKycRequired => 'warning',
+            self::FiatCurrencyOrMethodUnsupported => 'danger',
+            self::FiatOrderNotFound => 'danger',
+            self::FiatChannelUnavailable => 'warning',
         };
     }
 
@@ -69,6 +99,12 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::MandatoryParameterMissing => '`timestamp` ou `signature` ausente, vazio ou não numérico',
             self::ApiKeyMissing => 'Header X-MBX-APIKEY não enviado',
             self::ApiKeyInvalid => 'Header X-MBX-APIKEY não confere com a chave configurada',
+            self::FiatServiceNotEnabled => 'Endpoint fiat desligado por config (venue-fiat.deposit_enabled=false)',
+            self::FiatDepositLimitExceeded => '`amount` acima do teto configurado (venue-fiat.deposit_limit)',
+            self::FiatKycRequired => 'Conta exige verificação KYC antes do depósito fiat',
+            self::FiatCurrencyOrMethodUnsupported => '`currency`/`apiPaymentMethod` fora do par configurado (venue-fiat.supported_currency/supported_payment_method)',
+            self::FiatOrderNotFound => '`orderNo` não corresponde a nenhuma FiatOrder criada',
+            self::FiatChannelUnavailable => 'Canal de pagamento fiat sem capacidade no momento',
         };
     }
 }
