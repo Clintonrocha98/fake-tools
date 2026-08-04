@@ -1,0 +1,25 @@
+{
+    "name": "he4rt/venue",
+    "description": "",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "He4rt\\Venue\\": "src/",
+            "He4rt\\Venue\\Database\\Factories\\": "database/factories/",
+            "He4rt\\Venue\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "He4rt\\Venue\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": ["He4rt\\Venue\\VenueServiceProvider"]
+        }
+    }
+}

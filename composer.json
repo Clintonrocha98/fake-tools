@@ -16,6 +16,7 @@
         "guava/filament-knowledge-base": "^3.3.2",
         "he4rt/identity": "^1.0.0",
         "he4rt/panel-admin": "^1.0.0",
+        "he4rt/venue": "^1.0.0",
         "internachi/modular": "^3.0.2",
         "joaopaulolndev/filament-edit-profile": "^3.0.2",
         "laravel/framework": "^13.22.0",
@@ -63,8 +64,9 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "He4rt\\PanelAdmin\\Tests\\": "app-modules/panel-admin/tests/",
             "He4rt\\Identity\\Tests\\": "app-modules/identity/tests/",
+            "He4rt\\PanelAdmin\\Tests\\": "app-modules/panel-admin/tests/",
+            "He4rt\\Venue\\Tests\\": "app-modules/venue/tests/",
             "Tests\\": "tests/"
         }
     },
