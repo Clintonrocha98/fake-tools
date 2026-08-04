@@ -8,6 +8,7 @@ use He4rt\Venue\Ledger\Actions\DebitLedgerAccount;
 use He4rt\Venue\Withdraw\DTOs\ApplyWithdrawData;
 use He4rt\Venue\Withdraw\Enums\WithdrawStatus;
 use He4rt\Venue\Withdraw\Exceptions\MisconfiguredWithdrawFeeException;
+use He4rt\Venue\Withdraw\Exceptions\UnsupportedWithdrawNetworkException;
 use He4rt\Venue\Withdraw\Models\Withdrawal;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -65,7 +66,12 @@ final readonly class ApplyWithdraw
     private function feeFor(string $network): string
     {
         $fees = config()->array('venue-withdraw.fees');
-        $fee = $fees[$network] ?? config()->string('venue-withdraw.default_fee');
+
+        if (!array_key_exists($network, $fees)) {
+            throw UnsupportedWithdrawNetworkException::forNetwork($network);
+        }
+
+        $fee = $fees[$network];
 
         if (!is_string($fee) || !is_numeric($fee)) {
             throw MisconfiguredWithdrawFeeException::forNetwork($network, is_string($fee) ? $fee : get_debug_type($fee));

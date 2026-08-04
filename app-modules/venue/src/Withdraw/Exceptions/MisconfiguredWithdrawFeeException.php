@@ -7,7 +7,7 @@ namespace He4rt\Venue\Withdraw\Exceptions;
 use RuntimeException;
 
 /**
- * `config('venue-withdraw.fees')`/`default_fee` carrega um valor não numérico — erro
+ * `config('venue-withdraw.fees')` carrega, para a rede, um valor não numérico — erro
  * de configuração, nunca de request. Falha fail-closed em vez de debitar um valor
  * incerto do ledger.
  */

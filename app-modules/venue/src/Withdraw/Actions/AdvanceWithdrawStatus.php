@@ -18,8 +18,7 @@ use Illuminate\Support\Str;
  * persistido intermediário.
  *
  * Nunca mexe num status fora de {AwaitingApproval, Processing}: falhas (Cancelled/
- * Rejected/Failure) e overrides manuais são cenário do painel (#7) e são sempre
- * terminais para este avanço.
+ * Rejected/Failure) e overrides manuais são sempre terminais para este avanço.
  */
 final readonly class AdvanceWithdrawStatus
 {
@@ -35,7 +34,7 @@ final readonly class AdvanceWithdrawStatus
             return $withdrawal;
         }
 
-        $elapsedSeconds = $withdrawal->applied_at?->diffInSeconds(Date::now()) ?? 0;
+        $elapsedSeconds = $withdrawal->applied_at->diffInSeconds(Date::now());
 
         if ($elapsedSeconds >= $advanceSeconds * 2) {
             $withdrawal->update([

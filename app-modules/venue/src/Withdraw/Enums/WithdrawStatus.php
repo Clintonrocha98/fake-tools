@@ -79,7 +79,7 @@ enum WithdrawStatus: int implements HasColor, HasDescription, HasIcon, HasLabel
 
     /**
      * Estados em que o avanço automático (lazy, por idade) ainda pode agir — os
-     * demais são terminais ou dependem de override manual do painel (#7).
+     * demais são terminais ou dependem de override manual do painel.
      */
     public function advancesAutomatically(): bool
     {

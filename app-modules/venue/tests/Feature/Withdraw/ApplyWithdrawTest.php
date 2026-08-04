@@ -8,6 +8,7 @@ use He4rt\Venue\Ledger\Models\LedgerAccount;
 use He4rt\Venue\Withdraw\Actions\ApplyWithdraw;
 use He4rt\Venue\Withdraw\DTOs\ApplyWithdrawData;
 use He4rt\Venue\Withdraw\Enums\WithdrawStatus;
+use He4rt\Venue\Withdraw\Exceptions\UnsupportedWithdrawNetworkException;
 use He4rt\Venue\Withdraw\Models\Withdrawal;
 
 beforeEach(function (): void {
@@ -53,6 +54,28 @@ it('throws without creating a withdrawal when the ledger balance is insufficient
     }
 
     expect(Withdrawal::query()->count())->toBe(0);
+});
+
+it('rejects a network absent from venue-withdraw.fees without creating a withdrawal or debiting', function (): void {
+    (new CreditLedgerAccount)('USDC', '100');
+
+    try {
+        (new ApplyWithdraw)(new ApplyWithdrawData(
+            coin: 'USDC',
+            address: 'SomeBscAddress',
+            amount: '8.91',
+            network: 'BSC',
+            withdrawOrderId: 'payout-unmapped-network',
+        ));
+    } catch (UnsupportedWithdrawNetworkException) {
+        // esperado
+    }
+
+    expect(Withdrawal::query()->count())->toBe(0);
+
+    $account = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
+
+    expect($account->free)->toBe('100.000000000000000000');
 });
 
 it('is idempotent: repeating the same withdrawOrderId does not debit twice', function (): void {

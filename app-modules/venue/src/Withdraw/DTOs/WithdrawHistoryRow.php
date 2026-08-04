@@ -42,7 +42,7 @@ final readonly class WithdrawHistoryRow implements JsonSerializable
             status: $withdrawal->status->value,
             txId: $withdrawal->tx_id,
             info: $withdrawal->info,
-            applyTime: $withdrawal->applied_at?->clone()->utc()->format('Y-m-d H:i:s') ?? '',
+            applyTime: $withdrawal->applied_at->clone()->utc()->format('Y-m-d H:i:s'),
         );
     }
 

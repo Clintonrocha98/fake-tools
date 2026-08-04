@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'advance_seconds' => env('FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS', 60),
+    'advance_seconds' => (int) env('FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS', 60),
 
     /*
     |--------------------------------------------------------------------------
@@ -25,7 +25,8 @@ return [
     |
     | Taxa fixa (decimal string) cobrada por rede de destino — chave é o código
     | de rede da Binance (o que chega em `network` no apply), não o id canônico
-    | do monolito. Rede sem taxa configurada cai no `default_fee`.
+    | do monolito. Rede fora deste mapa é recusada: nunca inventamos uma taxa
+    | para uma chain não mapeada.
     |
     */
 
@@ -34,7 +35,5 @@ return [
         'ETH' => '0.003',
         'TRX' => '1',
     ],
-
-    'default_fee' => '0',
 
 ];

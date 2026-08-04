@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property WithdrawStatus $status
  * @property string|null $tx_id
  * @property string|null $info
- * @property Carbon|null $applied_at
+ * @property Carbon $applied_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
