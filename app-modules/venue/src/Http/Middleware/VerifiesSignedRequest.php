@@ -43,29 +43,59 @@ final readonly class VerifiesSignedRequest
         /** @var array<string, mixed> $query */
         $query = $request->query();
         $timestamp = $query['timestamp'] ?? null;
-
-        if (!is_numeric($timestamp) || !$this->withinRecvWindow((int) $timestamp, $query)) {
-            return $this->errors->make($family, BinanceErrorCode::TimestampOutOfWindow);
-        }
-
         $signature = $query['signature'] ?? null;
 
-        if (!is_string($signature) || $signature === '' || !hash_equals($this->expectedSignature($query), $signature)) {
+        // `timestamp` e `signature` são mandatórios: ausentes ou malformados é -1102
+        // (Binance real), nunca -1021/-1022 — esses dois códigos são exclusivos do
+        // BinanceErrorBoundary do consumidor para "indisponibilidade retryable",
+        // enquanto -1102 é fatal. Ver ADR/ticket para o mapeamento completo.
+        if (!is_numeric($timestamp) || !is_string($signature) || $signature === '') {
+            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
+        }
+
+        // A assinatura é verificada antes da janela de recvWindow — mesma ordem da
+        // Binance real: um request com timestamp velho E assinatura errada responde
+        // -1022, nunca -1021.
+        if (!hash_equals($this->expectedSignature($query), $signature)) {
             return $this->errors->make($family, BinanceErrorCode::InvalidSignature);
+        }
+
+        $recvWindow = $this->resolveRecvWindow($query);
+
+        if ($recvWindow === null || !$this->withinRecvWindow((int) $timestamp, $recvWindow)) {
+            return $this->errors->make($family, BinanceErrorCode::TimestampOutOfWindow);
         }
 
         return $next($request);
     }
 
     /**
+     * Resolve o `recvWindow` efetivo do request: default configurado quando ausente,
+     * `null` quando o valor informado é inválido (não numérico, não positivo, ou acima
+     * do teto de 60000ms) — a Binance real recusa esses casos com -1021 em vez de
+     * silenciosamente aceitar um `recvWindow` maior que o permitido.
+     *
      * @param  array<string, mixed>  $query
      */
-    private function withinRecvWindow(int $timestamp, array $query): bool
+    private function resolveRecvWindow(array $query): ?int
     {
-        $recvWindow = isset($query['recvWindow']) && is_numeric($query['recvWindow'])
-            ? min((int) $query['recvWindow'], 60_000)
-            : config()->integer('venue.recv_window');
+        if (!isset($query['recvWindow'])) {
+            return config()->integer('venue.recv_window');
+        }
 
+        $recvWindow = $query['recvWindow'];
+
+        if (!is_numeric($recvWindow)) {
+            return null;
+        }
+
+        $recvWindow = (int) $recvWindow;
+
+        return $recvWindow > 0 && $recvWindow <= 60_000 ? $recvWindow : null;
+    }
+
+    private function withinRecvWindow(int $timestamp, int $recvWindow): bool
+    {
         $serverTime = now()->getTimestampMs();
 
         return $timestamp >= $serverTime - $recvWindow && $timestamp <= $serverTime + 1_000;

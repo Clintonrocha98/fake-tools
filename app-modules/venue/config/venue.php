@@ -10,7 +10,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | O par que o monolito consumidor configura como BINANCE_API_KEY/SECRET em
-    | dev/testing — o fake valida assinaturas contra este mesmo par.
+    | dev/testing — o fake valida assinaturas contra este mesmo par. As chaves
+    | levam o prefixo FAKE_ (renomeação intencional, para não colidir com um
+    | .env que também aponte para a Binance real) e devem espelhar o valor
+    | configurado no monolito.
     |
     */
 
@@ -29,6 +32,6 @@ return [
     |
     */
 
-    'recv_window' => 5_000,
+    'recv_window' => env('FAKE_BINANCE_RECV_WINDOW', 5_000),
 
 ];

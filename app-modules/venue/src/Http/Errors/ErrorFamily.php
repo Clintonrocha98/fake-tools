@@ -19,9 +19,14 @@ enum ErrorFamily: string implements HasColor, HasDescription, HasLabel
     case SpotWallet = 'spot_wallet';
     case Fiat = 'fiat';
 
+    /**
+     * O prefixo fiat é versionado (`sapi/v1/fiat/deposit`, `sapi/v1/fiat/get-order-detail`,
+     * mas `sapi/v2/fiat/withdraw`) — nunca fixar a versão no match, ou um novo endpoint
+     * fiat em outra versão cai silenciosamente na família SpotWallet errada.
+     */
     public static function fromPath(string $path): self
     {
-        return str_starts_with($path, 'sapi/v1/fiat/') ? self::Fiat : self::SpotWallet;
+        return preg_match('#^sapi/v\d+/fiat/#', $path) === 1 ? self::Fiat : self::SpotWallet;
     }
 
     public function getLabel(): string
@@ -44,7 +49,7 @@ enum ErrorFamily: string implements HasColor, HasDescription, HasLabel
     {
         return match ($this) {
             self::SpotWallet => 'Envelope {code: int negativo, msg: string} — /api/*, /sapi/v1/capital/*',
-            self::Fiat => 'Envelope {code: string, message: string, data: null} — /sapi/v1/fiat/*',
+            self::Fiat => 'Envelope {code: string, message: string, success: bool, data: null} — sapi/v{n}/fiat/*',
         };
     }
 }

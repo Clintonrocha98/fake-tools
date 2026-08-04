@@ -17,6 +17,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
 {
     case InvalidSignature = -1_022;
     case TimestampOutOfWindow = -1_021;
+    case MandatoryParameterMissing = -1_102;
     case ApiKeyMissing = -2_014;
     case ApiKeyInvalid = -2_015;
 
@@ -25,6 +26,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidSignature => 'Signature for this request is not valid.',
             self::TimestampOutOfWindow => 'Timestamp for this request is outside of the recvWindow.',
+            self::MandatoryParameterMissing => 'A mandatory parameter was not sent, was empty/null, or malformed.',
             self::ApiKeyMissing => 'API-key format invalid.',
             self::ApiKeyInvalid => 'Invalid API-key, IP, or permissions for action.',
         };
@@ -33,7 +35,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
     public function httpStatus(): int
     {
         return match ($this) {
-            self::InvalidSignature, self::TimestampOutOfWindow => 400,
+            self::InvalidSignature, self::TimestampOutOfWindow, self::MandatoryParameterMissing => 400,
             self::ApiKeyMissing, self::ApiKeyInvalid => 401,
         };
     }
@@ -43,6 +45,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidSignature => 'Assinatura inválida',
             self::TimestampOutOfWindow => 'Timestamp fora da janela',
+            self::MandatoryParameterMissing => 'Parâmetro obrigatório ausente',
             self::ApiKeyMissing => 'API key ausente',
             self::ApiKeyInvalid => 'API key inválida',
         };
@@ -53,6 +56,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidSignature => 'danger',
             self::TimestampOutOfWindow => 'warning',
+            self::MandatoryParameterMissing => 'warning',
             self::ApiKeyMissing, self::ApiKeyInvalid => 'danger',
         };
     }
@@ -62,6 +66,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidSignature => 'HMAC-SHA256 da query não confere com o segredo configurado',
             self::TimestampOutOfWindow => 'Timestamp fora de [serverTime - recvWindow, serverTime + 1000]',
+            self::MandatoryParameterMissing => '`timestamp` ou `signature` ausente, vazio ou não numérico',
             self::ApiKeyMissing => 'Header X-MBX-APIKEY não enviado',
             self::ApiKeyInvalid => 'Header X-MBX-APIKEY não confere com a chave configurada',
         };

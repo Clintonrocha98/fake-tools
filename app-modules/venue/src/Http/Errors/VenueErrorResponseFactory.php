@@ -24,6 +24,7 @@ final readonly class VenueErrorResponseFactory
             ErrorFamily::Fiat => new JsonResponse([
                 'code' => (string) $code->value,
                 'message' => $message,
+                'success' => false,
                 'data' => null,
             ], $code->httpStatus()),
         };
