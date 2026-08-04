@@ -6,6 +6,9 @@ return [
     'user_management' => [
         'label' => 'Gerenciamento de Usuários',
     ],
+    'venue' => [
+        'label' => 'Venue',
+    ],
     'system' => [
         'label' => 'Sistema',
     ],
