@@ -20,7 +20,7 @@ use Illuminate\Support\Carbon;
  *
  * @extends BaseModel<LedgerAccountFactory>
  */
-#[UseFactory(LedgerAccountFactory::class)]
+#[UseFactory(factoryClass: LedgerAccountFactory::class)]
 #[Table(name: 'venue_ledger_accounts')]
 final class LedgerAccount extends BaseModel
 {

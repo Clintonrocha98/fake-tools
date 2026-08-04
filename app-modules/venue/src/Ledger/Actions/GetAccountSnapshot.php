@@ -8,7 +8,7 @@ use He4rt\Venue\Ledger\DTOs\AccountBalance;
 use He4rt\Venue\Ledger\DTOs\AccountSnapshot;
 use He4rt\Venue\Ledger\Models\LedgerAccount;
 use He4rt\Venue\Ledger\Support\LedgerAmount;
-use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Date;
 
 final readonly class GetAccountSnapshot
 {
@@ -27,7 +27,7 @@ final readonly class GetAccountSnapshot
 
         return new AccountSnapshot(
             balances: $balances,
-            updateTime: Carbon::now()->getTimestampMs(),
+            updateTime: Date::now()->getTimestampMs(),
         );
     }
 

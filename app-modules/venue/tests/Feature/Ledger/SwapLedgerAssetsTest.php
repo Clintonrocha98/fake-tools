@@ -6,6 +6,7 @@ use He4rt\Venue\Ledger\Actions\CreditLedgerAccount;
 use He4rt\Venue\Ledger\Actions\DebitLedgerAccount;
 use He4rt\Venue\Ledger\Actions\SwapLedgerAssets;
 use He4rt\Venue\Ledger\DTOs\LedgerFill;
+use He4rt\Venue\Ledger\Enums\Side;
 use He4rt\Venue\Ledger\Exceptions\InsufficientLedgerBalanceException;
 use He4rt\Venue\Ledger\Models\LedgerAccount;
 
@@ -14,12 +15,12 @@ function swapAction(): SwapLedgerAssets
     return new SwapLedgerAssets(new CreditLedgerAccount, new DebitLedgerAccount);
 }
 
-it('debits the spent total from `from` and credits the received total to `to` for a single fill', function (): void {
+it('on a BUY, debits the quote total from `from` and credits the base total to `to` for a single fill', function (): void {
     (new CreditLedgerAccount)('BRL', '100000');
 
     swapAction()('BRL', 'USDC', [
         new LedgerFill(qty: '1000', price: '5.10'),
-    ]);
+    ], Side::Buy);
 
     $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
     $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
@@ -28,13 +29,29 @@ it('debits the spent total from `from` and credits the received total to `to` fo
         ->and($usdc->free)->toBe('1000.000000000000000000');
 });
 
+it('credits the quote asset and debits the base asset on a SELL-side swap', function (): void {
+    // USDC->BRL é sempre SELL no monolito (BRL é quote asset): `from`=USDC (base,
+    // gasta = qty) e `to`=BRL (quote, recebida = qty*price) — o inverso do BUY acima.
+    (new CreditLedgerAccount)('USDC', '1000');
+
+    swapAction()('USDC', 'BRL', [
+        new LedgerFill(qty: '1000', price: '5.10'),
+    ], Side::Sell);
+
+    $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
+    $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+
+    expect($usdc->free)->toBe('0.000000000000000000')
+        ->and($brl->free)->toBe('5100.000000000000000000');
+});
+
 it('sums multiple fills across price levels into one atomic move', function (): void {
     (new CreditLedgerAccount)('BRL', '100000');
 
     swapAction()('BRL', 'USDC', [
         new LedgerFill(qty: '500', price: '5.10'),
         new LedgerFill(qty: '500', price: '5.12'),
-    ]);
+    ], Side::Buy);
 
     $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
     $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
@@ -49,7 +66,7 @@ it('deducts commission from the received (`to`) asset when commissionAsset match
 
     swapAction()('BRL', 'USDC', [
         new LedgerFill(qty: '1000', price: '5.10', commission: '1', commissionAsset: 'USDC'),
-    ]);
+    ], Side::Buy);
 
     $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
 
@@ -61,7 +78,7 @@ it('adds commission to the spent (`from`) asset when commissionAsset matches it'
 
     swapAction()('BRL', 'USDC', [
         new LedgerFill(qty: '1000', price: '5.10', commission: '5', commissionAsset: 'BRL'),
-    ]);
+    ], Side::Buy);
 
     $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
 
@@ -74,7 +91,7 @@ it('rejects the whole swap when the `from` balance cannot cover the total spent,
     try {
         swapAction()('BRL', 'USDC', [
             new LedgerFill(qty: '1000', price: '5.10'),
-        ]);
+        ], Side::Buy);
     } catch (InsufficientLedgerBalanceException) {
         // esperado
     }
@@ -92,7 +109,7 @@ it('keeps both ledgers coherent across deposit, swap and withdraw in sequence', 
 
     swapAction()('BRL', 'USDC', [
         new LedgerFill(qty: '1000', price: '5.10'),
-    ]);
+    ], Side::Buy);
 
     (new DebitLedgerAccount)('USDC', '400');
 

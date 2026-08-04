@@ -18,16 +18,17 @@ it('trims whitespace around pairs and around each side of the colon', function (
     ]);
 });
 
-it('upper-cases the asset code', function (): void {
-    expect(SeedBalancesParser::parse('brl:100000'))->toBe(['BRL' => '100000']);
+it('returns the asset code as-is, without touching its case', function (): void {
+    // Normalizar o case é responsabilidade de CreditLedgerAccount, não do parser.
+    expect(SeedBalancesParser::parse('brl:100000'))->toBe(['brl' => '100000']);
 });
 
 it('returns an empty array for a null value', function (): void {
-    expect(SeedBalancesParser::parse(null))->toBe([]);
+    expect(SeedBalancesParser::parse(raw: null))->toBeEmpty();
 });
 
 it('returns an empty array for a blank string', function (): void {
-    expect(SeedBalancesParser::parse('  '))->toBe([]);
+    expect(SeedBalancesParser::parse('  '))->toBeEmpty();
 });
 
 it('silently skips a pair missing the colon', function (): void {

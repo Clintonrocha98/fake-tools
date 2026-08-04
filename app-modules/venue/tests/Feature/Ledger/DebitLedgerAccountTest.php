@@ -5,6 +5,7 @@ declare(strict_types=1);
 use He4rt\Venue\Ledger\Actions\CreditLedgerAccount;
 use He4rt\Venue\Ledger\Actions\DebitLedgerAccount;
 use He4rt\Venue\Ledger\Exceptions\InsufficientLedgerBalanceException;
+use He4rt\Venue\Ledger\Models\LedgerAccount;
 
 it('subtracts the amount from the free balance', function (): void {
     (new CreditLedgerAccount)('USDC', '100');
@@ -42,7 +43,7 @@ it('leaves the balance untouched when a debit is rejected', function (): void {
         // esperado
     }
 
-    $account = He4rt\Venue\Ledger\Models\LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+    $account = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
 
     expect($account->free)->toBe('10.000000000000000000');
 });
@@ -53,4 +54,13 @@ it('allows debiting the exact available balance down to zero', function (): void
     $account = (new DebitLedgerAccount)('BRL', '10');
 
     expect($account->free)->toBe('0.000000000000000000');
+});
+
+it('treats an asset code as case-insensitive when debiting', function (): void {
+    (new CreditLedgerAccount)('USDC', '100');
+
+    $account = (new DebitLedgerAccount)('usdc', '40');
+
+    expect($account->asset)->toBe('USDC')
+        ->and($account->free)->toBe('60.000000000000000000');
 });

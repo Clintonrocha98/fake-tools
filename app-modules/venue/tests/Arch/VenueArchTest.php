@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Models\BaseModel;
-
 /*
 |--------------------------------------------------------------------------
 | Venue module architecture rules
 |--------------------------------------------------------------------------
 |
-| Module-scoped conventions: the ledger is a domain concern (never depends on the
-| presentation layer) and its Eloquent models extend the shared BaseModel so they
-| inherit UUIDs, activity logging and factory wiring.
+| Module-wide conventions shared by every sub-domain of `He4rt\Venue`. Rules scoped to
+| a single sub-domain (e.g. the ledger models) live in their own Arch test file —
+| story/2 and story/3 both scaffold this file from scratch, so keeping it to only the
+| rules every wave agrees on avoids an add/add conflict on merge.
 |
 */
 
@@ -26,7 +25,3 @@ arch('domain code never produces a stdClass')
 arch('domain modules do not depend on the presentation layer')
     ->expect('He4rt\Venue')
     ->not->toUse('He4rt\PanelAdmin');
-
-arch('ledger models extend the shared BaseModel')
-    ->expect('He4rt\Venue\Ledger\Models')
-    ->toExtend(BaseModel::class);

@@ -9,7 +9,8 @@ use He4rt\Venue\Ledger\Models\LedgerAccount;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Debita `amount` do saldo livre de `asset`. Chamado com o total já somado — um
+ * Debita `amount` do saldo livre de `asset` (normalizado para maiúsculas — mesma
+ * fronteira de {@see CreditLedgerAccount}). Chamado com o total já somado — um
  * withdraw passa `amount + fee` como um único valor ({@see SwapLedgerAssets}
  * para o caso de swap, que soma múltiplos fills antes de debitar).
  */
@@ -20,6 +21,8 @@ final readonly class DebitLedgerAccount
      */
     public function __invoke(string $asset, string $amount): LedgerAccount
     {
+        $asset = mb_strtoupper($asset);
+
         return DB::transaction(function () use ($asset, $amount): LedgerAccount {
             $account = LedgerAccount::query()->where('asset', $asset)->lockForUpdate()->first();
 
@@ -27,12 +30,12 @@ final readonly class DebitLedgerAccount
                 throw InsufficientLedgerBalanceException::forAsset($asset, $amount, '0');
             }
 
-            if (bccomp($account->free, $amount, 18) < 0) {
+            if (bccomp((string) $account->free, $amount, 18) < 0) {
                 throw InsufficientLedgerBalanceException::forAsset($asset, $amount, $account->free);
             }
 
             $account->update([
-                'free' => bcsub($account->free, $amount, 18),
+                'free' => bcsub((string) $account->free, $amount, 18),
             ]);
 
             return $account->refresh();
