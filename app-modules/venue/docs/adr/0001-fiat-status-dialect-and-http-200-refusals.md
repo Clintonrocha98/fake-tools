@@ -37,3 +37,25 @@ HTTP 200 e um `code` de erro no corpo, não com 4xx.
 - Adicionar um novo caso a `FiatOrderStatus` obriga a decidir seu wire nos dois
   dialetos, sem `default` — {@see FiatOrderStatus::toWire()} já falha em tempo
   de compilação se um caso ficar sem os dois mapeamentos.
+- `BinanceErrorBoundary::translate()` do consumidor lê sempre `code`/`msg`
+  (vocabulário spot/wallet), mesmo numa chamada fiat — o `(int) $body['code']`
+  sobrevive nos dois envelopes (numeric-string vira int igual), mas
+  `$body['msg']` só existe no dialeto spot/wallet. Um erro de
+  assinatura/autenticação na perna fiat perde o TEXTO da mensagem (`message`,
+  não `msg`) — a exceção lançada continua sendo a certa, porque a decisão é só
+  pelo código, nunca pelo texto, mas o operador lê um `reason` vazio. Rastreado
+  em `brd-digital/brd-digital#292`; o fake mantém os dois envelopes com
+  fidelidade à Binance real (o boundary do consumidor é quem escolheu o
+  vocabulário fixo) até a correção lá — a suíte de contrato prova essa
+  compatibilidade PARCIAL explicitamente, em vez de assumir que os dois textos
+  sempre chegam.
+- O cruzamento exaustivo `FiatOrderStatus::cases()` × `FiatStatusDialect::cases()`
+  contra o vocabulário de `BinanceFiatOrderStatus` (suíte de contrato,
+  `FiatContractTest`) prova que só o dialeto Live tem um gap real: o
+  consumidor não modela `order_refund_failed` nem
+  `order_partial_credit_stopped`, então os dois caem no `tryFrom()` como
+  `null` e o consumidor fail-closa para `Pending` — um estado TERMINAL de
+  falha nunca sai de "pendente". Rastreado em
+  `brd-digital/brd-digital#291`; o fake mantém os dois valores (é o que a
+  Binance real foi observada respondendo) até o consumidor os aceitar — a
+  suíte de contrato afirma esse gap explicitamente em vez de escondê-lo.

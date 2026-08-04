@@ -18,6 +18,10 @@
             <directory>tests/Arch</directory>
             <directory>app-modules/*/tests/Arch</directory>
         </testsuite>
+        <testsuite name="Contract">
+            <directory>tests/Contract</directory>
+            <directory>app-modules/*/tests/Contract</directory>
+        </testsuite>
     </testsuites>
     <source>
         <include>

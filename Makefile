@@ -73,6 +73,10 @@ test-feature: ## Run feature tests
 test-arch: ## Run architecture tests
 	@php artisan test --compact --group=arch
 
+.PHONY: test-contract
+test-contract: ## Run contract tests
+	@php artisan test --compact --group=contract
+
 .PHONY: setup-test-db
 setup-test-db: ## Create & migrate the testing database (honors .env.testing overrides)
 	@php artisan migrate --env=testing --no-interaction --force

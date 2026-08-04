@@ -1,0 +1,13 @@
+{
+    "id": "9a967d3ad8590c1e",
+    "withdrawOrderId": "payout-history-1",
+    "coin": "USDC",
+    "network": "SOL",
+    "address": "SomeAddress",
+    "amount": "8.91",
+    "transactionFee": "0.004",
+    "status": 6,
+    "txId": "0xdeadbeef",
+    "info": null,
+    "applyTime": "2019-10-12 11:12:02"
+}
