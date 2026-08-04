@@ -10,7 +10,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Fonte do preço no fake: preço fixo por env, com spread bid/ask pequeno
-    | em torno do mid (ADR-0001). `price` é o mid; bid = price - spread/2,
+    | em torno do mid (ADR-0002). `price` é o mid; bid = price - spread/2,
     | ask = price + spread/2. Uma ordem BUY preenche no ask (o comprador paga
     | o ask), uma SELL preenche no bid (o vendedor recebe o bid) — mesma
     | convenção de qualquer order book.

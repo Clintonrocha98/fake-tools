@@ -1,4 +1,4 @@
-# ADR-0001: preço fixo por config como fonte do bookTicker USDCBRL
+# ADR-0002: preço fixo por config como fonte do bookTicker USDCBRL
 
 ## Status
 
