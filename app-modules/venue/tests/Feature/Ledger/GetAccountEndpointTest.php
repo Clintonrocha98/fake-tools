@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+use He4rt\Venue\Ledger\Actions\CreditLedgerAccount;
+
+it('returns the documented balances shape backed by the ledger', function (): void {
+    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)('USDC', '0');
+
+    $response = $this->getJson('/api/v3/account');
+
+    $response->assertOk()->assertJson([
+        'accountType' => 'SPOT',
+        'canTrade' => true,
+        'canWithdraw' => true,
+        'canDeposit' => true,
+        'balances' => [
+            ['asset' => 'BRL', 'free' => '100000', 'locked' => '0'],
+            ['asset' => 'USDC', 'free' => '0', 'locked' => '0'],
+        ],
+    ]);
+
+    $response->assertJsonStructure([
+        'makerCommission', 'takerCommission', 'canTrade', 'canWithdraw', 'canDeposit',
+        'updateTime', 'accountType', 'balances',
+    ]);
+});
+
+it('returns an empty balances list when the ledger has no accounts yet', function (): void {
+    $response = $this->getJson('/api/v3/account');
+
+    $response->assertOk()->assertJson(['balances' => []]);
+});
+
+it('omits zero balances when omitZeroBalances=true is passed', function (): void {
+    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)('USDC', '0');
+
+    $response = $this->getJson('/api/v3/account?omitZeroBalances=true');
+
+    $response->assertOk()->assertJson([
+        'balances' => [
+            ['asset' => 'BRL', 'free' => '100000', 'locked' => '0'],
+        ],
+    ]);
+});
+
+it('keeps zero balances by default when omitZeroBalances is not passed', function (): void {
+    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)('USDC', '0');
+
+    $response = $this->getJson('/api/v3/account');
+
+    $response->assertJsonCount(2, 'balances');
+});
+
+it('is reachable without any signing middleware in this ticket', function (): void {
+    // Ticket #2 acopla 'venue.signed' no merge da onda — aqui a rota é aberta.
+    $response = $this->getJson('/api/v3/account');
+
+    $response->assertOk();
+});
