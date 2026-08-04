@@ -10,11 +10,11 @@ use Filament\Support\Contracts\HasLabel;
 
 /**
  * Os códigos de erro da Binance que o fake sabe emitir. As cinco primeiras são
- * o subconjunto de assinatura coberto por story/2 — negativos, exatamente como
- * a doc oficial de Error Codes. As seis fiat (story/4) cobrem POST
- * /sapi/v1/fiat/deposit e GET /sapi/v1/fiat/get-order-detail (legacy-docs Fiat
- * Deposit): toda recusa fiat é HTTP 200 (ver {@see self::httpStatus()}), nunca
- * um HTTP de erro — só a assinatura (família spot/wallet OU fiat) usa 400/401.
+ * o subconjunto de assinatura — negativos, exatamente como a doc oficial de
+ * Error Codes. As seis fiat cobrem POST /sapi/v1/fiat/deposit e GET
+ * /sapi/v1/fiat/get-order-detail (legacy-docs Fiat Deposit): toda recusa fiat
+ * é HTTP 200 (ver {@see self::httpStatus()}), nunca um HTTP de erro — só a
+ * assinatura (família spot/wallet OU fiat) usa 400/401. Ver ADR-0001.
  */
 enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
 {

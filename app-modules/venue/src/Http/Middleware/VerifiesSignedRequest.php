@@ -48,7 +48,7 @@ final readonly class VerifiesSignedRequest
         // `timestamp` e `signature` são mandatórios: ausentes ou malformados é -1102
         // (Binance real), nunca -1021/-1022 — esses dois códigos são exclusivos do
         // BinanceErrorBoundary do consumidor para "indisponibilidade retryable",
-        // enquanto -1102 é fatal. Ver ADR/ticket para o mapeamento completo.
+        // enquanto -1102 é fatal.
         if (!is_numeric($timestamp) || !is_string($signature) || $signature === '') {
             return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
         }
@@ -80,7 +80,9 @@ final readonly class VerifiesSignedRequest
     private function resolveRecvWindow(array $query): ?int
     {
         if (!isset($query['recvWindow'])) {
-            return config()->integer('venue.recv_window');
+            // `config()->integer()` exige um `int` estrito — a mesma numeric-string
+            // que `env()` produz do `.env` real o faria explodir aqui.
+            return (int) config('venue.recv_window', 5_000);
         }
 
         $recvWindow = $query['recvWindow'];

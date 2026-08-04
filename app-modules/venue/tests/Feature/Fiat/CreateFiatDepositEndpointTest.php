@@ -111,8 +111,13 @@ it('accepts an amount at exactly the configured deposit limit', function (): voi
     $response->assertOk()->assertJson(['code' => '000000']);
 });
 
-it('validates the required body fields', function (): void {
+it('validates the required body fields, answering the fiat -1102 envelope', function (): void {
     $response = $this->postJson($this->signedUri('/sapi/v1/fiat/deposit'), [], $this->apiKeyHeader());
 
-    $response->assertStatus(422)->assertJsonValidationErrors(['currency', 'apiPaymentMethod', 'amount']);
+    $response->assertStatus(400)->assertExactJson([
+        'code' => '-1102',
+        'message' => 'A mandatory parameter was not sent, was empty/null, or malformed.',
+        'success' => false,
+        'data' => null,
+    ]);
 });

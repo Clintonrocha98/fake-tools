@@ -14,10 +14,14 @@ use Illuminate\Support\Facades\DB;
  * GET /sapi/v1/fiat/get-order-detail — releitura que ela mesma faz a ordem
  * avançar: LAZY, sem scheduler. Só `Processing` avança sozinho (pela idade
  * contra `venue-fiat.advance_seconds`); todo estado de falha só chega via
- * `forced_status` (override do painel, #7). Ao entrar em
+ * `forced_status` (override do painel). `forced_status` é uma máscara de
+ * leitura — nunca é gravado em `status` — para que limpar o override deixe o
+ * avanço lazy retomar de onde `status` estava. Ao entrar em
  * {@see FiatOrderStatus::Success} pela PRIMEIRA vez — lazy ou forçado —
  * credita `CreditLedgerAccount` UMA vez; `credited_at` é o guard de
  * idempotência, então uma releitura repetida nunca credita duas vezes.
+ * `forced_wire_status` cobre o vocabulário de wire que `FiatOrderStatus` não
+ * modela: enquanto setado, a ordem nunca avança e nunca credita.
  */
 final readonly class GetFiatOrderDetail
 {
@@ -35,11 +39,19 @@ final readonly class GetFiatOrderDetail
             /** @var FiatOrder $locked */
             $locked = FiatOrder::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-            $effective = $locked->forced_status ?? $this->lazyStatus($locked);
-
-            if ($effective !== $locked->status) {
-                $locked->update(['status' => $effective]);
+            if ($locked->forced_wire_status !== null) {
+                return $locked;
             }
+
+            if ($locked->forced_status === null) {
+                $lazy = $this->lazyStatus($locked);
+
+                if ($lazy !== $locked->status) {
+                    $locked->update(['status' => $lazy]);
+                }
+            }
+
+            $effective = $locked->effectiveStatus();
 
             if ($effective->isCredited() && $locked->credited_at === null) {
                 ($this->credit)($locked->currency, $locked->amount);
@@ -56,7 +68,11 @@ final readonly class GetFiatOrderDetail
             return $order->status;
         }
 
-        $advanceSeconds = config()->integer('venue-fiat.advance_seconds');
+        // `config()->integer()` exige um `int` estrito e explode em qualquer outra
+        // coisa — inclusive a numeric-string que `env()` produz a partir do `.env`
+        // real. O cast manual aceita a mesma faixa de valores que o config file já
+        // normaliza para `int`.
+        $advanceSeconds = (int) config('venue-fiat.advance_seconds', 60);
         $age = $order->created_at?->diffInSeconds(now()) ?? 0;
 
         return $age >= $advanceSeconds ? FiatOrderStatus::Success : FiatOrderStatus::Processing;

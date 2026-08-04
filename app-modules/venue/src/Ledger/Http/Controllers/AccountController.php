@@ -9,8 +9,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * GET /api/v3/account — sem middleware de assinatura aqui de propósito: o acoplamento
- * com `venue.signed` acontece no merge da onda (ticket #2), não neste ticket.
+ * GET /api/v3/account — a assinatura é verificada pelo middleware `venue.signed`
+ * na definição da rota, não aqui.
  */
 final readonly class AccountController
 {

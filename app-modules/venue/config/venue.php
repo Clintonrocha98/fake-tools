@@ -32,6 +32,6 @@ return [
     |
     */
 
-    'recv_window' => env('FAKE_BINANCE_RECV_WINDOW', 5_000),
+    'recv_window' => (int) env('FAKE_BINANCE_RECV_WINDOW', 5_000),
 
 ];

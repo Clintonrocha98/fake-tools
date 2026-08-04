@@ -12,10 +12,11 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * O body JSON de POST /sapi/v1/fiat/deposit — fora da assinatura (query only,
- * `venue.signed`), exatamente como o `CreateFiatDepositRequest` do monolito manda.
+ * A query de GET /sapi/v1/fiat/get-order-detail?orderNo=… — fora da assinatura
+ * (query only, `venue.signed`), exatamente como o `GetFiatOrderDetailRequest`
+ * do monolito manda.
  */
-final class CreateFiatDepositRequest extends FormRequest
+final class GetFiatOrderDetailRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -28,9 +29,7 @@ final class CreateFiatDepositRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'currency' => ['required', 'string'],
-            'apiPaymentMethod' => ['required', 'string'],
-            'amount' => ['required', 'string', 'regex:/^\d+(\.\d+)?$/'],
+            'orderNo' => ['required', 'string'],
         ];
     }
 

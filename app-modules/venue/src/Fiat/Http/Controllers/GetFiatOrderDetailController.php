@@ -7,12 +7,11 @@ namespace He4rt\Venue\Fiat\Http\Controllers;
 use He4rt\Venue\Fiat\Actions\GetFiatOrderDetail;
 use He4rt\Venue\Fiat\Enums\FiatStatusDialect;
 use He4rt\Venue\Fiat\Exceptions\FiatOrderNotFoundException;
+use He4rt\Venue\Fiat\Http\Requests\GetFiatOrderDetailRequest;
 use He4rt\Venue\Fiat\Models\FiatOrder;
 use He4rt\Venue\Http\Errors\ErrorFamily;
 use He4rt\Venue\Http\Errors\VenueErrorResponseFactory;
-use He4rt\Venue\Ledger\Support\LedgerAmount;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 /**
  * GET /sapi/v1/fiat/get-order-detail?orderNo=… — a leitura que faz a ordem
@@ -28,10 +27,8 @@ final readonly class GetFiatOrderDetailController
         private VenueErrorResponseFactory $errors,
     ) {}
 
-    public function __invoke(Request $request): JsonResponse
+    public function __invoke(GetFiatOrderDetailRequest $request): JsonResponse
     {
-        $request->validate(['orderNo' => ['required', 'string']]);
-
         $orderNo = $request->string('orderNo')->toString();
 
         try {
@@ -41,7 +38,11 @@ final readonly class GetFiatOrderDetailController
         }
 
         $dialect = FiatStatusDialect::from(config()->string('venue-fiat.status_dialect', 'live'));
-        $status = $order->effectiveStatus()->toWire($dialect);
+
+        // Um vocabulário de wire fora do enum (`forced_wire_status`) é ecoado
+        // verbatim — o fail-closed do consumidor é o arm que este campo existe
+        // para exercitar, então o fake nunca o traduz para um caso conhecido.
+        $status = $order->forced_wire_status ?? $order->effectiveStatus()->toWire($dialect);
 
         return response()->json([
             'code' => '000000',
@@ -55,13 +56,23 @@ final readonly class GetFiatOrderDetailController
      */
     private function orderData(FiatOrder $order, string $status): array
     {
+        $pending = $order->forced_wire_status !== null || $order->effectiveStatus()->isPending();
+        $credited = $order->forced_wire_status === null && $order->effectiveStatus()->isCredited();
+
         return [
             'orderNo' => $order->order_no,
             'status' => $status,
             'orderStatus' => $status,
+            'fiatCurrency' => $order->currency,
             'currency' => $order->currency,
-            'amount' => LedgerAmount::wire($order->amount),
-            'pixcode' => $order->brcode,
+            'amount' => bcadd((string) $order->amount, '0', 2),
+            'method' => $order->payment_method,
+            'totalFee' => '0.00',
+            'createTime' => $order->created_at?->getTimestampMs(),
+            'updateTime' => $order->updated_at?->getTimestampMs(),
+            // O brcode só faz sentido enquanto o depósito pode ainda ser pago
+            // ou já foi: some quando a ordem morre num estado terminal de falha.
+            'pixcode' => $pending || $credited ? $order->brcode : null,
         ];
     }
 }

@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
  * @property numeric-string $amount
  * @property FiatOrderStatus $status
  * @property FiatOrderStatus|null $forced_status
+ * @property string|null $forced_wire_status
  * @property string|null $brcode
  * @property Carbon|null $credited_at
  * @property Carbon|null $created_at
@@ -32,8 +33,10 @@ final class FiatOrder extends BaseModel
 {
     /**
      * O status que a wire deve responder agora: o override do painel
-     * (`forced_status`, #7) sempre vence o `status` computado pelo avanço
-     * lazy — é o que torna a coluna um "congelamento" de fato.
+     * (`forced_status`) sempre vence o `status` computado pelo avanço lazy.
+     * É uma máscara de leitura, não um congelamento — `forced_status` nunca é
+     * gravado em `status` (ver {@see \He4rt\Venue\Fiat\Actions\GetFiatOrderDetail}),
+     * então limpar o override deixa o avanço lazy retomar de onde estava.
      */
     public function effectiveStatus(): FiatOrderStatus
     {

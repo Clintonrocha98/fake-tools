@@ -16,7 +16,7 @@ return [
     |
     */
 
-    'advance_seconds' => env('FAKE_BINANCE_FIAT_ADVANCE_SECONDS', 60),
+    'advance_seconds' => (int) env('FAKE_BINANCE_FIAT_ADVANCE_SECONDS', 60),
 
     /*
     |--------------------------------------------------------------------------

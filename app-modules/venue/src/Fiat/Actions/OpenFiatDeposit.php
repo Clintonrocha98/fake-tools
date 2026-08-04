@@ -11,8 +11,8 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
 /**
  * POST /sapi/v1/fiat/deposit — abre a ordem em {@see FiatOrderStatus::Processing}
  * com o brcode já anexado (imediato por default; "brcode só após N leituras" é
- * cenário do painel, #7). Toda recusa aqui é síncrona e "sob comando": cada
- * guarda lê um switch de `config('venue-fiat')`, nunca uma decisão aleatória.
+ * cenário do painel). Toda recusa aqui é síncrona e "sob comando": cada guarda
+ * lê um switch de `config('venue-fiat')`, nunca uma decisão aleatória.
  */
 final readonly class OpenFiatDeposit
 {
