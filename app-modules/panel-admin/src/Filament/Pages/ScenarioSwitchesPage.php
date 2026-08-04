@@ -29,9 +29,9 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
 
     protected static ?string $slug = 'scenario-switches';
 
-    protected static ?string $title = 'Scenario Switches';
+    protected static ?string $title = null;
 
-    protected static ?string $navigationLabel = 'Scenario Switches';
+    protected static ?string $navigationLabel = null;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSignalSlash;
 
@@ -47,6 +47,16 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
         return [
             'venue.scenario-switches',
         ];
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('panel-admin::venue.scenario_switches.title');
+    }
+
+    public function getTitle(): string
+    {
+        return __('panel-admin::venue.scenario_switches.title');
     }
 
     public function getSwitchboard(): ScenarioSwitchboard
@@ -75,11 +85,11 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
             ->requiresConfirmation()
             ->modalHeading(function (array $arguments): string {
                 /** @var array{switch: string, enable: bool} $arguments */
-                return sprintf(
-                    '%s the %s switch?',
-                    $arguments['enable'] ? 'Turn on' : 'Turn off',
-                    ScenarioSwitch::from($arguments['switch'])->getLabel(),
-                );
+                $key = $arguments['enable'] ? 'turn_on' : 'turn_off';
+
+                return __('panel-admin::venue.scenario_switches.'.$key, [
+                    'switch' => ScenarioSwitch::from($arguments['switch'])->getLabel(),
+                ]);
             })
             ->action(function (array $arguments): void {
                 /** @var array{switch: string, enable: bool} $arguments */
@@ -89,7 +99,10 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
                 resolve(ToggleScenarioSwitch::class)($switch, $enable);
 
                 Notification::make()
-                    ->title(sprintf('%s is now %s', $switch->getLabel(), $enable ? 'ON' : 'OFF'))
+                    ->title(__('panel-admin::venue.scenario_switches.toggle_notification', [
+                        'switch' => $switch->getLabel(),
+                        'state' => __('panel-admin::venue.scenario_switches.'.($enable ? 'state_on' : 'state_off')),
+                    ]))
                     ->success()
                     ->send();
             });

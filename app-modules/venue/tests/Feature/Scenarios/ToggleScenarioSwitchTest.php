@@ -25,6 +25,19 @@ it('never creates a second row across repeated reads', function (): void {
     expect(ScenarioSwitchboard::query()->count())->toBe(1);
 });
 
+it('never serves a second switchboard row, even if one exists behind the singleton id', function (): void {
+    // Simula o cenário de corrida: uma linha extra, criada com um id qualquer,
+    // já existe quando a leitura acontece — a leitura deve sempre pousar na
+    // linha do id fixo, nunca numa das outras.
+    ScenarioSwitchboard::factory()->create(['outage_mode' => true]);
+
+    $switchboard = (new GetScenarioSwitchboard)();
+
+    expect(ScenarioSwitchboard::query()->count())->toBe(2)
+        ->and($switchboard->id)->toBe(GetScenarioSwitchboard::SINGLETON_ID)
+        ->and($switchboard->outage_mode)->toBeFalse();
+});
+
 it('toggles each switch independently', function (ScenarioSwitch $switch, string $column): void {
     $toggle = new ToggleScenarioSwitch;
 

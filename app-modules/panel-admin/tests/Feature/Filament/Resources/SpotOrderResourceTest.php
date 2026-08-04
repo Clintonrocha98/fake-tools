@@ -9,6 +9,7 @@ use Filament\Facades\Filament;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use He4rt\PanelAdmin\Filament\Resources\SpotOrders\Pages\ListSpotOrders;
+use He4rt\Venue\Ledger\Models\LedgerAccount;
 use He4rt\Venue\Spot\Enums\OrderStatus;
 use He4rt\Venue\Spot\Models\SpotOrder;
 
@@ -32,6 +33,9 @@ it('can list spot orders', function (): void {
 });
 
 it('can reject an order', function (): void {
+    LedgerAccount::factory()->create(['asset' => 'USDC', 'free' => '10']);
+    LedgerAccount::factory()->create(['asset' => 'BRL', 'free' => '0']);
+
     $order = SpotOrder::factory()->create(['status' => OrderStatus::Filled]);
 
     livewire(ListSpotOrders::class)
@@ -42,6 +46,9 @@ it('can reject an order', function (): void {
 });
 
 it('can expire an order partially', function (): void {
+    LedgerAccount::factory()->create(['asset' => 'USDC', 'free' => '10']);
+    LedgerAccount::factory()->create(['asset' => 'BRL', 'free' => '0']);
+
     $order = SpotOrder::factory()->create([
         'status' => OrderStatus::Filled,
         'executed_qty' => '2',

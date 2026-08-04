@@ -9,25 +9,29 @@ use He4rt\Venue\Scenarios\Models\ScenarioSwitchboard;
 /**
  * Lê o switchboard singleton, criando a linha default (tudo desligado) na
  * primeira leitura — nunca há mais de uma linha nesta tabela.
+ *
+ * O singleton é garantido pela chave primária: a linha vive sempre sob
+ * {@see self::SINGLETON_ID}, então dois pollers concorrentes batendo aqui antes
+ * de qualquer linha existir não produzem duas linhas — `firstOrCreate()` tenta o
+ * `create()` e, se perder a corrida, recupera a violação de unicidade e relê a
+ * mesma linha ({@see \Illuminate\Database\Eloquent\Builder::createOrFirst()}).
  */
 final readonly class GetScenarioSwitchboard
 {
+    public const string SINGLETON_ID = '00000000-0000-0000-0000-000000000001';
+
     public function __invoke(): ScenarioSwitchboard
     {
-        $existing = ScenarioSwitchboard::query()->first();
-
-        if ($existing instanceof ScenarioSwitchboard) {
-            return $existing;
-        }
-
-        // Valores explícitos (nunca `create([])`): `create()` devolve o modelo em
-        // memória com só os atributos que ele mesmo setou — sem isso, o objeto
+        // Valores explícitos (nunca `firstOrCreate($id, [])`): sem isso, o objeto
         // devolvido não carregaria os DEFAULT que o banco aplicaria na inserção.
-        return ScenarioSwitchboard::query()->create([
-            'outage_mode' => false,
-            'rate_limit_mode' => false,
-            'rate_limit_retry_after_seconds' => 30,
-            'clock_skew_mode' => false,
-        ]);
+        return ScenarioSwitchboard::query()->firstOrCreate(
+            ['id' => self::SINGLETON_ID],
+            [
+                'outage_mode' => false,
+                'rate_limit_mode' => false,
+                'rate_limit_retry_after_seconds' => 30,
+                'clock_skew_mode' => false,
+            ],
+        );
     }
 }

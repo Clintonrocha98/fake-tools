@@ -28,7 +28,7 @@ class WithdrawalsTable
         return $table
             ->columns([
                 TextColumn::make('withdraw_order_id')
-                    ->label('Withdraw order id')
+                    ->label(__('panel-admin::venue.withdrawals.columns.withdraw_order_id'))
                     ->searchable()
                     ->copyable(),
                 TextColumn::make('coin')
@@ -40,19 +40,19 @@ class WithdrawalsTable
                 TextColumn::make('status')
                     ->badge(),
                 TextColumn::make('raw_status_override')
-                    ->label('Código desconhecido')
+                    ->label(__('panel-admin::venue.withdrawals.columns.unknown_code'))
                     ->placeholder('—')
                     ->color('danger'),
                 TextColumn::make('info')
                     ->placeholder('—')
                     ->limit(30),
                 TextColumn::make('tx_id')
-                    ->label('Tx id')
+                    ->label(__('panel-admin::venue.withdrawals.columns.tx_id'))
                     ->placeholder('—')
                     ->toggleable(isToggledHiddenByDefault: true),
                 IconColumn::make('frozen')
                     ->boolean()
-                    ->label('Congelado'),
+                    ->label(__('panel-admin::venue.withdrawals.columns.frozen')),
                 TextColumn::make('applied_at')
                     ->dateTime(timezone: config('app.display_timezone'))
                     ->sortable(),
@@ -88,50 +88,50 @@ class WithdrawalsTable
     private static function completeNowAction(): Action
     {
         return Action::make('completeNow')
-            ->label('Completar agora')
+            ->label(__('panel-admin::venue.withdrawals.actions.complete_now'))
             ->icon(Heroicon::OutlinedBolt)
             ->color('success')
             ->requiresConfirmation()
-            ->modalDescription('Pula o relógio do avanço lazy e conclui o withdraw imediatamente.')
+            ->modalDescription(__('panel-admin::venue.withdrawals.actions.complete_now_description'))
             ->action(function (Withdrawal $record): void {
                 resolve(CompleteWithdrawNow::class)($record);
 
-                Notification::make()->title('Withdraw concluído')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.withdrawals.actions.complete_now_notification'))->success()->send();
             });
     }
 
     private static function forceStatusAction(): Action
     {
         return Action::make('forceStatus')
-            ->label('Falhar com status')
+            ->label(__('panel-admin::venue.withdrawals.actions.force_status'))
             ->icon(Heroicon::OutlinedExclamationTriangle)
             ->color('danger')
             ->schema([
                 Select::make('status')
-                    ->label('Status')
+                    ->label(__('panel-admin::venue.withdrawals.actions.status_field'))
                     ->options(self::forcibleStatuses())
                     ->required(),
                 TextInput::make('info')
-                    ->label('Motivo (info)')
+                    ->label(__('panel-admin::venue.withdrawals.actions.info_field'))
                     ->required(),
             ])
             ->action(function (array $data, Withdrawal $record): void {
                 /** @var array{status: string, info: string} $data */
                 resolve(ForceWithdrawStatus::class)($record, WithdrawStatus::from((int) $data['status']), $data['info']);
 
-                Notification::make()->title('Status forçado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.withdrawals.actions.force_status_notification'))->success()->send();
             });
     }
 
     private static function emitUnknownAction(): Action
     {
         return Action::make('emitUnknown')
-            ->label('Emitir vocabulário desconhecido')
+            ->label(__('panel-admin::venue.withdrawals.actions.emit_unknown'))
             ->icon(Heroicon::OutlinedQuestionMarkCircle)
             ->color('warning')
             ->schema([
                 TextInput::make('rawStatus')
-                    ->label('Código de status arbitrário')
+                    ->label(__('panel-admin::venue.withdrawals.actions.raw_status_field'))
                     ->numeric()
                     ->required(),
             ])
@@ -139,20 +139,20 @@ class WithdrawalsTable
                 /** @var array{rawStatus: numeric-string} $data */
                 resolve(EmitUnknownWithdrawStatus::class)($record, (int) $data['rawStatus']);
 
-                Notification::make()->title('Vocabulário desconhecido emitido')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.withdrawals.actions.emit_unknown_notification'))->success()->send();
             });
     }
 
     private static function toggleFrozenAction(): Action
     {
         return Action::make('toggleFrozen')
-            ->label(fn (Withdrawal $record): string => $record->frozen ? 'Descongelar' : 'Congelar')
+            ->label(fn (Withdrawal $record): string => __('panel-admin::venue.withdrawals.actions.'.($record->frozen ? 'unfreeze' : 'freeze')))
             ->icon(fn (Withdrawal $record): Heroicon => $record->frozen ? Heroicon::OutlinedPlay : Heroicon::OutlinedPause)
             ->color('gray')
             ->action(function (Withdrawal $record): void {
                 resolve(SetWithdrawFrozen::class)($record, !$record->frozen);
 
-                Notification::make()->title('Congelamento atualizado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.withdrawals.actions.frozen_notification'))->success()->send();
             });
     }
 }

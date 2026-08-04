@@ -13,7 +13,7 @@
 
                 <x-slot name="afterHeader">
                     <x-filament::badge :color="$enabled ? 'danger' : 'gray'">
-                        {{ $enabled ? 'ON' : 'OFF' }}
+                        {{ $enabled ? __('panel-admin::venue.scenario_switches.state_on') : __('panel-admin::venue.scenario_switches.state_off') }}
                     </x-filament::badge>
                 </x-slot>
 

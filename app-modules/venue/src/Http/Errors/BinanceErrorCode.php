@@ -21,6 +21,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
     case InvalidSignature = -1_022;
     case TimestampOutOfWindow = -1_021;
     case TooManyRequests = -1_003;
+    case InternalError = -1_001;
     case MandatoryParameterMissing = -1_102;
     case InvalidOrderType = -1_116;
     case InvalidSide = -1_117;
@@ -44,6 +45,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'Signature for this request is not valid.',
             self::TimestampOutOfWindow => 'Timestamp for this request is outside of the recvWindow.',
             self::TooManyRequests => 'Way too many requests; please try again later.',
+            self::InternalError => 'Internal error; unable to process your request. Please try again.',
             self::MandatoryParameterMissing => 'A mandatory parameter was not sent, was empty/null, or malformed.',
             self::InvalidOrderType => 'Invalid orderType.',
             self::InvalidSide => 'Invalid side.',
@@ -65,6 +67,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
     public function httpStatus(): int
     {
         return match ($this) {
+            self::InternalError => 503,
             self::TooManyRequests => 429,
             self::InvalidSignature, self::TimestampOutOfWindow, self::MandatoryParameterMissing => 400,
             self::InvalidOrderType, self::InvalidSide, self::InvalidSymbol => 400,
@@ -82,6 +85,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'Assinatura inválida',
             self::TimestampOutOfWindow => 'Timestamp fora da janela',
             self::TooManyRequests => 'Rate limit excedido',
+            self::InternalError => 'Erro interno (outage)',
             self::MandatoryParameterMissing => 'Parâmetro obrigatório ausente',
             self::InvalidOrderType => 'Tipo de ordem inválido',
             self::InvalidSide => 'Side inválido',
@@ -106,6 +110,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'danger',
             self::TimestampOutOfWindow => 'warning',
             self::TooManyRequests => 'warning',
+            self::InternalError => 'danger',
             self::MandatoryParameterMissing => 'warning',
             self::InvalidOrderType => 'warning',
             self::InvalidSide => 'warning',
@@ -129,6 +134,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'HMAC-SHA256 da query não confere com o segredo configurado',
             self::TimestampOutOfWindow => 'Timestamp fora de [serverTime - recvWindow, serverTime + 1000]',
             self::TooManyRequests => 'Modo rate-limit do painel ligado — todo endpoint responde 429',
+            self::InternalError => 'Modo outage do painel ligado — todo endpoint responde 503',
             self::MandatoryParameterMissing => '`timestamp` ou `signature` ausente, vazio ou não numérico',
             self::InvalidOrderType => '`type` diferente de MARKET — o único tipo servido',
             self::InvalidSide => '`side` diferente de BUY ou SELL',

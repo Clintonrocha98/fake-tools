@@ -26,7 +26,7 @@ class SpotOrdersTable
                 TextColumn::make('symbol')
                     ->searchable(),
                 TextColumn::make('client_order_id')
-                    ->label('Client order id')
+                    ->label(__('panel-admin::venue.spot_orders.columns.client_order_id'))
                     ->searchable()
                     ->copyable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -35,14 +35,14 @@ class SpotOrdersTable
                 TextColumn::make('status')
                     ->badge(),
                 TextColumn::make('raw_status_override')
-                    ->label('Wire desconhecido')
+                    ->label(__('panel-admin::venue.spot_orders.columns.unknown_wire'))
                     ->placeholder('—')
                     ->color('danger'),
                 TextColumn::make('executed_qty')
-                    ->label('Executed qty')
+                    ->label(__('panel-admin::venue.spot_orders.columns.executed_qty'))
                     ->numeric(decimalPlaces: 8),
                 TextColumn::make('cummulative_quote_qty')
-                    ->label('Quote qty')
+                    ->label(__('panel-admin::venue.spot_orders.columns.quote_qty'))
                     ->numeric(decimalPlaces: 8),
                 TextColumn::make('fill_price')
                     ->numeric(decimalPlaces: 2)
@@ -66,49 +66,49 @@ class SpotOrdersTable
     private static function rejectAction(): Action
     {
         return Action::make('reject')
-            ->label('Recusar (REJECTED)')
+            ->label(__('panel-admin::venue.spot_orders.actions.reject'))
             ->icon(Heroicon::OutlinedXCircle)
             ->color('danger')
             ->requiresConfirmation()
-            ->modalDescription('Zera o fill e move a ordem para REJECTED — sem execução alguma.')
+            ->modalDescription(__('panel-admin::venue.spot_orders.actions.reject_description'))
             ->action(function (SpotOrder $record): void {
                 resolve(RejectSpotOrder::class)($record);
 
-                Notification::make()->title('Ordem recusada')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.spot_orders.actions.reject_notification'))->success()->send();
             });
     }
 
     private static function expirePartiallyAction(): Action
     {
         return Action::make('expirePartially')
-            ->label('Preencher parcial + EXPIRED')
+            ->label(__('panel-admin::venue.spot_orders.actions.expire_partially'))
             ->icon(Heroicon::OutlinedClock)
             ->color('warning')
             ->requiresConfirmation()
-            ->modalDescription('Reduz o fill à metade do executado e move a ordem para EXPIRED.')
+            ->modalDescription(__('panel-admin::venue.spot_orders.actions.expire_partially_description'))
             ->action(function (SpotOrder $record): void {
                 resolve(ExpireSpotOrderPartially::class)($record);
 
-                Notification::make()->title('Ordem preenchida parcialmente e expirada')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.spot_orders.actions.expire_partially_notification'))->success()->send();
             });
     }
 
     private static function emitUnknownAction(): Action
     {
         return Action::make('emitUnknown')
-            ->label('Emitir vocabulário desconhecido')
+            ->label(__('panel-admin::venue.spot_orders.actions.emit_unknown'))
             ->icon(Heroicon::OutlinedQuestionMarkCircle)
             ->color('gray')
             ->schema([
                 TextInput::make('rawStatus')
-                    ->label('Status arbitrário')
+                    ->label(__('panel-admin::venue.spot_orders.actions.raw_status_field'))
                     ->required(),
             ])
             ->action(function (array $data, SpotOrder $record): void {
                 /** @var array{rawStatus: string} $data */
                 resolve(EmitUnknownSpotOrderStatus::class)($record, $data['rawStatus']);
 
-                Notification::make()->title('Vocabulário desconhecido emitido')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.spot_orders.actions.emit_unknown_notification'))->success()->send();
             });
     }
 }

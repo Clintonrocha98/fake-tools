@@ -29,7 +29,7 @@ class FiatOrdersTable
         return $table
             ->columns([
                 TextColumn::make('order_no')
-                    ->label('Order no')
+                    ->label(__('panel-admin::venue.fiat_orders.columns.order_no'))
                     ->searchable()
                     ->copyable(),
                 TextColumn::make('currency')
@@ -38,23 +38,23 @@ class FiatOrdersTable
                     ->numeric(decimalPlaces: 2)
                     ->sortable(),
                 TextColumn::make('status')
-                    ->label('Status (lazy)')
+                    ->label(__('panel-admin::venue.fiat_orders.columns.status_lazy'))
                     ->badge(),
                 TextColumn::make('forced_status')
-                    ->label('Override')
+                    ->label(__('panel-admin::venue.fiat_orders.columns.override'))
                     ->badge()
                     ->placeholder('—'),
                 TextColumn::make('forced_wire_status')
-                    ->label('Wire desconhecido')
+                    ->label(__('panel-admin::venue.fiat_orders.columns.unknown_wire'))
                     ->placeholder('—')
                     ->color('danger'),
                 IconColumn::make('frozen')
                     ->boolean()
-                    ->label('Congelada'),
+                    ->label(__('panel-admin::venue.fiat_orders.columns.frozen')),
                 TextColumn::make('brcode_delay_reads')
-                    ->label('Atraso brcode')
+                    ->label(__('panel-admin::venue.fiat_orders.columns.brcode_delay'))
                     ->placeholder('—')
-                    ->description(fn (FiatOrder $record): string => sprintf('lidas: %d', $record->brcode_reads_count)),
+                    ->description(fn (FiatOrder $record): string => __('panel-admin::venue.fiat_orders.columns.brcode_delay_description', ['count' => $record->brcode_reads_count])),
                 TextColumn::make('credited_at')
                     ->dateTime(timezone: config('app.display_timezone'))
                     ->placeholder('—'),
@@ -96,27 +96,27 @@ class FiatOrdersTable
     private static function creditNowAction(): Action
     {
         return Action::make('creditNow')
-            ->label('Creditar agora')
+            ->label(__('panel-admin::venue.fiat_orders.actions.credit_now'))
             ->icon(Heroicon::OutlinedBolt)
             ->color('success')
             ->requiresConfirmation()
-            ->modalDescription('Pula o relógio do avanço lazy e credita o ledger imediatamente.')
+            ->modalDescription(__('panel-admin::venue.fiat_orders.actions.credit_now_description'))
             ->action(function (FiatOrder $record): void {
                 resolve(CreditFiatOrderNow::class)($record);
 
-                Notification::make()->title('Ordem creditada')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.credit_now_notification'))->success()->send();
             });
     }
 
     private static function forceStatusAction(): Action
     {
         return Action::make('forceStatus')
-            ->label('Falhar com status')
+            ->label(__('panel-admin::venue.fiat_orders.actions.force_status'))
             ->icon(Heroicon::OutlinedExclamationTriangle)
             ->color('danger')
             ->schema([
                 Select::make('status')
-                    ->label('Status')
+                    ->label(__('panel-admin::venue.fiat_orders.actions.status_field'))
                     ->options(self::forcibleStatuses())
                     ->required(),
             ])
@@ -124,62 +124,62 @@ class FiatOrdersTable
                 /** @var array{status: string} $data */
                 resolve(ForceFiatOrderStatus::class)($record, FiatOrderStatus::from($data['status']));
 
-                Notification::make()->title('Status forçado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.force_status_notification'))->success()->send();
             });
     }
 
     private static function emitUnknownAction(): Action
     {
         return Action::make('emitUnknown')
-            ->label('Emitir vocabulário desconhecido')
+            ->label(__('panel-admin::venue.fiat_orders.actions.emit_unknown'))
             ->icon(Heroicon::OutlinedQuestionMarkCircle)
             ->color('warning')
             ->schema([
                 TextInput::make('wireStatus')
-                    ->label('Status de wire arbitrário')
+                    ->label(__('panel-admin::venue.fiat_orders.actions.wire_status_field'))
                     ->required(),
             ])
             ->action(function (array $data, FiatOrder $record): void {
                 /** @var array{wireStatus: string} $data */
                 resolve(EmitUnknownFiatWireStatus::class)($record, $data['wireStatus']);
 
-                Notification::make()->title('Vocabulário desconhecido emitido')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.emit_unknown_notification'))->success()->send();
             });
     }
 
     private static function delayBrcodeAction(): Action
     {
         return Action::make('delayBrcode')
-            ->label('Atrasar brcode')
+            ->label(__('panel-admin::venue.fiat_orders.actions.delay_brcode'))
             ->icon(Heroicon::OutlinedClock)
             ->color('gray')
             ->fillForm(fn (FiatOrder $record): array => ['reads' => $record->brcode_delay_reads])
             ->schema([
                 TextInput::make('reads')
-                    ->label('Leituras sem brcode')
+                    ->label(__('panel-admin::venue.fiat_orders.actions.reads_field'))
                     ->numeric()
                     ->minValue(0)
-                    ->helperText('Vazio remove o atraso — brcode volta a aparecer imediatamente.'),
+                    ->helperText(__('panel-admin::venue.fiat_orders.actions.reads_helper')),
             ])
             ->action(function (array $data, FiatOrder $record): void {
                 /** @var array{reads: string|int|null} $data */
                 $reads = $data['reads'];
                 resolve(DelayFiatBrcode::class)($record, $reads === null || $reads === '' ? null : (int) $reads);
 
-                Notification::make()->title('Atraso de brcode atualizado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.delay_brcode_notification'))->success()->send();
             });
     }
 
     private static function toggleFrozenAction(): Action
     {
         return Action::make('toggleFrozen')
-            ->label(fn (FiatOrder $record): string => $record->frozen ? 'Descongelar' : 'Congelar')
+            ->label(fn (FiatOrder $record): string => __('panel-admin::venue.fiat_orders.actions.'.($record->frozen ? 'unfreeze' : 'freeze')))
             ->icon(fn (FiatOrder $record): Heroicon => $record->frozen ? Heroicon::OutlinedPlay : Heroicon::OutlinedPause)
             ->color('gray')
             ->action(function (FiatOrder $record): void {
                 resolve(SetFiatOrderFrozen::class)($record, !$record->frozen);
 
-                Notification::make()->title('Congelamento atualizado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.frozen_notification'))->success()->send();
             });
     }
 }

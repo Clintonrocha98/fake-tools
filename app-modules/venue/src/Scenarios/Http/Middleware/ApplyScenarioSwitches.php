@@ -35,10 +35,9 @@ final readonly class ApplyScenarioSwitches
         $switches = ($this->switchboard)();
 
         if ($switches->outage_mode) {
-            return response()->json([
-                'code' => -1_001,
-                'msg' => 'Internal error; unable to process your request. Please try again.',
-            ], 503);
+            $family = ErrorFamily::fromPath($request->path());
+
+            return $this->errors->make($family, BinanceErrorCode::InternalError);
         }
 
         if ($switches->rate_limit_mode) {

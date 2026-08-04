@@ -12,7 +12,25 @@ it('answers the happy path untouched when every switch is off', function (): voi
 it('outage mode answers HTTP 5xx before any auth check, even on an unsigned request', function (): void {
     (new ToggleScenarioSwitch)(ScenarioSwitch::Outage, true);
 
-    $this->getJson('/api/v3/ticker/bookTicker?symbol=USDCBRL')->assertServerError();
+    $response = $this->getJson('/api/v3/ticker/bookTicker?symbol=USDCBRL');
+
+    $response->assertServerError()->assertExactJson([
+        'code' => -1_001,
+        'msg' => 'Internal error; unable to process your request. Please try again.',
+    ]);
+});
+
+it('outage mode answers the fiat envelope on a fiat path', function (): void {
+    (new ToggleScenarioSwitch)(ScenarioSwitch::Outage, true);
+
+    $response = $this->getJson('/sapi/v1/fiat/get-order-detail?orderNo=anything');
+
+    $response->assertStatus(503)->assertExactJson([
+        'code' => '-1001',
+        'message' => 'Internal error; unable to process your request. Please try again.',
+        'success' => false,
+        'data' => null,
+    ]);
 });
 
 it('rate limit mode answers 429 with Retry-After, spot/wallet envelope, before any auth check', function (): void {

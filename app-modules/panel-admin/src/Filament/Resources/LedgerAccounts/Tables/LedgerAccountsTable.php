@@ -43,11 +43,11 @@ class LedgerAccountsTable
     private static function setNewAssetAction(): Action
     {
         return Action::make('setNewAsset')
-            ->label('Novo saldo')
+            ->label(__('panel-admin::venue.ledger_accounts.actions.new_balance'))
             ->icon(Heroicon::OutlinedPlus)
             ->schema([
                 TextInput::make('asset')
-                    ->label('Asset')
+                    ->label(__('panel-admin::venue.ledger_accounts.actions.asset_field'))
                     ->required(),
                 TextInput::make('free')
                     ->numeric()
@@ -62,14 +62,14 @@ class LedgerAccountsTable
                 /** @var array{asset: string, free: float, locked: float} $data */
                 resolve(SetLedgerBalance::class)($data['asset'], (string) $data['free'], (string) $data['locked']);
 
-                Notification::make()->title('Saldo definido')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.new_balance_notification'))->success()->send();
             });
     }
 
     private static function editBalanceAction(): Action
     {
         return Action::make('editBalance')
-            ->label('Editar saldo')
+            ->label(__('panel-admin::venue.ledger_accounts.actions.edit_balance'))
             ->icon(Heroicon::OutlinedPencilSquare)
             ->fillForm(fn (LedgerAccount $record): array => [
                 'free' => (string) $record->free,
@@ -87,7 +87,7 @@ class LedgerAccountsTable
                 /** @var array{free: float, locked: float} $data */
                 resolve(SetLedgerBalance::class)($record->asset, (string) $data['free'], (string) $data['locked']);
 
-                Notification::make()->title('Saldo atualizado')->success()->send();
+                Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.edit_balance_notification'))->success()->send();
             });
     }
 }
