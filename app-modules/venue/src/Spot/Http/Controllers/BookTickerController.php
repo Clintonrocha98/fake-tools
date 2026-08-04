@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace He4rt\Venue\Spot\Http\Controllers;
 
+use He4rt\Venue\Http\Errors\BinanceErrorCode;
+use He4rt\Venue\Http\Errors\ErrorFamily;
+use He4rt\Venue\Http\Errors\VenueErrorResponseFactory;
 use He4rt\Venue\Spot\Actions\GetBookTicker;
+use He4rt\Venue\Spot\Enums\SpotSymbol;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,12 +17,19 @@ use Illuminate\Http\Request;
  */
 final readonly class BookTickerController
 {
-    public function __construct(private GetBookTicker $bookTicker) {}
+    public function __construct(
+        private GetBookTicker $bookTicker,
+        private VenueErrorResponseFactory $errors,
+    ) {}
 
     public function __invoke(Request $request): JsonResponse
     {
-        $symbol = (string) $request->query('symbol');
+        $symbol = SpotSymbol::tryFromWire($request->query('symbol'));
 
-        return response()->json(($this->bookTicker)($symbol)->toWireArray());
+        if (!$symbol instanceof SpotSymbol) {
+            return $this->errors->make(ErrorFamily::fromPath($request->path()), BinanceErrorCode::InvalidSymbol);
+        }
+
+        return response()->json(($this->bookTicker)($symbol->value)->toWireArray());
     }
 }

@@ -120,3 +120,70 @@ it('refuses an unsigned POST /api/v3/order with the spot/wallet error envelope',
 
     $response->assertStatus(401)->assertJson(['code' => -2_014]);
 });
+
+it('refuses an unknown symbol with -1121', function (): void {
+    (new CreditLedgerAccount)('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'BTCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-unknown-symbol-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_121]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-unknown-symbol-1')->exists())->toBeFalse();
+});
+
+it('refuses a type other than MARKET with -1116', function (): void {
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'BUY', 'type' => 'LIMIT', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-limit-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_116]);
+});
+
+it('refuses an invalid side with -1117', function (): void {
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'HOLD', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-side-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_117]);
+});
+
+it('debits BRL byte-for-byte equal to the cummulativeQuoteQty reported on the wire, even when the division truncates', function (): void {
+    (new CreditLedgerAccount)('BRL', '20');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '15', 'newClientOrderId' => 'forex-truncation-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'executedQty' => '2.93542074',
+        'cummulativeQuoteQty' => '14.9999999814',
+    ]);
+
+    $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+
+    expect($brl->free)->toBe('5.000000018600000000');
+});
+
+it('refuses a SELL below minQty with a filter failure', function (): void {
+    config(['venue-spot.usdcbrl.filters.min_qty' => '5']);
+    (new CreditLedgerAccount)('USDC', '1000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'SELL', 'quantity' => '1', 'newClientOrderId' => 'forex-lot-size-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_013]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-lot-size-1')->exists())->toBeFalse();
+});
+
+it('refuses a BUY below minNotional with a filter failure', function (): void {
+    (new CreditLedgerAccount)('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '1', 'newClientOrderId' => 'forex-notional-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_013]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-notional-1')->exists())->toBeFalse();
+});

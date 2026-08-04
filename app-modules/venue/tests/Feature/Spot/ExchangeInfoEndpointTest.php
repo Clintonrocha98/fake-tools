@@ -19,3 +19,15 @@ it('returns symbols[] with the base/quote precisions and the LOT_SIZE/NOTIONAL f
         ]],
     ]);
 });
+
+it('refuses an unknown symbol with -1121', function (): void {
+    $response = $this->getJson('/api/v3/exchangeInfo?symbol=BTCBRL');
+
+    $response->assertStatus(400)->assertJson(['code' => -1_121]);
+});
+
+it('refuses a missing symbol with -1121', function (): void {
+    $response = $this->getJson('/api/v3/exchangeInfo');
+
+    $response->assertStatus(400)->assertJson(['code' => -1_121]);
+});

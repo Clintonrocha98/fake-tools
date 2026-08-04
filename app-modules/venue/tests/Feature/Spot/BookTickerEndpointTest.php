@@ -26,3 +26,15 @@ it('derives bid/ask from a different configured price and spread', function (): 
         'askPrice' => '5.05',
     ]);
 });
+
+it('refuses an unknown symbol with -1121', function (): void {
+    $response = $this->getJson('/api/v3/ticker/bookTicker?symbol=BTCBRL');
+
+    $response->assertStatus(400)->assertJson(['code' => -1_121]);
+});
+
+it('refuses a missing symbol with -1121', function (): void {
+    $response = $this->getJson('/api/v3/ticker/bookTicker');
+
+    $response->assertStatus(400)->assertJson(['code' => -1_121]);
+});

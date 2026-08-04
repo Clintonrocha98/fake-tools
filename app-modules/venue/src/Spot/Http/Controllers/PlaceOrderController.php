@@ -12,15 +12,18 @@ use He4rt\Venue\Spot\Actions\PlaceMarketOrder;
 use He4rt\Venue\Spot\DTOs\PlaceMarketOrderData;
 use He4rt\Venue\Spot\DTOs\SpotOrderView;
 use He4rt\Venue\Spot\Enums\OrderSide;
+use He4rt\Venue\Spot\Enums\SpotSymbol;
 use He4rt\Venue\Spot\Exceptions\DuplicateClientOrderIdException;
+use He4rt\Venue\Spot\Exceptions\SpotFilterViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * POST /api/v3/order — assinado, só MARKET. Válida os parâmetros mandatórios
- * no dialeto de erro da Binance (-1102) antes de qualquer execução; saldo
- * insuficiente e `newClientOrderId` duplicado colapsam no mesmo -2010
- * (NEW_ORDER_REJECTED) que a Binance real usa para ambos os casos.
+ * POST /api/v3/order — assinado, só MARKET. Valida os parâmetros antes de
+ * qualquer execução, cada rejeição no código da Binance real (parâmetro
+ * mandatório ausente, `symbol`/`type`/`side` inválidos); saldo insuficiente
+ * e `newClientOrderId` duplicado colapsam no mesmo -2010 (NEW_ORDER_REJECTED)
+ * que a Binance real usa para ambos os casos.
  */
 final readonly class PlaceOrderController
 {
@@ -43,6 +46,8 @@ final readonly class PlaceOrderController
             $order = ($this->placeOrder)($data);
         } catch (DuplicateClientOrderIdException|InsufficientLedgerBalanceException $exception) {
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected, $exception->getMessage());
+        } catch (SpotFilterViolationException $exception) {
+            return $this->errors->make($family, BinanceErrorCode::FilterFailure, $exception->getMessage());
         }
 
         return response()->json(SpotOrderView::fromModel($order)->toWireArray(withFills: true));
@@ -61,14 +66,18 @@ final readonly class PlaceOrderController
             return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
         }
 
+        if (!SpotSymbol::tryFromWire($symbol) instanceof SpotSymbol) {
+            return $this->errors->make($family, BinanceErrorCode::InvalidSymbol);
+        }
+
         if ($type !== null && $type !== 'MARKET') {
-            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing, 'Unsupported order type: only MARKET is served.');
+            return $this->errors->make($family, BinanceErrorCode::InvalidOrderType);
         }
 
         $side = is_string($sideValue) ? OrderSide::tryFrom($sideValue) : null;
 
         if (!$side instanceof OrderSide) {
-            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing, 'side must be BUY or SELL.');
+            return $this->errors->make($family, BinanceErrorCode::InvalidSide);
         }
 
         if ($side === OrderSide::Buy && !is_numeric($quoteOrderQty)) {

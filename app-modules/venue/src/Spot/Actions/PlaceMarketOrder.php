@@ -25,10 +25,21 @@ use RuntimeException;
  */
 final readonly class PlaceMarketOrder
 {
+    /**
+     * Escala usada para `cummulativeQuoteQty` — a MESMA que
+     * {@see SwapLedgerAssets} usa ao recalcular
+     * `qty * price` para o movimento do ledger. Se essa conta aqui truncasse
+     * numa precisão diferente (ex.: `quote_asset_precision` = 8), a wire
+     * reportaria um `cummulativeQuoteQty` diferente do que é debitado —
+     * mesmos `qty`/`price`, escalas diferentes, dois números diferentes.
+     */
+    private const int LEDGER_SCALE = 18;
+
     public function __construct(
         private GetBookTicker $bookTicker,
         private NextSpotOrderId $nextOrderId,
         private SwapLedgerAssets $swap,
+        private AssertSpotSymbolFilters $assertFilters,
     ) {}
 
     public function __invoke(PlaceMarketOrderData $data): SpotOrder
@@ -37,11 +48,12 @@ final readonly class PlaceMarketOrder
             throw DuplicateClientOrderIdException::forClientOrderId($data->newClientOrderId);
         }
 
+        ($this->assertFilters)($data->side, $data->quantity, $data->quoteOrderQty);
+
         $symbolConfig = config()->array('venue-spot.usdcbrl');
         $baseAsset = (string) $symbolConfig['base_asset'];
         $quoteAsset = (string) $symbolConfig['quote_asset'];
         $basePrecision = (int) $symbolConfig['base_asset_precision'];
-        $quotePrecision = (int) $symbolConfig['quote_asset_precision'];
         $commissionRateValue = config()->string('venue-spot.commission_rate');
 
         throw_unless(is_numeric($commissionRateValue), RuntimeException::class, 'venue-spot.commission_rate must be numeric.');
@@ -51,8 +63,8 @@ final readonly class PlaceMarketOrder
         $book = ($this->bookTicker)($data->symbol);
 
         [$executedQty, $cummulativeQuoteQty, $price, $receivedAsset] = $data->side === OrderSide::Buy
-            ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $quotePrecision, $baseAsset)
-            : $this->baseSell($data, $book->bidPrice, $quotePrecision, $quoteAsset);
+            ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $baseAsset)
+            : $this->baseSell($data, $book->bidPrice, $quoteAsset);
 
         $receivedGross = $this->receivedGross($data->side, $executedQty, $cummulativeQuoteQty);
         $commission = bcmul($receivedGross, $commissionRate, 18);
@@ -93,12 +105,12 @@ final readonly class PlaceMarketOrder
      * @param  numeric-string  $askPrice
      * @return array{0: numeric-string, 1: numeric-string, 2: numeric-string, 3: string}
      */
-    private function quoteSpend(PlaceMarketOrderData $data, string $askPrice, int $basePrecision, int $quotePrecision, string $baseAsset): array
+    private function quoteSpend(PlaceMarketOrderData $data, string $askPrice, int $basePrecision, string $baseAsset): array
     {
         throw_if($data->quoteOrderQty === null, RuntimeException::class, 'quoteOrderQty is required for a BUY MARKET order.');
 
         $executedQty = bcdiv($data->quoteOrderQty, $askPrice, $basePrecision);
-        $cummulativeQuoteQty = bcmul($executedQty, $askPrice, $quotePrecision);
+        $cummulativeQuoteQty = bcmul($executedQty, $askPrice, self::LEDGER_SCALE);
 
         return [$executedQty, $cummulativeQuoteQty, $askPrice, $baseAsset];
     }
@@ -110,11 +122,11 @@ final readonly class PlaceMarketOrder
      * @param  numeric-string  $bidPrice
      * @return array{0: numeric-string, 1: numeric-string, 2: numeric-string, 3: string}
      */
-    private function baseSell(PlaceMarketOrderData $data, string $bidPrice, int $quotePrecision, string $quoteAsset): array
+    private function baseSell(PlaceMarketOrderData $data, string $bidPrice, string $quoteAsset): array
     {
         throw_if($data->quantity === null, RuntimeException::class, 'quantity is required for a SELL MARKET order.');
 
-        $cummulativeQuoteQty = bcmul($data->quantity, $bidPrice, $quotePrecision);
+        $cummulativeQuoteQty = bcmul($data->quantity, $bidPrice, self::LEDGER_SCALE);
 
         return [$data->quantity, $cummulativeQuoteQty, $bidPrice, $quoteAsset];
     }

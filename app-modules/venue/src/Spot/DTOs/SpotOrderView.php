@@ -38,7 +38,7 @@ final readonly class SpotOrderView
         ];
 
         if ($withFills) {
-            $payload['fills'] = $this->order->fills();
+            $payload['fills'] = $this->order->wireFills();
         }
 
         return $payload;

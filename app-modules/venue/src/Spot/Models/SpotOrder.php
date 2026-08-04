@@ -18,9 +18,9 @@ use Illuminate\Support\Carbon;
  * modela um order book real, preenche tudo de uma vez ao preço do
  * bookTicker), por isso o preço/comissão do fill vivem como colunas
  * escalares, nunca uma lista de fills em JSON. `status` REJECTED e o par
- * parcial+EXPIRED são produzíveis diretamente por estado no banco (gatilho
- * do painel — ticket #7); {@see \He4rt\Venue\Spot\Actions\PlaceMarketOrder}
- * só produz o caminho feliz (FILLED).
+ * parcial+EXPIRED são produzíveis diretamente por estado no banco;
+ * {@see \He4rt\Venue\Spot\Actions\PlaceMarketOrder} só produz o caminho
+ * feliz (FILLED).
  *
  * @property string $id
  * @property int $order_id
@@ -46,9 +46,14 @@ use Illuminate\Support\Carbon;
 final class SpotOrder extends BaseModel
 {
     /**
+     * Nome deliberadamente diferente de `fills` — um método público `fills()`
+     * num Model Eloquent é lido por `isRelation()` (`method_exists()`) como
+     * uma relação e explode em `LogicException` no primeiro acesso a
+     * `$order->fills`.
+     *
      * @return list<array{price: string, qty: string, commission: string, commissionAsset: string}>
      */
-    public function fills(): array
+    public function wireFills(): array
     {
         if ($this->fill_price === null || bccomp($this->executed_qty, '0', 18) <= 0) {
             return [];
