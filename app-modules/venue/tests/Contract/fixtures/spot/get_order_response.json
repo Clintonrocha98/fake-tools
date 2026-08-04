@@ -1,0 +1,10 @@
+{
+    "symbol": "USDCBRL",
+    "orderId": 123,
+    "clientOrderId": "forex-1",
+    "status": "FILLED",
+    "side": "BUY",
+    "type": "MARKET",
+    "executedQty": "2.93",
+    "cummulativeQuoteQty": "15.00"
+}

@@ -1,0 +1,20 @@
+{
+    "symbols": [
+        {
+            "symbol": "USDCBRL",
+            "baseAsset": "USDC",
+            "quoteAsset": "BRL",
+            "filters": [
+                {
+                    "filterType": "LOT_SIZE",
+                    "stepSize": "0.00000001",
+                    "minQty": "0.00000001"
+                },
+                {
+                    "filterType": "NOTIONAL",
+                    "minNotional": "1"
+                }
+            ]
+        }
+    ]
+}

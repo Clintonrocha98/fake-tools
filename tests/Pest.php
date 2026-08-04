@@ -29,6 +29,11 @@ pest()->extend(TestCase::class)
     ->group('arch')
     ->in('Arch', '../app-modules/*/tests/Arch');
 
+pest()->extend(TestCase::class)
+    ->use(LazilyRefreshDatabase::class)
+    ->group('contract')
+    ->in('Contract', '../app-modules/*/tests/Contract');
+
 /*
 |--------------------------------------------------------------------------
 | Expectations
