@@ -1,4 +1,39 @@
 services:
+  fake-binance:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    image: fake-binance.local:1
+    container_name: fake-binance
+    restart: no
+    hostname: fake-binance
+    environment:
+      # Par que o monolito consumidor configura como BINANCE_API_KEY/SECRET
+      # de dev — troque os defaults abaixo para casar com o outro lado.
+      FAKE_BINANCE_API_KEY: ${FAKE_BINANCE_API_KEY:-fake-binance-local-key}
+      FAKE_BINANCE_API_SECRET: ${FAKE_BINANCE_API_SECRET:-fake-binance-local-secret}
+      # Velocidade do auto-advance de ordens fiat/withdraw; consumido pelo
+      # ticket do painel, que ainda vai implementar o scheduler.
+      FAKE_BINANCE_FIAT_ADVANCE_SECONDS: ${FAKE_BINANCE_FIAT_ADVANCE_SECONDS:-60}
+      FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS: ${FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS:-60}
+      # Ledger de partida. Formato: lista separada por vírgula de
+      # ASSET:AMOUNT (ex.: BRL:100000,USDT:5000).
+      FAKE_BINANCE_SEED_BALANCES: ${FAKE_BINANCE_SEED_BALANCES:-BRL:100000,USDT:5000}
+      # Sobrescreva para casar com o hostname do ambiente onde o container roda.
+      APP_URL: ${FAKE_BINANCE_APP_URL:-http://localhost:8080}
+    ports:
+      - '8080:8080'
+    volumes:
+      - fake-binance-data:/app/storage
+    networks:
+      - dev-sycorax
+    healthcheck:
+      test: ['CMD', 'curl', '--fail', 'http://127.0.0.1:8080/up']
+      interval: 10s
+      retries: 5
+      timeout: 10s
+      start_period: 15s
+
   sycorax-mailpit:
     build:
       dockerfile: docker/mailpit.Dockerfile
@@ -18,6 +53,10 @@ services:
       retries: 5
       timeout: 10s
       start_period: 10s
+
+volumes:
+  fake-binance-data:
+    name: fake-binance-data
 
 networks:
   dev-sycorax:

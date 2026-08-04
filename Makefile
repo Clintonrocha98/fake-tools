@@ -90,8 +90,16 @@ env-up: ## Start the development environment
 	@docker compose --file docker-compose.yml up --detach
 
 .PHONY: env-down
-env-down: ## Start the development environment
+env-down: ## Stop the development environment (also wipes the fake Binance ledger volume — use fake-binance-down to keep it)
 	@docker compose --file docker-compose.yml down --rmi all --volumes
+
+.PHONY: fake-binance-up
+fake-binance-up: ## Start only the fake Binance venue container
+	@docker compose --file docker-compose.yml up --detach fake-binance
+
+.PHONY: fake-binance-down
+fake-binance-down: ## Stop the fake Binance venue container, keeping its ledger volume
+	@docker compose --file docker-compose.yml stop fake-binance
 
 .PHONY: dev
 dev: ## Start the server
