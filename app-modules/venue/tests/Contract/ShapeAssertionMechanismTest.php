@@ -99,3 +99,35 @@ it('never breaks on a genuinely nullable field the fixture marks as null', funct
 
     expect(value: true)->toBeTrue();
 });
+
+it('never breaks when filters arrive in a different order, because the consumer looks up by filterType, not position', function (): void {
+    $recorded = $this->loadContractFixture('spot/exchange_info.json');
+
+    $reordered = $recorded;
+    $reordered['symbols'][0]['filters'] = array_reverse($recorded['symbols'][0]['filters']); // NOTIONAL antes de LOT_SIZE
+
+    $this->assertMatchesRecordedShape($recorded, $reordered);
+
+    expect(value: true)->toBeTrue();
+});
+
+it('breaks when a filterType is renamed, even though every key/type under it still matches', function (): void {
+    // `ExchangeInfoResponse::filterByType()` busca por 'LOT_SIZE' — um rename
+    // silencioso para 'LOTSIZE' precisa derrubar o contrato mesmo comparando
+    // por forma, porque a busca do consumidor é pela KEY discriminadora.
+    $recorded = $this->loadContractFixture('spot/exchange_info.json');
+
+    $drifted = $recorded;
+    $drifted['symbols'][0]['filters'][0]['filterType'] = 'LOTSIZE';
+
+    expect(fn () => $this->assertMatchesRecordedShape($recorded, $drifted))
+        ->toThrow(ExpectationFailedException::class);
+});
+
+it('breaks when an exactValue()-marked literal changes value, even though the type stays the same', function (): void {
+    $recorded = ['code' => $this->exactValue('000000')];
+    $drifted = ['code' => '0'];
+
+    expect(fn () => $this->assertMatchesRecordedShape($recorded, $drifted))
+        ->toThrow(ExpectationFailedException::class);
+});

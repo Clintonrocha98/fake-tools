@@ -86,15 +86,18 @@ it('answers -2015 when X-MBX-APIKEY does not match the configured key in both en
     'fiat family' => ['/sapi/v1/fiat/deposit', 'POST'],
 ]);
 
-it('proves the exact partial compatibility of BinanceErrorBoundary::translate() across both envelope dialects', function (): void {
-    // O boundary do consumidor lê SEMPRE `code`/`msg` (vocabulário spot/wallet),
-    // mesmo numa chamada fiat. `(int) $body['code']` sobrevive nos dois dialetos
-    // porque PHP converte uma numeric-string ("-1022") para int igual a um int
-    // nativo — é por isso que o MAPEAMENTO do código para exceção nunca quebra
-    // entre famílias. `$body['msg']` só existe no dialeto spot/wallet: um erro de
-    // assinatura na perna fiat perde o texto da mensagem (`message`, não `msg`),
-    // mas a exceção lançada continua sendo a certa porque a decisão é só pelo
-    // código — nunca pelo texto.
+it('documents the known gap: BinanceErrorBoundary::translate() loses the reason text on a fiat-family signature error', function (): void {
+    // GAP RASTREADO (ver ADR-0001, venue): o boundary do consumidor lê SEMPRE
+    // `code`/`msg` (vocabulário spot/wallet), mesmo numa chamada fiat.
+    // `(int) $body['code']` sobrevive nos dois dialetos — PHP converte a
+    // numeric-string ("-1022") para int igual a um int nativo — então o
+    // MAPEAMENTO do código para exceção nunca quebra entre famílias. Mas
+    // `$body['msg']` só existe no dialeto spot/wallet: um erro de assinatura na
+    // perna fiat perde o texto da mensagem (`message`, não `msg`) e o operador
+    // lê um `reason` vazio. Este teste PROVA o gap — não o endossa — para que
+    // ele fique visível até a correção upstream (ou, se a Binance real de fato
+    // sempre responde erro de assinatura no envelope spot/wallet mesmo em paths
+    // fiat, até o fake ser corrigido).
     $query = $this->signedQuery();
     $query['signature'] = 'not-the-real-signature';
 

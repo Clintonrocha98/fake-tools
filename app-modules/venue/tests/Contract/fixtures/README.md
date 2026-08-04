@@ -21,6 +21,10 @@ ver `AssertsRecordedShape` em `../Support/`.
 | `errors/spot_wallet_error.json` | `Support/BinanceErrorBoundary::translate()` — lê `code` (int) + `msg` (string) |
 | `errors/fiat_error.json` | `Http/Responses/FiatDepositResponse.php`/`FiatOrderDetailResponse.php` — lê `code` (string) + `message` |
 
+`FiatContractTest`'s exhaustive vocabulary guard copia o conjunto de values de
+`Funding/BinanceFiatOrderStatus.php` (não um MockClient — o enum é o próprio
+contrato de vocabulário lido por `toFundingState()`).
+
 Todos os arquivos referenciados vivem em
 `brd-digital/app-modules/integration-binance/{src,tests}`.
 
