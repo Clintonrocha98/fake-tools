@@ -7,6 +7,8 @@ namespace He4rt\Venue;
 use He4rt\Venue\Fiat\Models\FiatOrder;
 use He4rt\Venue\Http\Middleware\VerifiesSignedRequest;
 use He4rt\Venue\Ledger\Models\LedgerAccount;
+use He4rt\Venue\Scenarios\Http\Middleware\ApplyScenarioSwitches;
+use He4rt\Venue\Scenarios\Models\ScenarioSwitchboard;
 use He4rt\Venue\Spot\Models\SpotOrder;
 use He4rt\Venue\Withdraw\Models\Withdrawal;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -27,6 +29,7 @@ class VenueServiceProvider extends ServiceProvider
     public function boot(Router $router): void
     {
         $router->aliasMiddleware('venue.signed', VerifiesSignedRequest::class);
+        $router->aliasMiddleware('venue.scenario-switches', ApplyScenarioSwitches::class);
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
@@ -35,6 +38,7 @@ class VenueServiceProvider extends ServiceProvider
             'fiat_order' => FiatOrder::class,
             'spot_order' => SpotOrder::class,
             'withdrawal' => Withdrawal::class,
+            'scenario_switchboard' => ScenarioSwitchboard::class,
         ]);
     }
 }

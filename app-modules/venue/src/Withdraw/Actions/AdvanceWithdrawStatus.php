@@ -6,8 +6,8 @@ namespace He4rt\Venue\Withdraw\Actions;
 
 use He4rt\Venue\Withdraw\Enums\WithdrawStatus;
 use He4rt\Venue\Withdraw\Models\Withdrawal;
+use He4rt\Venue\Withdraw\Support\SyntheticTxId;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Str;
 
 /**
  * Avanço automático LAZY do ciclo de vida (2 Awaiting Approval → 4 Processing →
@@ -19,12 +19,13 @@ use Illuminate\Support\Str;
  *
  * Nunca mexe num status fora de {AwaitingApproval, Processing}: falhas (Cancelled/
  * Rejected/Failure) e overrides manuais são sempre terminais para este avanço.
+ * Um withdraw congelado no painel (`frozen`) também nunca avança sozinho.
  */
 final readonly class AdvanceWithdrawStatus
 {
     public function __invoke(Withdrawal $withdrawal): Withdrawal
     {
-        if (!$withdrawal->status->advancesAutomatically()) {
+        if ($withdrawal->frozen || !$withdrawal->status->advancesAutomatically()) {
             return $withdrawal;
         }
 
@@ -39,7 +40,7 @@ final readonly class AdvanceWithdrawStatus
         if ($elapsedSeconds >= $advanceSeconds * 2) {
             $withdrawal->update([
                 'status' => WithdrawStatus::Completed,
-                'tx_id' => $this->syntheticTxId(),
+                'tx_id' => SyntheticTxId::generate(),
             ]);
 
             return $withdrawal;
@@ -50,10 +51,5 @@ final readonly class AdvanceWithdrawStatus
         }
 
         return $withdrawal;
-    }
-
-    private function syntheticTxId(): string
-    {
-        return '0x'.Str::lower(Str::random(64));
     }
 }

@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\DB;
  * credita `CreditLedgerAccount` UMA vez; `credited_at` é o guard de
  * idempotência, então uma releitura repetida nunca credita duas vezes.
  * `forced_wire_status` cobre o vocabulário de wire que `FiatOrderStatus` não
- * modela: enquanto setado, a ordem nunca avança e nunca credita.
+ * modela: enquanto setado, a ordem nunca avança e nunca credita. Toda releitura
+ * conta como uma leitura de brcode (`brcode_reads_count`), independente do
+ * congelamento — {@see FiatOrder::brcodeVisible()} é
+ * quem decide, a partir dessa contagem, se o controller deve expor `pixcode`.
  */
 final readonly class GetFiatOrderDetail
 {
@@ -39,11 +42,14 @@ final readonly class GetFiatOrderDetail
             /** @var FiatOrder $locked */
             $locked = FiatOrder::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
+            $locked->increment('brcode_reads_count');
+
             if ($locked->forced_wire_status !== null) {
                 return $locked;
             }
 
-            if ($locked->forced_status === null) {
+            // Congelada: o avanço lazy não roda, `status` fica exatamente onde estava.
+            if ($locked->forced_status === null && !$locked->frozen) {
                 $lazy = $this->lazyStatus($locked);
 
                 if ($lazy !== $locked->status) {

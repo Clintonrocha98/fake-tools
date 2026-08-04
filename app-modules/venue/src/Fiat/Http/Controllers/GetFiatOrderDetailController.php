@@ -71,8 +71,9 @@ final readonly class GetFiatOrderDetailController
             'createTime' => $order->created_at?->getTimestampMs(),
             'updateTime' => $order->updated_at?->getTimestampMs(),
             // O brcode só faz sentido enquanto o depósito pode ainda ser pago
-            // ou já foi: some quando a ordem morre num estado terminal de falha.
-            'pixcode' => $pending || $credited ? $order->brcode : null,
+            // ou já foi (some quando a ordem morre num estado terminal de falha),
+            // E só depois de `brcode_delay_reads` releituras (atraso do painel).
+            'pixcode' => ($pending || $credited) && $order->brcodeVisible() ? $order->brcode : null,
         ];
     }
 }

@@ -36,6 +36,7 @@ use Illuminate\Support\Carbon;
  * @property numeric-string|null $fill_price
  * @property numeric-string $commission
  * @property string|null $commission_asset
+ * @property string|null $raw_status_override
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
