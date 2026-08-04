@@ -7,9 +7,10 @@ declare(strict_types=1);
 | Venue module architecture rules
 |--------------------------------------------------------------------------
 |
-| Regras de convenção do módulo venue (domínio): strict types, sem stdClass,
-| e nunca dependência da camada de apresentação — mesmo padrão do
-| identity/tests/Arch/IdentityArchTest.php.
+| Regras de convenção válidas para todo o módulo venue (domínio): strict
+| types, sem stdClass e nunca dependência da camada de apresentação. Regras
+| de um sub-domínio específico (ex.: models do ledger) vivem no Arch test
+| do próprio sub-domínio.
 |
 */
 

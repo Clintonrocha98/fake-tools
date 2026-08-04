@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use He4rt\Identity\Users\User;
+use He4rt\Venue\Database\Seeders\LedgerAccountSeeder;
 use Illuminate\Database\Seeder;
 
 final class DatabaseSeeder extends Seeder
@@ -15,6 +16,7 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->syncPermissions();
+        $this->call(LedgerAccountSeeder::class);
 
         if (app()->isLocal()) {
             $this->spawnAdminUser();
