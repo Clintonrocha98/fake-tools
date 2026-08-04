@@ -13,7 +13,7 @@ use He4rt\Identity\Users\User;
  */
 function seedAsLocalEnvironment(): void
 {
-    app()['env'] = 'local';
+    app()->instance('env', 'local');
 
     test()->seed(DatabaseSeeder::class);
 }

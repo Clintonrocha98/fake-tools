@@ -59,3 +59,20 @@ it('keeps zero balances by default when omitZeroBalances is not passed', functio
 
     $response->assertJsonCount(2, 'balances');
 });
+
+it('refuses an unsigned request with the spot/wallet error envelope', function (): void {
+    $response = $this->getJson('/api/v3/account');
+
+    $response->assertStatus(401)->assertExactJson([
+        'code' => -2_014,
+        'msg' => 'API-key format invalid.',
+    ]);
+});
+
+it('refuses a request signed with the wrong secret with -1022', function (): void {
+    $uri = '/api/v3/account?'.http_build_query($this->signedQuery(secret: 'wrong-secret'));
+
+    $response = $this->getJson($uri, $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_022]);
+});
