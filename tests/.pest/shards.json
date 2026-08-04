@@ -1,0 +1,28 @@
+{
+    "timings": {
+        "Appmodules\\identity\\tests\\Arch\\IdentityArchTest": 0.3607,
+        "Appmodules\\identity\\tests\\Feature\\ExternalIdentity\\Actions\\ConnectIdentityTest": 0.2663,
+        "Appmodules\\identity\\tests\\Feature\\ExternalIdentity\\Actions\\DisconnectIdentityTest": 0.2871,
+        "Appmodules\\identity\\tests\\Feature\\ExternalIdentity\\Capabilities\\IdentityCapabilityMapTest": 0.1783,
+        "Appmodules\\identity\\tests\\Feature\\ExternalIdentity\\Models\\ExternalIdentityTest": 0.7505,
+        "Appmodules\\identity\\tests\\Feature\\ExternalIdentity\\Models\\IdentityResourceTest": 0.5659,
+        "Appmodules\\identity\\tests\\Feature\\Teams\\TeamTest": 0.1499,
+        "Appmodules\\identity\\tests\\Feature\\Users\\UserPolicyTest": 0.2076,
+        "Appmodules\\identity\\tests\\Unit\\ExternalIdentity\\Data\\IdentityMetadataTest": 0.1785,
+        "Appmodules\\identity\\tests\\Unit\\ExternalIdentity\\Enums\\IdentityCapabilityTest": 0.03,
+        "Appmodules\\paneladmin\\tests\\Feature\\Filament\\Pages\\ExternalIdentitiesPageTest": 1.2772,
+        "Appmodules\\paneladmin\\tests\\Feature\\Filament\\Pages\\ManageExternalIdentityPageTest": 2.3614,
+        "Appmodules\\paneladmin\\tests\\Feature\\Filament\\Resources\\RoleResourceTest": 1.7434,
+        "Appmodules\\paneladmin\\tests\\Feature\\Filament\\Resources\\TeamResourceTest": 1.0689,
+        "Appmodules\\paneladmin\\tests\\Feature\\Filament\\Resources\\UserResourceTest": 1.5961,
+        "Tests\\Arch\\ArchTest": 0.7969,
+        "Tests\\Arch\\ModuleTestNamespacesRegisteredTest": 0.0324,
+        "Tests\\Arch\\NoLooseArrayCastsTest": 0.0328,
+        "Tests\\Feature\\ActivityLogTest": 1.0323,
+        "Tests\\Feature\\ExampleTest": 0.0638,
+        "Tests\\Feature\\KnowledgeBase\\ViewDocumentationTest": 0.3557,
+        "Tests\\Unit\\ExampleTest": 0.1795
+    },
+    "checksum": "2992efd5f04fa97e67a28a0ef52fbcf9",
+    "updated_at": "2026-07-14T15:12:39+00:00"
+}
