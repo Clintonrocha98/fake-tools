@@ -6,12 +6,12 @@ namespace He4rt\PanelAdmin\Tests\Feature\Filament;
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
+use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use He4rt\PanelAdmin\Filament\Resources\FiatOrders\Pages\ListFiatOrders;
-use He4rt\Venue\Fiat\Enums\FiatOrderStatus;
-use He4rt\Venue\Fiat\Models\FiatOrder;
-use He4rt\Venue\Ledger\Models\LedgerAccount;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;

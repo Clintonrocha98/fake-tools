@@ -9,7 +9,7 @@ use Filament\Support\Contracts\HasLabel;
 enum NavigationGroup: string implements HasLabel
 {
     case UserManagement = 'user_management';
-    case Venue = 'venue';
+    case FakeBinance = 'fake-binance';
     case System = 'system';
 
     /**
@@ -19,7 +19,7 @@ enum NavigationGroup: string implements HasLabel
     {
         return [
             self::UserManagement,
-            self::Venue,
+            self::FakeBinance,
             self::System,
         ];
     }

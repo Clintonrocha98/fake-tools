@@ -1,0 +1,25 @@
+{
+    "name": "he4rt/fake-binance",
+    "description": "",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "He4rt\\FakeBinance\\": "src/",
+            "He4rt\\FakeBinance\\Database\\Factories\\": "database/factories/",
+            "He4rt\\FakeBinance\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "He4rt\\FakeBinance\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": ["He4rt\\FakeBinance\\FakeBinanceServiceProvider"]
+        }
+    }
+}

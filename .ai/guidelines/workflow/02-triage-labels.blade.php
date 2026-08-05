@@ -37,11 +37,11 @@ Issue type follows conventional commit prefixes.
 
 Every issue must be tagged with the module(s) it affects. Labels follow the pattern `mod:<module-name>`, matching the directory name under `app-modules/`.
 
-| Label             | Module directory | Description                    |
-| ----------------- | ---------------- | ------------------------------ |
-| `mod:identity`    | `identity`       | Auth, users, teams, RBAC & external identities |
-| `mod:panel-admin` | `panel-admin`    | Admin Filament panel (namespace `He4rt\PanelAdmin`) |
-| `mod:venue`       | `venue`          | Fake Binance venue — ledger, `/api` e `/sapi` endpoints |
+| Label              | Module directory | Description                    |
+| ------------------ | ---------------- | ------------------------------ |
+| `mod:fake-binance` | `fake-binance`   | Fake Binance API — ledger, `/api` and `/sapi` endpoints |
+| `mod:identity`     | `identity`       | Auth, users, teams, RBAC & external identities |
+| `mod:panel-admin`  | `panel-admin`    | Admin Filament panel (namespace `He4rt\PanelAdmin`) |
 
 Only modules that exist under `app-modules/` get a label. When a new module is
 scaffolded, create its label first (`gh label create "mod:<name>" --description "<short description>" --color "c2e0c6"`) and add a row here.

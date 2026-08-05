@@ -10,8 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use He4rt\Venue\Ledger\Actions\SetLedgerBalance;
-use He4rt\Venue\Ledger\Models\LedgerAccount;
+use He4rt\FakeBinance\Ledger\Actions\SetLedgerBalance;
+use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
 
 class LedgerAccountsTable
 {
@@ -43,11 +43,11 @@ class LedgerAccountsTable
     private static function setNewAssetAction(): Action
     {
         return Action::make('setNewAsset')
-            ->label(__('panel-admin::venue.ledger_accounts.actions.new_balance'))
+            ->label(__('panel-admin::fake-binance.ledger_accounts.actions.new_balance'))
             ->icon(Heroicon::OutlinedPlus)
             ->schema([
                 TextInput::make('asset')
-                    ->label(__('panel-admin::venue.ledger_accounts.actions.asset_field'))
+                    ->label(__('panel-admin::fake-binance.ledger_accounts.actions.asset_field'))
                     ->required(),
                 TextInput::make('free')
                     ->numeric()
@@ -62,14 +62,14 @@ class LedgerAccountsTable
                 /** @var array{asset: string, free: float, locked: float} $data */
                 resolve(SetLedgerBalance::class)->handle($data['asset'], (string) $data['free'], (string) $data['locked']);
 
-                Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.new_balance_notification'))->success()->send();
+                Notification::make()->title(__('panel-admin::fake-binance.ledger_accounts.actions.new_balance_notification'))->success()->send();
             });
     }
 
     private static function editBalanceAction(): Action
     {
         return Action::make('editBalance')
-            ->label(__('panel-admin::venue.ledger_accounts.actions.edit_balance'))
+            ->label(__('panel-admin::fake-binance.ledger_accounts.actions.edit_balance'))
             ->icon(Heroicon::OutlinedPencilSquare)
             ->fillForm(fn (LedgerAccount $record): array => [
                 'free' => (string) $record->free,
@@ -87,7 +87,7 @@ class LedgerAccountsTable
                 /** @var array{free: float, locked: float} $data */
                 resolve(SetLedgerBalance::class)->handle($record->asset, (string) $data['free'], (string) $data['locked']);
 
-                Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.edit_balance_notification'))->success()->send();
+                Notification::make()->title(__('panel-admin::fake-binance.ledger_accounts.actions.edit_balance_notification'))->success()->send();
             });
     }
 }

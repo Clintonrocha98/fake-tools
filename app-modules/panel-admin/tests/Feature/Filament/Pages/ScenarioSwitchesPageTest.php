@@ -6,10 +6,10 @@ namespace He4rt\PanelAdmin\Tests\Feature\Filament;
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use He4rt\PanelAdmin\Filament\Pages\ScenarioSwitchesPage;
-use He4rt\Venue\Scenarios\Models\ScenarioSwitchboard;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;

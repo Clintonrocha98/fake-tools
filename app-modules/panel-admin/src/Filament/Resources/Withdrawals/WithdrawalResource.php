@@ -11,15 +11,15 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
+use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use He4rt\PanelAdmin\Filament\Resources\Withdrawals\Pages\ListWithdrawals;
 use He4rt\PanelAdmin\Filament\Resources\Withdrawals\Tables\WithdrawalsTable;
-use He4rt\Venue\Withdraw\Models\Withdrawal;
 use UnitEnum;
 
 /**
  * Controle remoto do cenário de withdraw: o happy path (2 → 4 → 6 lazy)
  * atravessa sem nenhum clique — este Resource existe só para os desvios que
- * o painel força sob comando (ver `docs/admin/en/venue/withdrawals.md`).
+ * o painel força sob comando (ver `docs/admin/en/fake-binance/withdrawals.md`).
  */
 class WithdrawalResource extends Resource implements HasKnowledgeBase
 {
@@ -31,7 +31,7 @@ class WithdrawalResource extends Resource implements HasKnowledgeBase
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowUpOnSquare;
 
-    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Venue;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::FakeBinance;
 
     protected static ?int $navigationSort = 3;
 
@@ -61,7 +61,7 @@ class WithdrawalResource extends Resource implements HasKnowledgeBase
     public static function getDocumentation(): array
     {
         return [
-            'venue.withdrawals',
+            'fake-binance.withdrawals',
         ];
     }
 }

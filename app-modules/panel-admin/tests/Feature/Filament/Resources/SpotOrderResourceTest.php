@@ -6,12 +6,12 @@ namespace He4rt\PanelAdmin\Tests\Feature\Filament;
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
+use He4rt\FakeBinance\Spot\Enums\OrderStatus;
+use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use He4rt\PanelAdmin\Filament\Resources\SpotOrders\Pages\ListSpotOrders;
-use He4rt\Venue\Ledger\Models\LedgerAccount;
-use He4rt\Venue\Spot\Enums\OrderStatus;
-use He4rt\Venue\Spot\Models\SpotOrder;
 
 use function Pest\Laravel\actingAs;
 use function Pest\Livewire\livewire;

@@ -11,15 +11,15 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
+use He4rt\FakeBinance\Fiat\Models\FiatOrder;
 use He4rt\PanelAdmin\Filament\Resources\FiatOrders\Pages\ListFiatOrders;
 use He4rt\PanelAdmin\Filament\Resources\FiatOrders\Tables\FiatOrdersTable;
-use He4rt\Venue\Fiat\Models\FiatOrder;
 use UnitEnum;
 
 /**
  * Controle remoto do cenário fiat: o happy path (crédito lazy) atravessa sem
  * nenhum clique — este Resource existe só para os desvios que o painel força
- * sob comando (ver `docs/admin/en/venue/fiat-orders.md`).
+ * sob comando (ver `docs/admin/en/fake-binance/fiat-orders.md`).
  */
 class FiatOrderResource extends Resource implements HasKnowledgeBase
 {
@@ -31,7 +31,7 @@ class FiatOrderResource extends Resource implements HasKnowledgeBase
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBanknotes;
 
-    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Venue;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::FakeBinance;
 
     protected static ?int $navigationSort = 1;
 
@@ -61,7 +61,7 @@ class FiatOrderResource extends Resource implements HasKnowledgeBase
     public static function getDocumentation(): array
     {
         return [
-            'venue.fiat-orders',
+            'fake-binance.fiat-orders',
         ];
     }
 }

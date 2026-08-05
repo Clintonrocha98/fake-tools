@@ -6,8 +6,8 @@ return [
     'user_management' => [
         'label' => 'Gerenciamento de Usuários',
     ],
-    'venue' => [
-        'label' => 'Venue',
+    'fake-binance' => [
+        'label' => 'Fake Binance',
     ],
     'system' => [
         'label' => 'Sistema',

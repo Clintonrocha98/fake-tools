@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use He4rt\FakeBinance\Database\Seeders\LedgerAccountSeeder;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
-use He4rt\Venue\Database\Seeders\LedgerAccountSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 

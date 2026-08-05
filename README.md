@@ -116,7 +116,7 @@ For contributions, follow Laravel standards.
 
 This repo also ships a **fake Binance venue**: a sandbox server the `brd-digital`
 monolith points at instead of the real Binance API in local/dev environments (see
-`app-modules/venue`). It runs as its own container, built from the root `Dockerfile`
+`app-modules/fake-binance`). It runs as its own container, built from the root `Dockerfile`
 (FrankenPHP), with its state in the `dev_fake_binance` database on the shared
 `brd-db` Postgres — so the ledger survives a restart, and survives the container
 and its volume being recreated.

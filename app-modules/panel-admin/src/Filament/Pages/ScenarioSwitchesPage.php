@@ -11,15 +11,15 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
-use He4rt\Venue\Scenarios\Actions\GetScenarioSwitchboard;
-use He4rt\Venue\Scenarios\Actions\ToggleScenarioSwitch;
-use He4rt\Venue\Scenarios\Enums\ScenarioSwitch;
-use He4rt\Venue\Scenarios\Models\ScenarioSwitchboard;
+use He4rt\FakeBinance\Scenarios\Actions\GetScenarioSwitchboard;
+use He4rt\FakeBinance\Scenarios\Actions\ToggleScenarioSwitch;
+use He4rt\FakeBinance\Scenarios\Enums\ScenarioSwitch;
+use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
 use UnitEnum;
 
 /**
- * Os três switches globais aplicados ANTES de qualquer endpoint do venue
- * ({@see \He4rt\Venue\Scenarios\Http\Middleware\ApplyScenarioSwitches}) — sem
+ * Os três switches globais aplicados ANTES de qualquer endpoint da fake Binance
+ * ({@see \He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches}) — sem
  * clique, o happy path nunca os encontra ligados (persistem `false` por
  * padrão).
  */
@@ -35,7 +35,7 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSignalSlash;
 
-    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Venue;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::FakeBinance;
 
     protected static ?int $navigationSort = 5;
 
@@ -45,18 +45,18 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
     public static function getDocumentation(): array
     {
         return [
-            'venue.scenario-switches',
+            'fake-binance.scenario-switches',
         ];
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('panel-admin::venue.scenario_switches.title');
+        return __('panel-admin::fake-binance.scenario_switches.title');
     }
 
     public function getTitle(): string
     {
-        return __('panel-admin::venue.scenario_switches.title');
+        return __('panel-admin::fake-binance.scenario_switches.title');
     }
 
     public function getSwitchboard(): ScenarioSwitchboard
@@ -87,7 +87,7 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
                 /** @var array{switch: string, enable: bool} $arguments */
                 $key = $arguments['enable'] ? 'turn_on' : 'turn_off';
 
-                return __('panel-admin::venue.scenario_switches.'.$key, [
+                return __('panel-admin::fake-binance.scenario_switches.'.$key, [
                     'switch' => ScenarioSwitch::from($arguments['switch'])->getLabel(),
                 ]);
             })
@@ -99,9 +99,9 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
                 resolve(ToggleScenarioSwitch::class)->handle($switch, $enable);
 
                 Notification::make()
-                    ->title(__('panel-admin::venue.scenario_switches.toggle_notification', [
+                    ->title(__('panel-admin::fake-binance.scenario_switches.toggle_notification', [
                         'switch' => $switch->getLabel(),
-                        'state' => __('panel-admin::venue.scenario_switches.'.($enable ? 'state_on' : 'state_off')),
+                        'state' => __('panel-admin::fake-binance.scenario_switches.'.($enable ? 'state_on' : 'state_off')),
                     ]))
                     ->success()
                     ->send();

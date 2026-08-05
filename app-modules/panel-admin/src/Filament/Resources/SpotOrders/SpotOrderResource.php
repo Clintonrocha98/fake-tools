@@ -11,15 +11,15 @@ use Filament\Resources\Resource;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
+use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use He4rt\PanelAdmin\Filament\Resources\SpotOrders\Pages\ListSpotOrders;
 use He4rt\PanelAdmin\Filament\Resources\SpotOrders\Tables\SpotOrdersTable;
-use He4rt\Venue\Spot\Models\SpotOrder;
 use UnitEnum;
 
 /**
  * Controle remoto do cenário spot: o happy path (MARKET sempre FILLED)
  * atravessa sem nenhum clique — este Resource existe só para os desvios que
- * o painel força sob comando (ver `docs/admin/en/venue/spot-orders.md`).
+ * o painel força sob comando (ver `docs/admin/en/fake-binance/spot-orders.md`).
  */
 class SpotOrderResource extends Resource implements HasKnowledgeBase
 {
@@ -31,7 +31,7 @@ class SpotOrderResource extends Resource implements HasKnowledgeBase
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
 
-    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::Venue;
+    protected static string|UnitEnum|null $navigationGroup = NavigationGroup::FakeBinance;
 
     protected static ?int $navigationSort = 2;
 
@@ -61,7 +61,7 @@ class SpotOrderResource extends Resource implements HasKnowledgeBase
     public static function getDocumentation(): array
     {
         return [
-            'venue.spot-orders',
+            'fake-binance.spot-orders',
         ];
     }
 }

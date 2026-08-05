@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "58ff6d6225da15abe0e30e2cc049d487",
+    "content-hash": "31857a2d555a860a98f82072952adf61",
     "packages": [
         {
             "name": "alizharb/filament-activity-log",
@@ -3137,6 +3137,42 @@
             "time": "2026-07-17T13:53:03+00:00"
         },
         {
+            "name": "he4rt/fake-binance",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/fake-binance",
+                "reference": "97be090d794e007181adcc7ae0fcc545bcea5de6"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "He4rt\\FakeBinance\\FakeBinanceServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "He4rt\\FakeBinance\\": "src/",
+                    "He4rt\\FakeBinance\\Database\\Factories\\": "database/factories/",
+                    "He4rt\\FakeBinance\\Database\\Seeders\\": "database/seeders/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "He4rt\\FakeBinance\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
             "name": "he4rt/identity",
             "version": "1.0.0",
             "dist": {
@@ -3196,42 +3232,6 @@
             "autoload-dev": {
                 "psr-4": {
                     "He4rt\\PanelAdmin\\Tests\\": "tests/"
-                }
-            },
-            "license": [
-                "proprietary"
-            ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
-        },
-        {
-            "name": "he4rt/venue",
-            "version": "1.0.0",
-            "dist": {
-                "type": "path",
-                "url": "app-modules/venue",
-                "reference": "868c71430a39592e7741be70424eaf1238e76f40"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "He4rt\\Venue\\VenueServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "He4rt\\Venue\\": "src/",
-                    "He4rt\\Venue\\Database\\Factories\\": "database/factories/",
-                    "He4rt\\Venue\\Database\\Seeders\\": "database/seeders/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "He4rt\\Venue\\Tests\\": "tests/"
                 }
             },
             "license": [
