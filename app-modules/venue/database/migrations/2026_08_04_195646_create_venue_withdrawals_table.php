@@ -23,6 +23,11 @@ return new class extends Migration
             $table->string('tx_id')->nullable();
             $table->string('info')->nullable();
             $table->timestampTz('applied_at');
+            // Congelamento pausa o avanço lazy (AdvanceWithdrawStatus) sem tocar em `status`.
+            $table->boolean('frozen')->default(value: false);
+            // Vocabulário de wire fora de WithdrawStatus (0-6) — ecoado verbatim em
+            // WithdrawHistoryRow::status, nunca traduzido para um caso conhecido do enum.
+            $table->integer('raw_status_override')->nullable();
             $table->timestampsTz();
 
             $table->index('coin');
