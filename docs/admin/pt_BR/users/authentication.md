@@ -6,7 +6,7 @@ order: 4
 
 # Autenticação
 
-Como a autenticação e o controle de acesso dos usuários funcionam no Sycorax.
+Como a autenticação e o controle de acesso dos usuários funcionam no Fake Tools.
 
 ## Fazendo Login
 

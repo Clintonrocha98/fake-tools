@@ -73,8 +73,8 @@ COPY --from=vendor /app/vendor ./vendor
 COPY --from=assets /app/public/build ./public/build
 COPY . .
 
-COPY docker/entrypoint.sh /usr/local/bin/fake-binance-entrypoint
-RUN chmod +x /usr/local/bin/fake-binance-entrypoint
+COPY docker/entrypoint.sh /usr/local/bin/fake-tools-entrypoint
+RUN chmod +x /usr/local/bin/fake-tools-entrypoint
 
 # Chave de app fixa e não-secreta: este servidor nunca vê produção, então
 # travar a chave no build evita exigir configuração extra do dev do
@@ -85,7 +85,7 @@ RUN chmod +x /usr/local/bin/fake-binance-entrypoint
 # isProduction() (app/Providers/AppServiceProvider.php), e o FrankenPHP aqui
 # só serve HTTP puro em :8080 — em "production" toda URL absoluta viraria
 # https:// e o painel não carregaria.
-ENV APP_NAME="Fake Binance" \
+ENV APP_NAME="Fake Tools" \
     APP_ENV=local \
     APP_URL=http://localhost:8080 \
     APP_DEBUG=false \
@@ -98,7 +98,7 @@ ENV APP_NAME="Fake Binance" \
     DB_CONNECTION=pgsql \
     DB_HOST=brd-db \
     DB_PORT=5432 \
-    DB_DATABASE=dev_fake_binance \
+    DB_DATABASE=dev_fake_tools \
     DB_USERNAME=postgres \
     DB_PASSWORD=postgres \
     SESSION_DRIVER=database \
@@ -121,5 +121,5 @@ EXPOSE 8080
 
 VOLUME ["/app/storage"]
 
-ENTRYPOINT ["fake-binance-entrypoint"]
+ENTRYPOINT ["fake-tools-entrypoint"]
 CMD ["frankenphp", "run", "--config", "/etc/frankenphp/Caddyfile"]

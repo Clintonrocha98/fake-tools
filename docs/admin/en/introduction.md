@@ -4,9 +4,9 @@ icon: heroicon-o-home
 order: 0
 ---
 
-# Welcome to Sycorax
+# Welcome to Fake Tools
 
-Sycorax is your central management platform for users, teams, roles, and system administration. This knowledge base is your go-to reference for everything you can do in the admin panel.
+Fake Tools is your central management platform for users, teams, roles, and system administration. This knowledge base is your go-to reference for everything you can do in the admin panel.
 
 ## How This Guide Is Organized
 

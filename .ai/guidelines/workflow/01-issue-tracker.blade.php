@@ -4,7 +4,7 @@
 
 # Issue tracker: GitHub Issues
 
-This repo has a GitHub remote (`origin` → `gvieira18/sycorax`, **private**).
+This repo has a GitHub remote (`origin` → `Clintonrocha98/fake-binance`, **private**).
 Issues, PRDs, and triage live on **GitHub Issues**. Use the `gh` CLI for all issue
 operations — `gh` infers the repo from `git remote -v`, so never hard-code the
 `owner/repo`.

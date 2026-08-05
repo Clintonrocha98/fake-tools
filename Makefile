@@ -79,8 +79,8 @@ test-contract: ## Run contract tests
 
 .PHONY: db-create
 db-create: ## Create the dev & testing databases inside the reused brd-db container
-	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE dev_fake_binance' || true
-	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE test_fake_binance' || true
+	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE dev_fake_tools' || true
+	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE test_fake_tools' || true
 
 .PHONY: setup-test-db
 setup-test-db: ## Create & migrate the testing database (honors .env.testing overrides)
@@ -102,13 +102,13 @@ env-up: ## Start the development environment
 env-down: ## Tear down the development environment (the ledger lives in Postgres and survives)
 	@docker compose --file docker-compose.yml down --rmi all --volumes
 
-.PHONY: fake-binance-up
-fake-binance-up: ## Start the fake Binance venue container
-	@docker compose --file docker-compose.yml up --detach fake-binance
+.PHONY: fake-tools-up
+fake-tools-up: ## Start the fake-tools container
+	@docker compose --file docker-compose.yml up --detach fake-tools
 
-.PHONY: fake-binance-down
-fake-binance-down: ## Stop the fake Binance venue container
-	@docker compose --file docker-compose.yml stop fake-binance
+.PHONY: fake-tools-down
+fake-tools-down: ## Stop the fake-tools container
+	@docker compose --file docker-compose.yml stop fake-tools
 
 .PHONY: dev
 dev: ## Start the server

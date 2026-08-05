@@ -1,11 +1,16 @@
-# Sycorax - Modular Laravel Application
+# Fake Tools
 
 ## Overview
 
-Sycorax is a modular Laravel 12 scaffold application built with Filament v4 for admin panels, Livewire v3, Pest v4 for
-testing, and Tailwind CSS v4.
+**fake-tools** is a dev-environment support suite for the `brd-digital` monolith: it stands in for third-party APIs
+that have no usable sandbox, so the monolith can be exercised end to end locally. One module per faked provider —
+`fake-binance` today, with dakota and starkbank foreseen.
 
-It follows a **modular monolith** architecture for better organization, scalability, and maintainability.
+It is built on a modular Laravel scaffold (Filament for the control panel, Livewire, Pest, Tailwind), and follows a
+**modular monolith** architecture: each faked provider is self-contained under `app-modules/`.
+
+This is internal tooling for the team, not a product. It is never deployed anywhere that faces real users, and its
+data is disposable by design.
 
 ## Modular Architecture
 
@@ -79,7 +84,7 @@ Development workflow powered by [Makefile](Makefile). Run `make help` for all co
 
 This project does **not** run its own database container — it reuses the Postgres
 instance from `brd-digital`'s compose stack (`brd-db`), with its own databases:
-`dev_fake_binance` and `test_fake_binance`.
+`dev_fake_tools` and `test_fake_tools`.
 
 ```bash
 # 1. Bring up brd-digital's stack first — it owns brd-db and the dev-brd network
@@ -112,24 +117,24 @@ Access admin panel (SuperAdmin required): `/admin` (create via tinker or seed).
 
 For contributions, follow Laravel standards.
 
-## Fake Binance Venue — Container
+## The fake-binance module — Container
 
-This repo also ships a **fake Binance venue**: a sandbox server the `brd-digital`
-monolith points at instead of the real Binance API in local/dev environments (see
+The `fake-binance` module is a sandbox server the `brd-digital` monolith points at
+instead of the real Binance API in local/dev environments (see
 `app-modules/fake-binance`). It runs as its own container, built from the root `Dockerfile`
-(FrankenPHP), with its state in the `dev_fake_binance` database on the shared
+(FrankenPHP), with its state in the `dev_fake_tools` database on the shared
 `brd-db` Postgres — so the ledger survives a restart, and survives the container
 and its volume being recreated.
 
 ### Running it locally
 
 ```bash
-docker compose up fake-binance
-# or: make fake-binance-up
+docker compose up fake-tools
+# or: make fake-tools-up
 ```
 
 The container joins `brd-db`'s network (`dev-brd`, declared `external`), so
-**brd-digital's stack must be up first** and `dev_fake_binance` must exist
+**brd-digital's stack must be up first** and `dev_fake_tools` must exist
 (`make db-create`). The entrypoint waits for the database to accept connections
 before migrating, then runs the seeders on every start — they are idempotent, so a
 restart never re-credits an already-evolved ledger (see `LedgerAccountSeeder`).
@@ -137,11 +142,11 @@ The container exposes the app on `http://localhost:8080`, and the
 Filament admin panel at `http://localhost:8080/admin` — the seeder creates
 `admin@admin.com` / `password` (prefilled on the login form) with no extra steps.
 
-Stop it with `make fake-binance-down`, or `make env-down` for a full teardown.
-Neither wipes the ledger any more: the state lives in `dev_fake_binance` on
-`brd-db`, not in the `fake-binance-data` volume (which now only holds
+Stop it with `make fake-tools-down`, or `make env-down` for a full teardown.
+Neither wipes the ledger any more: the state lives in `dev_fake_tools` on
+`brd-db`, not in the `fake-tools-data` volume (which now only holds
 logs/sessions/compiled views). To actually reset the ledger, drop and recreate the
-database — `docker exec brd-db psql -U postgres -c 'DROP DATABASE dev_fake_binance'`
+database — `docker exec brd-db psql -U postgres -c 'DROP DATABASE dev_fake_tools'`
 then `make db-create`.
 
 ### Env contract with the consumer
@@ -226,13 +231,13 @@ services:
       FAKE_BINANCE_SEED_BALANCES: ${FAKE_BINANCE_SEED_BALANCES:-BRL:100000,USDT:5000}
       APP_URL: https://fake-binance.internal.example
     volumes:
-      - fake-binance-data:/app/storage
+      - fake-tools-data:/app/storage
     networks:
       - deployed-network
     # No `ports:` mapping here on purpose — see below.
 
 volumes:
-  fake-binance-data:
+  fake-tools-data:
     external: true
 
 networks:

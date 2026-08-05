@@ -46,7 +46,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_fake_binance
+          POSTGRES_DB: test_fake_tools
         ports:
           - 5432/tcp
         options: >-

@@ -1,12 +1,12 @@
 services:
-  fake-binance:
+  fake-tools:
     build:
       dockerfile: Dockerfile
       context: .
-    image: fake-binance.local:1
-    container_name: fake-binance
+    image: fake-tools.local:1
+    container_name: fake-tools
     restart: no
-    hostname: fake-binance
+    hostname: fake-tools
     environment:
       # Par que o monolito consumidor configura como BINANCE_API_KEY/SECRET
       # de dev — troque os defaults abaixo para casar com o outro lado.
@@ -20,20 +20,20 @@ services:
       # ASSET:AMOUNT (ex.: BRL:100000,USDT:5000).
       FAKE_BINANCE_SEED_BALANCES: ${FAKE_BINANCE_SEED_BALANCES:-BRL:100000,USDT:5000}
       # Sobrescreva para casar com o hostname do ambiente onde o container roda.
-      APP_URL: ${FAKE_BINANCE_APP_URL:-http://localhost:8080}
+      APP_URL: ${FAKE_TOOLS_APP_URL:-http://localhost:8080}
       # Banco: a instância do brd-digital, alcançada pelo nome do serviço dentro
       # da rede dev-brd — a porta aqui é a INTERNA (5432), nunca a publicada no
       # host. O database precisa existir antes do primeiro `up`; ver README.
       DB_CONNECTION: pgsql
-      DB_HOST: ${FAKE_BINANCE_DB_HOST:-brd-db}
-      DB_PORT: ${FAKE_BINANCE_DB_PORT:-5432}
-      DB_DATABASE: ${FAKE_BINANCE_DB_DATABASE:-dev_fake_binance}
-      DB_USERNAME: ${FAKE_BINANCE_DB_USERNAME:-postgres}
-      DB_PASSWORD: ${FAKE_BINANCE_DB_PASSWORD:-postgres}
+      DB_HOST: ${FAKE_TOOLS_DB_HOST:-brd-db}
+      DB_PORT: ${FAKE_TOOLS_DB_PORT:-5432}
+      DB_DATABASE: ${FAKE_TOOLS_DB_DATABASE:-dev_fake_tools}
+      DB_USERNAME: ${FAKE_TOOLS_DB_USERNAME:-postgres}
+      DB_PASSWORD: ${FAKE_TOOLS_DB_PASSWORD:-postgres}
     ports:
       - '8080:8080'
     volumes:
-      - fake-binance-data:/app/storage
+      - fake-tools-data:/app/storage
     networks:
       - dev-brd
     healthcheck:
@@ -44,8 +44,8 @@ services:
       start_period: 15s
 
 volumes:
-  fake-binance-data:
-    name: fake-binance-data
+  fake-tools-data:
+    name: fake-tools-data
 
 networks:
   # Rede do compose do brd-digital, onde vive o `brd-db` que este projeto reusa.
