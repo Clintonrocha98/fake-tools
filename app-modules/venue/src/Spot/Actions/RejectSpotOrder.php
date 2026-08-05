@@ -24,13 +24,13 @@ final readonly class RejectSpotOrder
         private ReverseSpotOrderLedgerFill $reverseLedger = new ReverseSpotOrderLedgerFill(new CreditLedgerAccount, new DebitLedgerAccount),
     ) {}
 
-    public function __invoke(SpotOrder $order): SpotOrder
+    public function handle(SpotOrder $order): SpotOrder
     {
         return DB::transaction(function () use ($order): SpotOrder {
             if (bccomp((string) $order->executed_qty, '0', 18) > 0) {
                 $symbolConfig = config()->array('venue-spot.usdcbrl');
 
-                ($this->reverseLedger)(
+                $this->reverseLedger->handle(
                     $order->side,
                     (string) $order->executed_qty,
                     (string) $order->cummulative_quote_qty,

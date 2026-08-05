@@ -102,7 +102,7 @@ class FiatOrdersTable
             ->requiresConfirmation()
             ->modalDescription(__('panel-admin::venue.fiat_orders.actions.credit_now_description'))
             ->action(function (FiatOrder $record): void {
-                resolve(CreditFiatOrderNow::class)($record);
+                resolve(CreditFiatOrderNow::class)->handle($record);
 
                 Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.credit_now_notification'))->success()->send();
             });
@@ -122,7 +122,7 @@ class FiatOrdersTable
             ])
             ->action(function (array $data, FiatOrder $record): void {
                 /** @var array{status: string} $data */
-                resolve(ForceFiatOrderStatus::class)($record, FiatOrderStatus::from($data['status']));
+                resolve(ForceFiatOrderStatus::class)->handle($record, FiatOrderStatus::from($data['status']));
 
                 Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.force_status_notification'))->success()->send();
             });
@@ -141,7 +141,7 @@ class FiatOrdersTable
             ])
             ->action(function (array $data, FiatOrder $record): void {
                 /** @var array{wireStatus: string} $data */
-                resolve(EmitUnknownFiatWireStatus::class)($record, $data['wireStatus']);
+                resolve(EmitUnknownFiatWireStatus::class)->handle($record, $data['wireStatus']);
 
                 Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.emit_unknown_notification'))->success()->send();
             });
@@ -164,7 +164,7 @@ class FiatOrdersTable
             ->action(function (array $data, FiatOrder $record): void {
                 /** @var array{reads: string|int|null} $data */
                 $reads = $data['reads'];
-                resolve(DelayFiatBrcode::class)($record, $reads === null || $reads === '' ? null : (int) $reads);
+                resolve(DelayFiatBrcode::class)->handle($record, $reads === null || $reads === '' ? null : (int) $reads);
 
                 Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.delay_brcode_notification'))->success()->send();
             });
@@ -177,7 +177,7 @@ class FiatOrdersTable
             ->icon(fn (FiatOrder $record): Heroicon => $record->frozen ? Heroicon::OutlinedPlay : Heroicon::OutlinedPause)
             ->color('gray')
             ->action(function (FiatOrder $record): void {
-                resolve(SetFiatOrderFrozen::class)($record, !$record->frozen);
+                resolve(SetFiatOrderFrozen::class)->handle($record, !$record->frozen);
 
                 Notification::make()->title(__('panel-admin::venue.fiat_orders.actions.frozen_notification'))->success()->send();
             });

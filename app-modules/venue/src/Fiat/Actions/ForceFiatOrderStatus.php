@@ -16,7 +16,7 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
  */
 final readonly class ForceFiatOrderStatus
 {
-    public function __invoke(FiatOrder $order, FiatOrderStatus $status): FiatOrder
+    public function handle(FiatOrder $order, FiatOrderStatus $status): FiatOrder
     {
         $order->update([
             'forced_status' => $status,

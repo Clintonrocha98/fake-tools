@@ -15,7 +15,7 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
  */
 final readonly class DelayFiatBrcode
 {
-    public function __invoke(FiatOrder $order, ?int $reads): FiatOrder
+    public function handle(FiatOrder $order, ?int $reads): FiatOrder
     {
         $order->update([
             'brcode_delay_reads' => $reads,

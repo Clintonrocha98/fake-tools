@@ -17,7 +17,7 @@ it('sets the delay and resets the reads counter', function (): void {
         'brcode_reads_count' => 3,
     ]);
 
-    $delayed = (new DelayFiatBrcode)($order, 2);
+    $delayed = (new DelayFiatBrcode)->handle($order, 2);
 
     expect($delayed->brcode_delay_reads)->toBe(2)
         ->and($delayed->brcode_reads_count)->toBe(0);
@@ -26,14 +26,14 @@ it('sets the delay and resets the reads counter', function (): void {
 it('clearing the delay (null) makes the brcode visible immediately', function (): void {
     $order = FiatOrder::factory()->create(['brcode_delay_reads' => 5]);
 
-    $cleared = (new DelayFiatBrcode)($order, null);
+    $cleared = (new DelayFiatBrcode)->handle($order, reads: null);
 
     expect($cleared->brcodeVisible())->toBeTrue();
 });
 
 it('hides the pixcode for the first N reads, then reveals it', function (): void {
     $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
-    (new DelayFiatBrcode)($order, 2);
+    (new DelayFiatBrcode)->handle($order, 2);
 
     $uri = fn () => $this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]);
 

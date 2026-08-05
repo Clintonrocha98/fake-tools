@@ -16,7 +16,7 @@ use RuntimeException;
  */
 final readonly class GetBookTicker
 {
-    public function __invoke(string $symbol): BookTicker
+    public function handle(string $symbol): BookTicker
     {
         $config = config()->array('venue-spot.usdcbrl');
 

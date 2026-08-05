@@ -15,7 +15,7 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
  */
 final readonly class EmitUnknownFiatWireStatus
 {
-    public function __invoke(FiatOrder $order, string $wireStatus): FiatOrder
+    public function handle(FiatOrder $order, string $wireStatus): FiatOrder
     {
         $order->update([
             'forced_wire_status' => $wireStatus,

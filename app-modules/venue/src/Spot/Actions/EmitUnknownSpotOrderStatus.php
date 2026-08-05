@@ -16,7 +16,7 @@ use He4rt\Venue\Spot\Models\SpotOrder;
  */
 final readonly class EmitUnknownSpotOrderStatus
 {
-    public function __invoke(SpotOrder $order, string $rawStatus): SpotOrder
+    public function handle(SpotOrder $order, string $rawStatus): SpotOrder
     {
         $order->update(['raw_status_override' => $rawStatus]);
 

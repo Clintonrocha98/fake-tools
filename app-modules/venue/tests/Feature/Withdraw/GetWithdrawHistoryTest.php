@@ -26,7 +26,7 @@ it('returns the documented wire shape for a matching withdrawal', function (): v
         'applied_at' => $appliedAt,
     ]);
 
-    $rows = (new GetWithdrawHistory)(coin: 'USDC', withdrawOrderId: 'payout-1');
+    $rows = (new GetWithdrawHistory)->handle(coin: 'USDC', withdrawOrderId: 'payout-1');
 
     expect($rows)->toHaveCount(1);
 
@@ -52,7 +52,7 @@ it('filters by coin and withdrawOrderId', function (): void {
     Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'payout-b']);
     Withdrawal::factory()->create(['coin' => 'USDT', 'withdraw_order_id' => 'payout-c']);
 
-    $rows = (new GetWithdrawHistory)(coin: 'USDC', withdrawOrderId: 'payout-a');
+    $rows = (new GetWithdrawHistory)->handle(coin: 'USDC', withdrawOrderId: 'payout-a');
 
     expect($rows)->toHaveCount(1)
         ->and($rows[0]->withdrawOrderId)->toBe('payout-a');
@@ -65,7 +65,7 @@ it('lazily advances AwaitingApproval to Processing once advance_seconds has elap
         'applied_at' => Date::now()->subSeconds(61),
     ]);
 
-    $rows = (new GetWithdrawHistory)(coin: null, withdrawOrderId: 'payout-advance-1');
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-advance-1');
 
     expect($rows[0]->status)->toBe(WithdrawStatus::Processing->value);
 
@@ -80,7 +80,7 @@ it('lazily advances all the way to Completed with a synthetic txId once two inte
         'applied_at' => Date::now()->subSeconds(121),
     ]);
 
-    $rows = (new GetWithdrawHistory)(coin: null, withdrawOrderId: 'payout-advance-2');
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-advance-2');
 
     expect($rows[0]->status)->toBe(WithdrawStatus::Completed->value)
         ->and($rows[0]->txId)->not->toBeNull();
@@ -97,7 +97,7 @@ it('does not advance a withdrawal before advance_seconds has elapsed', function 
         'applied_at' => Date::now()->subSeconds(10),
     ]);
 
-    $rows = (new GetWithdrawHistory)(coin: null, withdrawOrderId: 'payout-advance-3');
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-advance-3');
 
     expect($rows[0]->status)->toBe(WithdrawStatus::AwaitingApproval->value);
 });
@@ -110,7 +110,7 @@ it('never auto-advances a terminal manual-override status (Failure)', function (
         'applied_at' => Date::now()->subSeconds(1_000),
     ]);
 
-    $rows = (new GetWithdrawHistory)(coin: null, withdrawOrderId: 'payout-advance-4');
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-advance-4');
 
     expect($rows[0]->status)->toBe(WithdrawStatus::Failure->value)
         ->and($rows[0]->info)->toBe('reason');

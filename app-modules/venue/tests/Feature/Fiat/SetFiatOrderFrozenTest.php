@@ -15,10 +15,10 @@ beforeEach(fn () => $this->configureVenueCredentials());
 it('toggles the frozen flag', function (): void {
     $order = FiatOrder::factory()->create();
 
-    $frozen = (new SetFiatOrderFrozen)($order, true);
+    $frozen = (new SetFiatOrderFrozen)->handle($order, frozen: true);
     expect($frozen->frozen)->toBeTrue();
 
-    $unfrozen = (new SetFiatOrderFrozen)($frozen, false);
+    $unfrozen = (new SetFiatOrderFrozen)->handle($frozen, frozen: false);
     expect($unfrozen->frozen)->toBeFalse();
 });
 
@@ -27,7 +27,7 @@ it('a frozen order never advances via the lazy clock, even past the advance wind
 
     Date::setTestNow(now()->subSeconds(120));
     $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
-    (new SetFiatOrderFrozen)($order, true);
+    (new SetFiatOrderFrozen)->handle($order, frozen: true);
     Date::setTestNow();
 
     $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader())
@@ -42,10 +42,10 @@ it('unfreezing resumes the lazy advance', function (): void {
 
     Date::setTestNow(now()->subSeconds(120));
     $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
-    (new SetFiatOrderFrozen)($order, true);
+    (new SetFiatOrderFrozen)->handle($order, frozen: true);
     Date::setTestNow();
 
-    (new SetFiatOrderFrozen)($order->refresh(), false);
+    (new SetFiatOrderFrozen)->handle($order->refresh(), frozen: false);
 
     $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader())
         ->assertOk()

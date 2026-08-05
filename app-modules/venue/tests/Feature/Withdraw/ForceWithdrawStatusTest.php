@@ -9,7 +9,7 @@ use He4rt\Venue\Withdraw\Models\Withdrawal;
 it('forces one of the three documented failure statuses with info filled', function (WithdrawStatus $status): void {
     $withdrawal = Withdrawal::factory()->create(['status' => WithdrawStatus::AwaitingApproval]);
 
-    $forced = (new ForceWithdrawStatus)($withdrawal, $status, 'reason from the panel');
+    $forced = (new ForceWithdrawStatus)->handle($withdrawal, $status, 'reason from the panel');
 
     expect($forced->status)->toBe($status)
         ->and($forced->info)->toBe('reason from the panel');
@@ -25,7 +25,7 @@ it('clears any raw_status_override: the two overrides are mutually exclusive', f
         'raw_status_override' => 99,
     ]);
 
-    $forced = (new ForceWithdrawStatus)($withdrawal, WithdrawStatus::Rejected, 'bad address');
+    $forced = (new ForceWithdrawStatus)->handle($withdrawal, WithdrawStatus::Rejected, 'bad address');
 
     expect($forced->raw_status_override)->toBeNull();
 });

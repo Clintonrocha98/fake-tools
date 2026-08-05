@@ -30,7 +30,7 @@ final readonly class GetFiatOrderDetail
 {
     public function __construct(private CreditLedgerAccount $credit) {}
 
-    public function __invoke(string $orderNo): FiatOrder
+    public function handle(string $orderNo): FiatOrder
     {
         $order = FiatOrder::query()->where('order_no', $orderNo)->first();
 
@@ -60,7 +60,7 @@ final readonly class GetFiatOrderDetail
             $effective = $locked->effectiveStatus();
 
             if ($effective->isCredited() && $locked->credited_at === null) {
-                ($this->credit)($locked->currency, $locked->amount);
+                $this->credit->handle($locked->currency, $locked->amount);
                 $locked->update(['credited_at' => now()]);
             }
 

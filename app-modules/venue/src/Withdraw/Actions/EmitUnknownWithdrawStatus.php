@@ -16,7 +16,7 @@ use He4rt\Venue\Withdraw\Models\Withdrawal;
  */
 final readonly class EmitUnknownWithdrawStatus
 {
-    public function __invoke(Withdrawal $withdrawal, int $rawStatus): Withdrawal
+    public function handle(Withdrawal $withdrawal, int $rawStatus): Withdrawal
     {
         $withdrawal->update(['raw_status_override' => $rawStatus]);
 

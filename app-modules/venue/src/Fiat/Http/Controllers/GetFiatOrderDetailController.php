@@ -32,7 +32,7 @@ final readonly class GetFiatOrderDetailController
         $orderNo = $request->string('orderNo')->toString();
 
         try {
-            $order = ($this->getFiatOrderDetail)($orderNo);
+            $order = $this->getFiatOrderDetail->handle($orderNo);
         } catch (FiatOrderNotFoundException $fiatOrderNotFoundException) {
             return $this->errors->make(ErrorFamily::Fiat, $fiatOrderNotFoundException->errorCode, $fiatOrderNotFoundException->getMessage());
         }

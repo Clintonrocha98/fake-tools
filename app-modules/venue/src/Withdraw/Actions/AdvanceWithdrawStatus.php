@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Date;
  */
 final readonly class AdvanceWithdrawStatus
 {
-    public function __invoke(Withdrawal $withdrawal): Withdrawal
+    public function handle(Withdrawal $withdrawal): Withdrawal
     {
         if ($withdrawal->frozen || !$withdrawal->status->advancesAutomatically()) {
             return $withdrawal;

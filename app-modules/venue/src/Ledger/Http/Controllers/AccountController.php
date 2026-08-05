@@ -18,9 +18,7 @@ final readonly class AccountController
 
     public function __invoke(Request $request): JsonResponse
     {
-        $snapshot = ($this->snapshot)(
-            omitZeroBalances: $request->boolean('omitZeroBalances'),
-        );
+        $snapshot = $this->snapshot->handle(omitZeroBalances: $request->boolean('omitZeroBalances'));
 
         return response()->json($snapshot);
     }

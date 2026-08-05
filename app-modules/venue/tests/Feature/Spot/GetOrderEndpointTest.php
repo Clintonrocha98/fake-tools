@@ -14,7 +14,7 @@ beforeEach(function (): void {
 });
 
 it('retrieves an order by origClientOrderId with the same shape as the POST response, minus fills', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $this->postJson(
         $this->signedUri('/api/v3/order', [
@@ -43,7 +43,7 @@ it('retrieves an order by origClientOrderId with the same shape as the POST resp
 });
 
 it('returns the original order on a GET after a rejected duplicate POST', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $this->postJson(
         $this->signedUri('/api/v3/order', [

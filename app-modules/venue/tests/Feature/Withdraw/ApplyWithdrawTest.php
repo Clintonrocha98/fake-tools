@@ -16,9 +16,9 @@ beforeEach(function (): void {
 });
 
 it('debits amount+fee from the ledger and creates an awaiting-approval withdrawal', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
-    $withdrawal = (new ApplyWithdraw)(new ApplyWithdrawData(
+    $withdrawal = (new ApplyWithdraw)->handle(new ApplyWithdrawData(
         coin: 'USDC',
         address: 'SomeSolanaAddress',
         amount: '8.91',
@@ -39,10 +39,10 @@ it('debits amount+fee from the ledger and creates an awaiting-approval withdrawa
 });
 
 it('throws without creating a withdrawal when the ledger balance is insufficient', function (): void {
-    (new CreditLedgerAccount)('USDC', '1');
+    (new CreditLedgerAccount)->handle('USDC', '1');
 
     try {
-        (new ApplyWithdraw)(new ApplyWithdrawData(
+        (new ApplyWithdraw)->handle(new ApplyWithdrawData(
             coin: 'USDC',
             address: 'SomeSolanaAddress',
             amount: '8.91',
@@ -57,10 +57,10 @@ it('throws without creating a withdrawal when the ledger balance is insufficient
 });
 
 it('rejects a network absent from venue-withdraw.fees without creating a withdrawal or debiting', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     try {
-        (new ApplyWithdraw)(new ApplyWithdrawData(
+        (new ApplyWithdraw)->handle(new ApplyWithdrawData(
             coin: 'USDC',
             address: 'SomeBscAddress',
             amount: '8.91',
@@ -79,7 +79,7 @@ it('rejects a network absent from venue-withdraw.fees without creating a withdra
 });
 
 it('is idempotent: repeating the same withdrawOrderId does not debit twice', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     $data = new ApplyWithdrawData(
         coin: 'USDC',
@@ -89,8 +89,8 @@ it('is idempotent: repeating the same withdrawOrderId does not debit twice', fun
         withdrawOrderId: 'payout-3',
     );
 
-    $first = (new ApplyWithdraw)($data);
-    $second = (new ApplyWithdraw)($data);
+    $first = (new ApplyWithdraw)->handle($data);
+    $second = (new ApplyWithdraw)->handle($data);
 
     expect($second->id)->toBe($first->id)
         ->and(Withdrawal::query()->count())->toBe(1);

@@ -14,7 +14,7 @@ beforeEach(fn () => $this->configureVenueCredentials());
 it('sets an arbitrary status code outside 0-6, without touching the real status column', function (): void {
     $withdrawal = Withdrawal::factory()->create(['status' => WithdrawStatus::AwaitingApproval]);
 
-    $emitted = (new EmitUnknownWithdrawStatus)($withdrawal, 99);
+    $emitted = (new EmitUnknownWithdrawStatus)->handle($withdrawal, 99);
 
     expect($emitted->raw_status_override)->toBe(99)
         ->and($emitted->status)->toBe(WithdrawStatus::AwaitingApproval);
@@ -22,7 +22,7 @@ it('sets an arbitrary status code outside 0-6, without touching the real status 
 
 it('echoes the raw override verbatim on the history endpoint', function (): void {
     $withdrawal = Withdrawal::factory()->create(['coin' => 'USDC', 'status' => WithdrawStatus::AwaitingApproval]);
-    (new EmitUnknownWithdrawStatus)($withdrawal, 99);
+    (new EmitUnknownWithdrawStatus)->handle($withdrawal, 99);
 
     $response = $this->getJson(
         $this->signedUri('/sapi/v1/capital/withdraw/history', ['coin' => 'USDC']),

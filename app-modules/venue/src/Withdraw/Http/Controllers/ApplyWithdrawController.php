@@ -48,7 +48,7 @@ final readonly class ApplyWithdrawController
         );
 
         try {
-            $withdrawal = ($this->apply)($data);
+            $withdrawal = $this->apply->handle($data);
         } catch (InsufficientLedgerBalanceException) {
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected);
         }

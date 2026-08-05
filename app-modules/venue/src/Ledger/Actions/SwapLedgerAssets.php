@@ -28,13 +28,13 @@ final readonly class SwapLedgerAssets
     /**
      * @param  list<LedgerFill>  $fills
      */
-    public function __invoke(string $from, string $to, array $fills, Side $side): void
+    public function handle(string $from, string $to, array $fills, Side $side): void
     {
         DB::transaction(function () use ($from, $to, $fills, $side): void {
             [$spent, $received] = $this->totals($from, $to, $fills, $side);
 
-            ($this->debit)($from, $spent);
-            ($this->credit)($to, $received);
+            $this->debit->handle($from, $spent);
+            $this->credit->handle($to, $received);
         });
     }
 

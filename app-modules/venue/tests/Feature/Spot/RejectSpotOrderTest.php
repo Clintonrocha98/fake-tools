@@ -13,7 +13,7 @@ it('rejects an order, zeroing every fill field', function (): void {
 
     $order = SpotOrder::factory()->create(['status' => OrderStatus::Filled]);
 
-    $rejected = (new RejectSpotOrder)($order);
+    $rejected = (new RejectSpotOrder)->handle($order);
 
     expect($rejected->status)->toBe(OrderStatus::Rejected)
         ->and((string) $rejected->executed_qty)->toBe('0.000000000000000000')
@@ -29,7 +29,7 @@ it('clears any raw_status_override', function (): void {
 
     $order = SpotOrder::factory()->create(['raw_status_override' => 'SOME_FUTURE_STATE']);
 
-    $rejected = (new RejectSpotOrder)($order);
+    $rejected = (new RejectSpotOrder)->handle($order);
 
     expect($rejected->raw_status_override)->toBeNull();
 });
@@ -48,7 +48,7 @@ it('reverses the ledger fill it was originally credited with, so the account mat
         'commission_asset' => 'USDC',
     ]);
 
-    (new RejectSpotOrder)($order);
+    (new RejectSpotOrder)->handle($order);
 
     expect((string) LedgerAccount::query()->where('asset', 'USDC')->first()->free)->toBe('0.000000000000000000')
         ->and((string) LedgerAccount::query()->where('asset', 'BRL')->first()->free)->toBe('100.000000000000000000');
@@ -57,7 +57,7 @@ it('reverses the ledger fill it was originally credited with, so the account mat
 it('never touches the ledger when the order carries no fill to reverse', function (): void {
     $order = SpotOrder::factory()->rejected()->create();
 
-    (new RejectSpotOrder)($order);
+    (new RejectSpotOrder)->handle($order);
 
     expect(LedgerAccount::query()->count())->toBe(0);
 });

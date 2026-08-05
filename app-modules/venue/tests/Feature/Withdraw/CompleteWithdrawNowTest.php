@@ -9,7 +9,7 @@ use He4rt\Venue\Withdraw\Models\Withdrawal;
 it('completes a withdrawal immediately with a synthetic tx id', function (): void {
     $withdrawal = Withdrawal::factory()->create(['status' => WithdrawStatus::AwaitingApproval]);
 
-    $completed = (new CompleteWithdrawNow)($withdrawal);
+    $completed = (new CompleteWithdrawNow)->handle($withdrawal);
 
     expect($completed->status)->toBe(WithdrawStatus::Completed)
         ->and($completed->tx_id)->not->toBeNull()
@@ -22,7 +22,7 @@ it('clears any raw_status_override', function (): void {
         'raw_status_override' => 99,
     ]);
 
-    $completed = (new CompleteWithdrawNow)($withdrawal);
+    $completed = (new CompleteWithdrawNow)->handle($withdrawal);
 
     expect($completed->raw_status_override)->toBeNull();
 });

@@ -15,9 +15,9 @@ final readonly class ToggleScenarioSwitch
 {
     public function __construct(private GetScenarioSwitchboard $get = new GetScenarioSwitchboard) {}
 
-    public function __invoke(ScenarioSwitch $switch, bool $enabled): ScenarioSwitchboard
+    public function handle(ScenarioSwitch $switch, bool $enabled): ScenarioSwitchboard
     {
-        $switchboard = ($this->get)();
+        $switchboard = $this->get->handle();
 
         $switchboard->update([$switch->column() => $enabled]);
 

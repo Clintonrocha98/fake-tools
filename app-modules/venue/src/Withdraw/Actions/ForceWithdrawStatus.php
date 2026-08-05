@@ -17,7 +17,7 @@ use He4rt\Venue\Withdraw\Models\Withdrawal;
  */
 final readonly class ForceWithdrawStatus
 {
-    public function __invoke(Withdrawal $withdrawal, WithdrawStatus $status, ?string $info): Withdrawal
+    public function handle(Withdrawal $withdrawal, WithdrawStatus $status, ?string $info): Withdrawal
     {
         $withdrawal->update([
             'status' => $status,

@@ -28,7 +28,7 @@ final readonly class ApplyWithdraw
         private DebitLedgerAccount $debit = new DebitLedgerAccount,
     ) {}
 
-    public function __invoke(ApplyWithdrawData $data): Withdrawal
+    public function handle(ApplyWithdrawData $data): Withdrawal
     {
         if ($data->withdrawOrderId !== null) {
             $existing = Withdrawal::query()->where('withdraw_order_id', $data->withdrawOrderId)->first();
@@ -44,7 +44,7 @@ final readonly class ApplyWithdraw
         $total = bcadd($data->amount, $fee, 18);
 
         return DB::transaction(function () use ($data, $coin, $network, $fee, $total): Withdrawal {
-            ($this->debit)($coin, $total);
+            $this->debit->handle($coin, $total);
 
             return Withdrawal::query()->create([
                 'coin' => $coin,

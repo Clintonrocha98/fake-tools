@@ -26,7 +26,7 @@ final readonly class CreateFiatDepositController
     public function __invoke(CreateFiatDepositRequest $request): JsonResponse
     {
         try {
-            $order = ($this->openFiatDeposit)(
+            $order = $this->openFiatDeposit->handle(
                 currency: $request->string('currency')->toString(),
                 paymentMethod: $request->string('apiPaymentMethod')->toString(),
                 amount: $request->string('amount')->toString(),

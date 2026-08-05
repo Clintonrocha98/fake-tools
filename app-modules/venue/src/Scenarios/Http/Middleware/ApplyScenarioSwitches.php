@@ -32,7 +32,7 @@ final readonly class ApplyScenarioSwitches
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $switches = ($this->switchboard)();
+        $switches = $this->switchboard->handle();
 
         if ($switches->outage_mode) {
             $family = ErrorFamily::fromPath($request->path());

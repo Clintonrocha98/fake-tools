@@ -10,7 +10,7 @@ use He4rt\Venue\Scenarios\Models\ScenarioSwitchboard;
 it('creates the singleton row on the first read, everything off', function (): void {
     expect(ScenarioSwitchboard::query()->count())->toBe(0);
 
-    $switchboard = (new GetScenarioSwitchboard)();
+    $switchboard = (new GetScenarioSwitchboard)->handle();
 
     expect($switchboard->outage_mode)->toBeFalse()
         ->and($switchboard->rate_limit_mode)->toBeFalse()
@@ -19,8 +19,8 @@ it('creates the singleton row on the first read, everything off', function (): v
 });
 
 it('never creates a second row across repeated reads', function (): void {
-    (new GetScenarioSwitchboard)();
-    (new GetScenarioSwitchboard)();
+    (new GetScenarioSwitchboard)->handle();
+    (new GetScenarioSwitchboard)->handle();
 
     expect(ScenarioSwitchboard::query()->count())->toBe(1);
 });
@@ -31,7 +31,7 @@ it('never serves a second switchboard row, even if one exists behind the singlet
     // linha do id fixo, nunca numa das outras.
     ScenarioSwitchboard::factory()->create(['outage_mode' => true]);
 
-    $switchboard = (new GetScenarioSwitchboard)();
+    $switchboard = (new GetScenarioSwitchboard)->handle();
 
     expect(ScenarioSwitchboard::query()->count())->toBe(2)
         ->and($switchboard->id)->toBe(GetScenarioSwitchboard::SINGLETON_ID)
@@ -41,10 +41,10 @@ it('never serves a second switchboard row, even if one exists behind the singlet
 it('toggles each switch independently', function (ScenarioSwitch $switch, string $column): void {
     $toggle = new ToggleScenarioSwitch;
 
-    $on = $toggle($switch, true);
+    $on = $toggle->handle($switch, enabled: true);
     expect($on->{$column})->toBeTrue();
 
-    $off = $toggle($switch, false);
+    $off = $toggle->handle($switch, enabled: false);
     expect($off->{$column})->toBeFalse();
 })->with([
     'outage' => [ScenarioSwitch::Outage, 'outage_mode'],
@@ -53,7 +53,7 @@ it('toggles each switch independently', function (ScenarioSwitch $switch, string
 ]);
 
 it('persists the toggle on the same singleton row', function (): void {
-    (new ToggleScenarioSwitch)(ScenarioSwitch::Outage, true);
+    (new ToggleScenarioSwitch)->handle(ScenarioSwitch::Outage, enabled: true);
 
     expect(ScenarioSwitchboard::query()->count())->toBe(1)
         ->and(ScenarioSwitchboard::query()->first()->outage_mode)->toBeTrue();

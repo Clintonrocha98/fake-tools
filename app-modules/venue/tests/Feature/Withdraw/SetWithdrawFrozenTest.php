@@ -11,10 +11,10 @@ use Illuminate\Support\Facades\Date;
 it('toggles the frozen flag', function (): void {
     $withdrawal = Withdrawal::factory()->create();
 
-    $frozen = (new SetWithdrawFrozen)($withdrawal, true);
+    $frozen = (new SetWithdrawFrozen)->handle($withdrawal, frozen: true);
     expect($frozen->frozen)->toBeTrue();
 
-    $unfrozen = (new SetWithdrawFrozen)($frozen, false);
+    $unfrozen = (new SetWithdrawFrozen)->handle($frozen, frozen: false);
     expect($unfrozen->frozen)->toBeFalse();
 });
 
@@ -25,9 +25,9 @@ it('a frozen withdrawal never advances, even past both advance windows', functio
         'status' => WithdrawStatus::AwaitingApproval,
         'applied_at' => Date::now()->subSeconds(200),
     ]);
-    (new SetWithdrawFrozen)($withdrawal, true);
+    (new SetWithdrawFrozen)->handle($withdrawal, frozen: true);
 
-    $advanced = (new AdvanceWithdrawStatus)($withdrawal->refresh());
+    $advanced = (new AdvanceWithdrawStatus)->handle($withdrawal->refresh());
 
     expect($advanced->status)->toBe(WithdrawStatus::AwaitingApproval);
 });

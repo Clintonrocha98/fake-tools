@@ -9,7 +9,7 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
 it('sets forced_status without touching the underlying lazy status', function (): void {
     $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
 
-    $forced = (new ForceFiatOrderStatus)($order, FiatOrderStatus::Failed);
+    $forced = (new ForceFiatOrderStatus)->handle($order, FiatOrderStatus::Failed);
 
     expect($forced->forced_status)->toBe(FiatOrderStatus::Failed)
         ->and($forced->status)->toBe(FiatOrderStatus::Processing);
@@ -21,7 +21,7 @@ it('clears any forced_wire_status: the two overrides are mutually exclusive', fu
         'forced_wire_status' => 'Some Future Status',
     ]);
 
-    $forced = (new ForceFiatOrderStatus)($order, FiatOrderStatus::Expired);
+    $forced = (new ForceFiatOrderStatus)->handle($order, FiatOrderStatus::Expired);
 
     expect($forced->forced_wire_status)->toBeNull()
         ->and($forced->forced_status)->toBe(FiatOrderStatus::Expired);
@@ -30,7 +30,7 @@ it('clears any forced_wire_status: the two overrides are mutually exclusive', fu
 it('produces every documented failure status on command', function (FiatOrderStatus $status): void {
     $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
 
-    $forced = (new ForceFiatOrderStatus)($order, $status);
+    $forced = (new ForceFiatOrderStatus)->handle($order, $status);
 
     expect($forced->forced_status)->toBe($status);
 })->with([

@@ -61,7 +61,7 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
 
     public function getSwitchboard(): ScenarioSwitchboard
     {
-        return resolve(GetScenarioSwitchboard::class)();
+        return resolve(GetScenarioSwitchboard::class)->handle();
     }
 
     /**
@@ -96,7 +96,7 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
                 $switch = ScenarioSwitch::from($arguments['switch']);
                 $enable = $arguments['enable'];
 
-                resolve(ToggleScenarioSwitch::class)($switch, $enable);
+                resolve(ToggleScenarioSwitch::class)->handle($switch, $enable);
 
                 Notification::make()
                     ->title(__('panel-admin::venue.scenario_switches.toggle_notification', [

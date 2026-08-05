@@ -13,7 +13,7 @@ use He4rt\Venue\Withdraw\Models\Withdrawal;
  */
 final readonly class SetWithdrawFrozen
 {
-    public function __invoke(Withdrawal $withdrawal, bool $frozen): Withdrawal
+    public function handle(Withdrawal $withdrawal, bool $frozen): Withdrawal
     {
         $withdrawal->update(['frozen' => $frozen]);
 

@@ -30,6 +30,6 @@ final readonly class BookTickerController
             return $this->errors->make(ErrorFamily::fromPath($request->path()), BinanceErrorCode::InvalidSymbol);
         }
 
-        return response()->json(($this->bookTicker)($symbol->value)->toWireArray());
+        return response()->json($this->bookTicker->handle($symbol->value)->toWireArray());
     }
 }

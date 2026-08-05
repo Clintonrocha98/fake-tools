@@ -19,7 +19,7 @@ final readonly class SetLedgerBalance
      * @param  numeric-string  $free
      * @param  numeric-string  $locked
      */
-    public function __invoke(string $asset, string $free, string $locked): LedgerAccount
+    public function handle(string $asset, string $free, string $locked): LedgerAccount
     {
         $asset = mb_strtoupper($asset);
 

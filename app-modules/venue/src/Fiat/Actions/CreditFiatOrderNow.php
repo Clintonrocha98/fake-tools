@@ -19,7 +19,7 @@ final readonly class CreditFiatOrderNow
 {
     public function __construct(private CreditLedgerAccount $credit = new CreditLedgerAccount) {}
 
-    public function __invoke(FiatOrder $order): FiatOrder
+    public function handle(FiatOrder $order): FiatOrder
     {
         return DB::transaction(function () use ($order): FiatOrder {
             /** @var FiatOrder $locked */
@@ -32,7 +32,7 @@ final readonly class CreditFiatOrderNow
             ]);
 
             if ($locked->credited_at === null) {
-                ($this->credit)($locked->currency, $locked->amount);
+                $this->credit->handle($locked->currency, $locked->amount);
                 $locked->update(['credited_at' => now()]);
             }
 

@@ -21,7 +21,7 @@ final readonly class CreditLedgerAccount
     /**
      * @param  numeric-string  $amount
      */
-    public function __invoke(string $asset, string $amount): LedgerAccount
+    public function handle(string $asset, string $amount): LedgerAccount
     {
         $asset = mb_strtoupper($asset);
 

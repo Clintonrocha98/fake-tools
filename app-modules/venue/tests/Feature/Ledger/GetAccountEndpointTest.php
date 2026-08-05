@@ -10,8 +10,8 @@ uses(SignsRequests::class);
 beforeEach(fn () => $this->configureVenueCredentials());
 
 it('returns the documented balances shape backed by the ledger', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
-    (new CreditLedgerAccount)('USDC', '0');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+    (new CreditLedgerAccount)->handle('USDC', '0');
 
     $response = $this->getJson($this->signedUri('/api/v3/account'), $this->apiKeyHeader());
 
@@ -39,8 +39,8 @@ it('returns an empty balances list when the ledger has no accounts yet', functio
 });
 
 it('omits zero balances when omitZeroBalances=true is passed', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
-    (new CreditLedgerAccount)('USDC', '0');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+    (new CreditLedgerAccount)->handle('USDC', '0');
 
     $response = $this->getJson($this->signedUri('/api/v3/account', ['omitZeroBalances' => 'true']), $this->apiKeyHeader());
 
@@ -52,8 +52,8 @@ it('omits zero balances when omitZeroBalances=true is passed', function (): void
 });
 
 it('keeps zero balances by default when omitZeroBalances is not passed', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
-    (new CreditLedgerAccount)('USDC', '0');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+    (new CreditLedgerAccount)->handle('USDC', '0');
 
     $response = $this->getJson($this->signedUri('/api/v3/account'), $this->apiKeyHeader());
 

@@ -30,7 +30,7 @@ final readonly class ReverseSpotOrderLedgerFill
      * @param  numeric-string  $quoteQtyDelta  Quantidade quote do fill a reverter
      * @param  numeric-string  $commissionDelta  Comissão (no ativo recebido) do fill a reverter
      */
-    public function __invoke(
+    public function handle(
         OrderSide $side,
         string $executedQtyDelta,
         string $quoteQtyDelta,
@@ -45,8 +45,8 @@ final readonly class ReverseSpotOrderLedgerFill
                 ? [$quoteAsset, $quoteQtyDelta, $baseAsset, bcsub($executedQtyDelta, $commissionDelta, 18)]
                 : [$baseAsset, $executedQtyDelta, $quoteAsset, bcsub($quoteQtyDelta, $commissionDelta, 18)];
 
-            ($this->credit)($spentAsset, $spentAmount);
-            ($this->debit)($receivedAsset, $receivedNetAmount);
+            $this->credit->handle($spentAsset, $spentAmount);
+            $this->debit->handle($receivedAsset, $receivedNetAmount);
         });
     }
 }

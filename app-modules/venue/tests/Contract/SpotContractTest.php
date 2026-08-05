@@ -48,7 +48,7 @@ it('answers GET /api/v3/exchangeInfo with the shape ExchangeInfoResponse reads (
 });
 
 it('answers GET /api/v3/account with the shape AccountResponse reads, signed as GetAccountRequest signs', function (): void {
-    (new CreditLedgerAccount)('BRL', '150');
+    (new CreditLedgerAccount)->handle('BRL', '150');
 
     $response = $this->getJson($this->signedUri('/api/v3/account'), $this->apiKeyHeader());
 
@@ -61,7 +61,7 @@ it('answers GET /api/v3/account with the shape AccountResponse reads, signed as 
 });
 
 it('answers POST /api/v3/order with the shape SpotOrderResponse reads, signed as PlaceSpotOrderRequest signs', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL',
@@ -80,7 +80,7 @@ it('answers POST /api/v3/order with the shape SpotOrderResponse reads, signed as
 });
 
 it('answers GET /api/v3/order with the shape SpotOrderResponse reads on a re-read, signed as GetOrderRequest signs', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'contract-get-1',
@@ -112,7 +112,7 @@ it('never emits a wire status outside the 8 values Brd\IntegrationBinance\Wire\B
 });
 
 it('serves a FILLED order status verbatim over the wire, one of the 8 accepted values', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'contract-status-filled',

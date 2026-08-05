@@ -18,7 +18,7 @@ it('halves the original fill and moves the order to EXPIRED', function (): void 
         'commission' => '0.00293000',
     ]);
 
-    $expired = (new ExpireSpotOrderPartially)($order);
+    $expired = (new ExpireSpotOrderPartially)->handle($order);
 
     expect($expired->status)->toBe(OrderStatus::Expired)
         ->and((string) $expired->executed_qty)->toBe('1.465000000000000000')
@@ -32,7 +32,7 @@ it('clears any raw_status_override', function (): void {
 
     $order = SpotOrder::factory()->create(['raw_status_override' => 'SOME_FUTURE_STATE']);
 
-    $expired = (new ExpireSpotOrderPartially)($order);
+    $expired = (new ExpireSpotOrderPartially)->handle($order);
 
     expect($expired->raw_status_override)->toBeNull();
 });
@@ -51,7 +51,7 @@ it('reverses only the removed half of the ledger fill, leaving the other half cr
         'commission_asset' => 'USDC',
     ]);
 
-    (new ExpireSpotOrderPartially)($order);
+    (new ExpireSpotOrderPartially)->handle($order);
 
     // Metade líquida do fill original permanece creditada: USDC líquido
     // 1.463535 (metade de 2.92707), BRL 7.48615 devolvido dos 92.5 gastos.

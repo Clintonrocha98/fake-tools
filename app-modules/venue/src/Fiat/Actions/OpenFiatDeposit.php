@@ -21,7 +21,7 @@ final readonly class OpenFiatDeposit
      * {@see \He4rt\Venue\Fiat\Http\Requests\CreateFiatDepositRequest}, mas
      * nunca `numeric-string` estaticamente neste limite de entrada.
      */
-    public function __invoke(string $currency, string $paymentMethod, string $amount): FiatOrder
+    public function handle(string $currency, string $paymentMethod, string $amount): FiatOrder
     {
         $this->guardServiceEnabled();
         $this->guardSupportedCurrencyAndMethod($currency, $paymentMethod);

@@ -15,7 +15,7 @@ beforeEach(function (): void {
 });
 
 it('applies a withdraw and returns only the id, debiting amount+fee from the ledger', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     $response = $this->postJson(
         $this->signedUri('/sapi/v1/capital/withdraw/apply', [
@@ -38,7 +38,7 @@ it('applies a withdraw and returns only the id, debiting amount+fee from the led
 });
 
 it('refuses with -2010 and creates no withdrawal when the ledger balance is insufficient', function (): void {
-    (new CreditLedgerAccount)('USDC', '1');
+    (new CreditLedgerAccount)->handle('USDC', '1');
 
     $response = $this->postJson(
         $this->signedUri('/sapi/v1/capital/withdraw/apply', [
@@ -61,7 +61,7 @@ it('refuses with -2010 and creates no withdrawal when the ledger balance is insu
 });
 
 it('is idempotent at the HTTP level: repeating withdrawOrderId returns the same id without debiting again', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     $params = [
         'coin' => 'USDC',

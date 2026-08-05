@@ -20,7 +20,7 @@ final readonly class GetScenarioSwitchboard
 {
     public const string SINGLETON_ID = '00000000-0000-0000-0000-000000000001';
 
-    public function __invoke(): ScenarioSwitchboard
+    public function handle(): ScenarioSwitchboard
     {
         // Valores explícitos (nunca `firstOrCreate($id, [])`): sem isso, o objeto
         // devolvido não carregaria os DEFAULT que o banco aplicaria na inserção.

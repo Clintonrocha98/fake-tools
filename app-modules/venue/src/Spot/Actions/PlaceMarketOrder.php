@@ -42,13 +42,13 @@ final readonly class PlaceMarketOrder
         private AssertSpotSymbolFilters $assertFilters,
     ) {}
 
-    public function __invoke(PlaceMarketOrderData $data): SpotOrder
+    public function handle(PlaceMarketOrderData $data): SpotOrder
     {
         if (SpotOrder::query()->where('client_order_id', $data->newClientOrderId)->exists()) {
             throw DuplicateClientOrderIdException::forClientOrderId($data->newClientOrderId);
         }
 
-        ($this->assertFilters)($data->side, $data->quantity, $data->quoteOrderQty);
+        $this->assertFilters->handle($data->side, $data->quantity, $data->quoteOrderQty);
 
         $symbolConfig = config()->array('venue-spot.usdcbrl');
         $baseAsset = (string) $symbolConfig['base_asset'];
@@ -60,7 +60,7 @@ final readonly class PlaceMarketOrder
 
         $commissionRate = $commissionRateValue;
 
-        $book = ($this->bookTicker)($data->symbol);
+        $book = $this->bookTicker->handle($data->symbol);
 
         [$executedQty, $cummulativeQuoteQty, $price, $receivedAsset] = $data->side === OrderSide::Buy
             ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $baseAsset)
@@ -72,7 +72,7 @@ final readonly class PlaceMarketOrder
         return DB::transaction(function () use (
             $data, $executedQty, $cummulativeQuoteQty, $price, $commission, $receivedAsset, $baseAsset, $quoteAsset,
         ): SpotOrder {
-            $this->swap->__invoke(
+            $this->swap->handle(
                 from: $data->side === OrderSide::Buy ? $quoteAsset : $baseAsset,
                 to: $data->side === OrderSide::Buy ? $baseAsset : $quoteAsset,
                 fills: [new LedgerFill(qty: $executedQty, price: $price, commission: $commission, commissionAsset: $receivedAsset)],
@@ -80,7 +80,7 @@ final readonly class PlaceMarketOrder
             );
 
             return SpotOrder::query()->create([
-                'order_id' => ($this->nextOrderId)(),
+                'order_id' => $this->nextOrderId->handle(),
                 'client_order_id' => $data->newClientOrderId,
                 'symbol' => $data->symbol,
                 'side' => $data->side,

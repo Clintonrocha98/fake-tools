@@ -15,7 +15,7 @@ use He4rt\Venue\Withdraw\Support\SyntheticTxId;
  */
 final readonly class CompleteWithdrawNow
 {
-    public function __invoke(Withdrawal $withdrawal): Withdrawal
+    public function handle(Withdrawal $withdrawal): Withdrawal
     {
         $withdrawal->update([
             'status' => WithdrawStatus::Completed,

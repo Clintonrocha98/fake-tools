@@ -19,7 +19,7 @@ final readonly class WithdrawHistoryController
 
     public function __invoke(Request $request): JsonResponse
     {
-        $rows = ($this->history)(
+        $rows = $this->history->handle(
             coin: $this->stringOrNull($request, 'coin'),
             withdrawOrderId: $this->stringOrNull($request, 'withdrawOrderId'),
         );

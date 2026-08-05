@@ -21,7 +21,7 @@ it('advances a pending withdraw to Completed with a txId across two history read
     config(['venue-withdraw.advance_seconds' => $freshConfig['advance_seconds']]);
     config(['venue-withdraw.fees' => ['SOL' => '0.004']]);
 
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     $applyResponse = $this->postJson(
         $this->signedUri('/sapi/v1/capital/withdraw/apply', [

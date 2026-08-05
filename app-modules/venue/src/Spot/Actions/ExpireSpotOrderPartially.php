@@ -26,7 +26,7 @@ final readonly class ExpireSpotOrderPartially
         private ReverseSpotOrderLedgerFill $reverseLedger = new ReverseSpotOrderLedgerFill(new CreditLedgerAccount, new DebitLedgerAccount),
     ) {}
 
-    public function __invoke(SpotOrder $order): SpotOrder
+    public function handle(SpotOrder $order): SpotOrder
     {
         return DB::transaction(function () use ($order): SpotOrder {
             $halfExecutedQty = bcdiv((string) $order->executed_qty, '2', 18);
@@ -40,7 +40,7 @@ final readonly class ExpireSpotOrderPartially
             if (bccomp($removedExecutedQty, '0', 18) > 0) {
                 $symbolConfig = config()->array('venue-spot.usdcbrl');
 
-                ($this->reverseLedger)(
+                $this->reverseLedger->handle(
                     $order->side,
                     $removedExecutedQty,
                     $removedQuoteQty,

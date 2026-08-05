@@ -12,7 +12,7 @@ use He4rt\Venue\Spot\DTOs\ExchangeSymbolInfo;
  */
 final readonly class GetExchangeInfo
 {
-    public function __invoke(string $symbol): ExchangeSymbolInfo
+    public function handle(string $symbol): ExchangeSymbolInfo
     {
         $config = config()->array('venue-spot.usdcbrl');
         $filters = $config['filters'];

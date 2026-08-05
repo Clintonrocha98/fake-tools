@@ -72,7 +72,7 @@ class SpotOrdersTable
             ->requiresConfirmation()
             ->modalDescription(__('panel-admin::venue.spot_orders.actions.reject_description'))
             ->action(function (SpotOrder $record): void {
-                resolve(RejectSpotOrder::class)($record);
+                resolve(RejectSpotOrder::class)->handle($record);
 
                 Notification::make()->title(__('panel-admin::venue.spot_orders.actions.reject_notification'))->success()->send();
             });
@@ -87,7 +87,7 @@ class SpotOrdersTable
             ->requiresConfirmation()
             ->modalDescription(__('panel-admin::venue.spot_orders.actions.expire_partially_description'))
             ->action(function (SpotOrder $record): void {
-                resolve(ExpireSpotOrderPartially::class)($record);
+                resolve(ExpireSpotOrderPartially::class)->handle($record);
 
                 Notification::make()->title(__('panel-admin::venue.spot_orders.actions.expire_partially_notification'))->success()->send();
             });
@@ -106,7 +106,7 @@ class SpotOrdersTable
             ])
             ->action(function (array $data, SpotOrder $record): void {
                 /** @var array{rawStatus: string} $data */
-                resolve(EmitUnknownSpotOrderStatus::class)($record, $data['rawStatus']);
+                resolve(EmitUnknownSpotOrderStatus::class)->handle($record, $data['rawStatus']);
 
                 Notification::make()->title(__('panel-admin::venue.spot_orders.actions.emit_unknown_notification'))->success()->send();
             });

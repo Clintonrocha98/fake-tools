@@ -14,7 +14,7 @@ use He4rt\Venue\Fiat\Models\FiatOrder;
  */
 final readonly class SetFiatOrderFrozen
 {
-    public function __invoke(FiatOrder $order, bool $frozen): FiatOrder
+    public function handle(FiatOrder $order, bool $frozen): FiatOrder
     {
         $order->update(['frozen' => $frozen]);
 

@@ -31,7 +31,7 @@ final readonly class ExchangeInfoController
         }
 
         return response()->json([
-            'symbols' => [($this->exchangeInfo)($symbol->value)->toWireArray()],
+            'symbols' => [$this->exchangeInfo->handle($symbol->value)->toWireArray()],
         ]);
     }
 }

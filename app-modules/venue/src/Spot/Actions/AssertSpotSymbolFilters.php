@@ -22,7 +22,7 @@ final readonly class AssertSpotSymbolFilters
      * @param  numeric-string|null  $quantity
      * @param  numeric-string|null  $quoteOrderQty
      */
-    public function __invoke(OrderSide $side, ?string $quantity, ?string $quoteOrderQty): void
+    public function handle(OrderSide $side, ?string $quantity, ?string $quoteOrderQty): void
     {
         $filters = config()->array('venue-spot.usdcbrl.filters');
         $minQty = $this->numeric($filters, 'min_qty');

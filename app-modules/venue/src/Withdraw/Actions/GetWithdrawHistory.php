@@ -22,7 +22,7 @@ final readonly class GetWithdrawHistory
     /**
      * @return list<WithdrawHistoryRow>
      */
-    public function __invoke(?string $coin, ?string $withdrawOrderId): array
+    public function handle(?string $coin, ?string $withdrawOrderId): array
     {
         $query = Withdrawal::query();
 
@@ -36,7 +36,7 @@ final readonly class GetWithdrawHistory
 
         $rows = $query->latest('applied_at')
             ->get()
-            ->map(fn (Withdrawal $withdrawal): Withdrawal => ($this->advance)($withdrawal))
+            ->map(fn (Withdrawal $withdrawal): Withdrawal => $this->advance->handle($withdrawal))
             ->map(fn (Withdrawal $withdrawal): WithdrawHistoryRow => WithdrawHistoryRow::fromModel($withdrawal))
             ->all();
 

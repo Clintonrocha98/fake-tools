@@ -43,7 +43,7 @@ final readonly class PlaceOrderController
         }
 
         try {
-            $order = ($this->placeOrder)($data);
+            $order = $this->placeOrder->handle($data);
         } catch (DuplicateClientOrderIdException|InsufficientLedgerBalanceException $exception) {
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected, $exception->getMessage());
         } catch (SpotFilterViolationException $exception) {

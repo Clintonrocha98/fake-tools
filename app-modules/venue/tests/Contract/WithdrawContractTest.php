@@ -28,7 +28,7 @@ beforeEach(function (): void {
 });
 
 it('answers POST /sapi/v1/capital/withdraw/apply with the shape WithdrawResponse reads, signed as ApplyWithdrawRequest signs', function (): void {
-    (new CreditLedgerAccount)('USDC', '100');
+    (new CreditLedgerAccount)->handle('USDC', '100');
 
     $response = $this->postJson(
         $this->signedUri('/sapi/v1/capital/withdraw/apply', [

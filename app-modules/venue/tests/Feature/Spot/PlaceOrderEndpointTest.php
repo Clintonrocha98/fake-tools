@@ -15,7 +15,7 @@ beforeEach(function (): void {
 });
 
 it('fills a BUY MARKET order at the ask price, spending quoteOrderQty and crediting the ledger net of commission', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL',
@@ -48,7 +48,7 @@ it('fills a BUY MARKET order at the ask price, spending quoteOrderQty and credit
 });
 
 it('fills a SELL MARKET order at the bid price, selling quantity and crediting the ledger net of commission', function (): void {
-    (new CreditLedgerAccount)('USDC', '1000');
+    (new CreditLedgerAccount)->handle('USDC', '1000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL',
@@ -76,7 +76,7 @@ it('fills a SELL MARKET order at the bid price, selling quantity and crediting t
 });
 
 it('refuses a duplicate newClientOrderId with -2010 without re-executing the swap', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $params = [
         'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-dup-1',
@@ -122,7 +122,7 @@ it('refuses an unsigned POST /api/v3/order with the spot/wallet error envelope',
 });
 
 it('refuses an unknown symbol with -1121', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'BTCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-unknown-symbol-1',
@@ -149,7 +149,7 @@ it('refuses an invalid side with -1117', function (): void {
 });
 
 it('debits BRL byte-for-byte equal to the cummulativeQuoteQty reported on the wire, even when the division truncates', function (): void {
-    (new CreditLedgerAccount)('BRL', '20');
+    (new CreditLedgerAccount)->handle('BRL', '20');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '15', 'newClientOrderId' => 'forex-truncation-1',
@@ -167,7 +167,7 @@ it('debits BRL byte-for-byte equal to the cummulativeQuoteQty reported on the wi
 
 it('refuses a SELL below minQty with a filter failure', function (): void {
     config(['venue-spot.usdcbrl.filters.min_qty' => '5']);
-    (new CreditLedgerAccount)('USDC', '1000');
+    (new CreditLedgerAccount)->handle('USDC', '1000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL', 'side' => 'SELL', 'quantity' => '1', 'newClientOrderId' => 'forex-lot-size-1',
@@ -178,7 +178,7 @@ it('refuses a SELL below minQty with a filter failure', function (): void {
 });
 
 it('refuses a BUY below minNotional with a filter failure', function (): void {
-    (new CreditLedgerAccount)('BRL', '100000');
+    (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
         'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '1', 'newClientOrderId' => 'forex-notional-1',

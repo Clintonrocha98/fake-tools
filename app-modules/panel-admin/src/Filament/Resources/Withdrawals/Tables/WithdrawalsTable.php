@@ -94,7 +94,7 @@ class WithdrawalsTable
             ->requiresConfirmation()
             ->modalDescription(__('panel-admin::venue.withdrawals.actions.complete_now_description'))
             ->action(function (Withdrawal $record): void {
-                resolve(CompleteWithdrawNow::class)($record);
+                resolve(CompleteWithdrawNow::class)->handle($record);
 
                 Notification::make()->title(__('panel-admin::venue.withdrawals.actions.complete_now_notification'))->success()->send();
             });
@@ -117,7 +117,7 @@ class WithdrawalsTable
             ])
             ->action(function (array $data, Withdrawal $record): void {
                 /** @var array{status: string, info: string} $data */
-                resolve(ForceWithdrawStatus::class)($record, WithdrawStatus::from((int) $data['status']), $data['info']);
+                resolve(ForceWithdrawStatus::class)->handle($record, WithdrawStatus::from((int) $data['status']), $data['info']);
 
                 Notification::make()->title(__('panel-admin::venue.withdrawals.actions.force_status_notification'))->success()->send();
             });
@@ -137,7 +137,7 @@ class WithdrawalsTable
             ])
             ->action(function (array $data, Withdrawal $record): void {
                 /** @var array{rawStatus: numeric-string} $data */
-                resolve(EmitUnknownWithdrawStatus::class)($record, (int) $data['rawStatus']);
+                resolve(EmitUnknownWithdrawStatus::class)->handle($record, (int) $data['rawStatus']);
 
                 Notification::make()->title(__('panel-admin::venue.withdrawals.actions.emit_unknown_notification'))->success()->send();
             });
@@ -150,7 +150,7 @@ class WithdrawalsTable
             ->icon(fn (Withdrawal $record): Heroicon => $record->frozen ? Heroicon::OutlinedPlay : Heroicon::OutlinedPause)
             ->color('gray')
             ->action(function (Withdrawal $record): void {
-                resolve(SetWithdrawFrozen::class)($record, !$record->frozen);
+                resolve(SetWithdrawFrozen::class)->handle($record, !$record->frozen);
 
                 Notification::make()->title(__('panel-admin::venue.withdrawals.actions.frozen_notification'))->success()->send();
             });

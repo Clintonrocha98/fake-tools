@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Date;
 
 final readonly class GetAccountSnapshot
 {
-    public function __invoke(bool $omitZeroBalances = false): AccountSnapshot
+    public function handle(bool $omitZeroBalances = false): AccountSnapshot
     {
         $balances = array_values(LedgerAccount::query()
             ->orderBy('asset')

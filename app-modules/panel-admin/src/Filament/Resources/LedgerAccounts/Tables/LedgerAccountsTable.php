@@ -60,7 +60,7 @@ class LedgerAccountsTable
             ])
             ->action(function (array $data): void {
                 /** @var array{asset: string, free: float, locked: float} $data */
-                resolve(SetLedgerBalance::class)($data['asset'], (string) $data['free'], (string) $data['locked']);
+                resolve(SetLedgerBalance::class)->handle($data['asset'], (string) $data['free'], (string) $data['locked']);
 
                 Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.new_balance_notification'))->success()->send();
             });
@@ -85,7 +85,7 @@ class LedgerAccountsTable
             ])
             ->action(function (array $data, LedgerAccount $record): void {
                 /** @var array{free: float, locked: float} $data */
-                resolve(SetLedgerBalance::class)($record->asset, (string) $data['free'], (string) $data['locked']);
+                resolve(SetLedgerBalance::class)->handle($record->asset, (string) $data['free'], (string) $data['locked']);
 
                 Notification::make()->title(__('panel-admin::venue.ledger_accounts.actions.edit_balance_notification'))->success()->send();
             });

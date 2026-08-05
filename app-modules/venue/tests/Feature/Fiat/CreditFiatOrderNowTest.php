@@ -14,7 +14,7 @@ it('credits a processing order immediately, skipping the lazy clock', function (
         'amount' => '500',
     ]);
 
-    $credited = (new CreditFiatOrderNow)($order);
+    $credited = (new CreditFiatOrderNow)->handle($order);
 
     expect($credited->status)->toBe(FiatOrderStatus::Success)
         ->and($credited->credited_at)->not->toBeNull();
@@ -30,7 +30,7 @@ it('clears any forced override before crediting', function (): void {
         'forced_wire_status' => 'Some Future Status',
     ]);
 
-    $credited = (new CreditFiatOrderNow)($order);
+    $credited = (new CreditFiatOrderNow)->handle($order);
 
     expect($credited->forced_status)->toBeNull()
         ->and($credited->forced_wire_status)->toBeNull()
@@ -45,8 +45,8 @@ it('never credits twice on a repeated call', function (): void {
     ]);
 
     $action = new CreditFiatOrderNow;
-    $action($order->refresh());
-    $action($order->refresh());
+    $action->handle($order->refresh());
+    $action->handle($order->refresh());
 
     $account = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
     expect((string) $account->free)->toBe('500.000000000000000000');
