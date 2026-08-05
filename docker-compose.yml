@@ -21,12 +21,21 @@ services:
       FAKE_BINANCE_SEED_BALANCES: ${FAKE_BINANCE_SEED_BALANCES:-BRL:100000,USDT:5000}
       # Sobrescreva para casar com o hostname do ambiente onde o container roda.
       APP_URL: ${FAKE_BINANCE_APP_URL:-http://localhost:8080}
+      # Banco: a instância do brd-digital, alcançada pelo nome do serviço dentro
+      # da rede dev-brd — a porta aqui é a INTERNA (5432), nunca a publicada no
+      # host. O database precisa existir antes do primeiro `up`; ver README.
+      DB_CONNECTION: pgsql
+      DB_HOST: ${FAKE_BINANCE_DB_HOST:-brd-db}
+      DB_PORT: ${FAKE_BINANCE_DB_PORT:-5432}
+      DB_DATABASE: ${FAKE_BINANCE_DB_DATABASE:-dev_fake_binance}
+      DB_USERNAME: ${FAKE_BINANCE_DB_USERNAME:-postgres}
+      DB_PASSWORD: ${FAKE_BINANCE_DB_PASSWORD:-postgres}
     ports:
       - '8080:8080'
     volumes:
       - fake-binance-data:/app/storage
     networks:
-      - dev-sycorax
+      - dev-brd
     healthcheck:
       test: ['CMD', 'curl', '--fail', 'http://127.0.0.1:8080/up']
       interval: 10s
@@ -34,34 +43,15 @@ services:
       timeout: 10s
       start_period: 15s
 
-  sycorax-mailpit:
-    build:
-      dockerfile: docker/mailpit.Dockerfile
-      context: .
-    image: mailpit.local:1
-    container_name: sycorax-mailpit
-    restart: no
-    hostname: dev
-    ports:
-      - '1025:1025'
-      - '8025:8025'
-    networks:
-      - dev-sycorax
-    healthcheck:
-      test: ['CMD', '/mailpit', 'readyz']
-      interval: 10s
-      retries: 5
-      timeout: 10s
-      start_period: 10s
-
 volumes:
   fake-binance-data:
     name: fake-binance-data
 
 networks:
-  dev-sycorax:
-    name: dev-sycorax
-    driver: bridge
-    driver_opts:
-      com.docker.network.bridge.name: dev-sycorax
-      com.docker.network.bridge.host_binding_ipv4: '127.0.0.1'
+  # Rede do compose do brd-digital, onde vive o `brd-db` que este projeto reusa.
+  # `external: true` porque quem a cria é o outro compose — um `up` aqui falha
+  # se a stack do brd-digital nunca subiu. Acoplamento deliberado: não subimos
+  # container de banco próprio.
+  dev-brd:
+    name: dev-brd
+    external: true

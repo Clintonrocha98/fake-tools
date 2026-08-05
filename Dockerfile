@@ -64,7 +64,8 @@ RUN install-php-extensions \
     zip \
     exif \
     pcntl \
-    opcache
+    opcache \
+    pdo_pgsql
 
 WORKDIR /app
 
@@ -94,8 +95,12 @@ ENV APP_NAME="Fake Binance" \
     LOG_CHANNEL=stack \
     LOG_STACK=single \
     LOG_LEVEL=info \
-    DB_CONNECTION=sqlite \
-    DB_DATABASE=/app/storage/app/database.sqlite \
+    DB_CONNECTION=pgsql \
+    DB_HOST=brd-db \
+    DB_PORT=5432 \
+    DB_DATABASE=dev_fake_binance \
+    DB_USERNAME=postgres \
+    DB_PASSWORD=postgres \
     SESSION_DRIVER=database \
     CACHE_STORE=database \
     QUEUE_CONNECTION=database \

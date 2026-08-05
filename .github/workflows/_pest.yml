@@ -37,6 +37,25 @@ jobs:
       matrix:
         shard: [1, 2]
 
+    # O CI sobe seu próprio Postgres efêmero; o `brd-db` do dev não existe aqui.
+    # `POSTGRES_DB` precisa casar com o `DB_DATABASE` do .env.testing.example,
+    # que o passo "Prepare test env" copia para .env.testing.
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_fake_binance
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 10
+          --health-start-period 5s
+
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -93,6 +112,7 @@ jobs:
 
       - name: Run Tests
         env:
+          DB_PORT: ${{ job.services.postgres.ports['5432'] }}
           SHARD: ${{ matrix.shard }}
         run: |
           vendor/bin/pest --ci --shard="${SHARD}"/2

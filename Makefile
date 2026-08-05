@@ -77,6 +77,11 @@ test-arch: ## Run architecture tests
 test-contract: ## Run contract tests
 	@php artisan test --compact --group=contract
 
+.PHONY: db-create
+db-create: ## Create the dev & testing databases inside the reused brd-db container
+	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE dev_fake_binance' || true
+	@docker exec brd-db psql -U postgres -c 'CREATE DATABASE test_fake_binance' || true
+
 .PHONY: setup-test-db
 setup-test-db: ## Create & migrate the testing database (honors .env.testing overrides)
 	@php artisan migrate --env=testing --no-interaction --force
@@ -94,15 +99,15 @@ env-up: ## Start the development environment
 	@docker compose --file docker-compose.yml up --detach
 
 .PHONY: env-down
-env-down: ## Stop the development environment (also wipes the fake Binance ledger volume — use fake-binance-down to keep it)
+env-down: ## Tear down the development environment (the ledger lives in Postgres and survives)
 	@docker compose --file docker-compose.yml down --rmi all --volumes
 
 .PHONY: fake-binance-up
-fake-binance-up: ## Start only the fake Binance venue container
+fake-binance-up: ## Start the fake Binance venue container
 	@docker compose --file docker-compose.yml up --detach fake-binance
 
 .PHONY: fake-binance-down
-fake-binance-down: ## Stop the fake Binance venue container, keeping its ledger volume
+fake-binance-down: ## Stop the fake Binance venue container
 	@docker compose --file docker-compose.yml stop fake-binance
 
 .PHONY: dev

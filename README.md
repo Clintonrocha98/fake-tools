@@ -69,6 +69,7 @@ Development workflow powered by [Makefile](Makefile). Run `make help` for all co
 | `make format`        |  `f`  | Rector + Pint fixes                         |
 | `make route-list`    | `rl`  | List routes (`--except-vendor`)             |
 | `make migrate-fresh` |       | Reset & seed DB                             |
+| `make db-create`     |       | Create both databases inside `brd-db`       |
 | `make env-up`        |       | Docker Compose up                           |
 | `make env-down`      |       | Docker down (clean)                         |
 | `make dev`           |       | `composer run dev` (Vite)                   |
@@ -76,12 +77,29 @@ Development workflow powered by [Makefile](Makefile). Run `make help` for all co
 
 ## Quick Start
 
+This project does **not** run its own database container — it reuses the Postgres
+instance from `brd-digital`'s compose stack (`brd-db`), with its own databases:
+`dev_fake_binance` and `test_fake_binance`.
+
 ```bash
-make setup          # Install deps, etc.
-make env-up         # Start Docker (DB, etc.)
-make migrate-fresh  # DB setup
-make dev            # Frontend build/watch
+# 1. Bring up brd-digital's stack first — it owns brd-db and the dev-brd network
+cd ../brd-digital && make env-up && cd -
+
+# 2. Create this project's two databases (idempotent)
+make db-create
+
+# 3. Point .env / .env.testing at the port brd-db publishes on YOUR machine
+docker port brd-db     # e.g. 5432/tcp -> 127.0.0.1:5434  =>  DB_PORT=5434
+
+make setup            # Install deps, copy .env files, migrate
+make migrate-fresh    # Reset & seed
+make dev              # Frontend build/watch
 ```
+
+`DB_PORT` is the only value that varies per machine: `brd-db` publishes `5432`
+internally, but the host port shifts when another container already holds `5432`.
+Inside the `dev-brd` network (i.e. the `fake-binance` container) it is always
+`brd-db:5432` — see `docker-compose.yml`.
 
 Access admin panel (SuperAdmin required): `/admin` (create via tinker or seed).
 
@@ -99,7 +117,9 @@ For contributions, follow Laravel standards.
 This repo also ships a **fake Binance venue**: a sandbox server the `brd-digital`
 monolith points at instead of the real Binance API in local/dev environments (see
 `app-modules/venue`). It runs as its own container, built from the root `Dockerfile`
-(FrankenPHP) with SQLite persisted on a named volume so state survives a restart.
+(FrankenPHP), with its state in the `dev_fake_binance` database on the shared
+`brd-db` Postgres — so the ledger survives a restart, and survives the container
+and its volume being recreated.
 
 ### Running it locally
 
@@ -108,28 +128,41 @@ docker compose up fake-binance
 # or: make fake-binance-up
 ```
 
-The entrypoint runs migrations and seeds automatically on first boot (a marker on
-the volume prevents re-seeding — and clobbering — an already-evolved ledger on every
-restart). The container exposes the app on `http://localhost:8080`, and the
+The container joins `brd-db`'s network (`dev-brd`, declared `external`), so
+**brd-digital's stack must be up first** and `dev_fake_binance` must exist
+(`make db-create`). The entrypoint waits for the database to accept connections
+before migrating, then runs the seeders on every start — they are idempotent, so a
+restart never re-credits an already-evolved ledger (see `LedgerAccountSeeder`).
+The container exposes the app on `http://localhost:8080`, and the
 Filament admin panel at `http://localhost:8080/admin` — the seeder creates
 `admin@admin.com` / `password` (prefilled on the login form) with no extra steps.
 
-Stop it with `make fake-binance-down` (keeps the `fake-binance-data` volume, so the
-ledger survives). `make env-down` also stops it, but runs
-`docker compose down --rmi all --volumes` — it deletes `fake-binance-data` along
-with everything else, wiping the ledger. Use `fake-binance-down` when you only
-want to pause the venue.
+Stop it with `make fake-binance-down`, or `make env-down` for a full teardown.
+Neither wipes the ledger any more: the state lives in `dev_fake_binance` on
+`brd-db`, not in the `fake-binance-data` volume (which now only holds
+logs/sessions/compiled views). To actually reset the ledger, drop and recreate the
+database — `docker exec brd-db psql -U postgres -c 'DROP DATABASE dev_fake_binance'`
+then `make db-create`.
 
 ### Env contract with the consumer
 
 The monolith configures its own `BINANCE_API_KEY` / `BINANCE_API_SECRET` to match
-whatever this container is running with:
+whatever this container is running with. Every env below is documented with its
+default in `.env.example`, grouped by the config file that reads it.
 
 | Env (fake-binance) | Meaning |
 | --- | --- |
 | `FAKE_BINANCE_API_KEY` / `FAKE_BINANCE_API_SECRET` | The pair the monolith configures as `BINANCE_API_KEY` / `BINANCE_API_SECRET` in dev. |
-| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` | Fiat / withdraw auto-advance cadences, in seconds. |
+| `FAKE_BINANCE_RECV_WINDOW` | Default signature window (ms) when the request omits `recvWindow`. Capped at 60000. |
 | `FAKE_BINANCE_SEED_BALANCES` | Starting ledger balances. Format: comma-separated `ASSET:AMOUNT` pairs (e.g. `BRL:100000,USDT:5000`). |
+| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` | Fiat / withdraw auto-advance cadences, in seconds. |
+| `FAKE_BINANCE_FIAT_STATUS_DIALECT` | `live` (SCREAMING_SNAKE, observed) or `classic` (documented). See ADR-0001. |
+| `FAKE_BINANCE_FIAT_DEPOSIT_ENABLED` | `false` makes every fiat deposit refuse with `100001`. |
+| `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
+| `FAKE_BINANCE_FIAT_DEPOSIT_LIMIT` | Optional per-deposit ceiling; unset means no ceiling. |
+| `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
+| `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |
+| `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
 
 Override the defaults via the compose `environment:` block or a shell-exported env
 before `docker compose up` (`FAKE_BINANCE_API_KEY=... docker compose up fake-binance`).

@@ -15,20 +15,31 @@ mkdir -p \
 
 php artisan storage:link --ansi || true
 
-DB_PATH="${DB_DATABASE:-/app/storage/app/database.sqlite}"
-if [ ! -f "$DB_PATH" ]; then
-    touch "$DB_PATH"
-fi
+# O Postgres é de OUTRO compose (o brd-db do brd-digital), então não há
+# `depends_on` que garanta ordem: este container pode subir antes do banco
+# aceitar conexão. Sem a espera, o `migrate` abaixo mata o start.
+echo "Aguardando o banco em ${DB_HOST}:${DB_PORT}..."
+attempt=1
+until php artisan db:show --quiet 2>/dev/null; do
+    if [ "$attempt" -ge 30 ]; then
+        echo "Banco inacessível em ${DB_HOST}:${DB_PORT} após 30 tentativas." >&2
+        echo "A stack do brd-digital está no ar e o database '${DB_DATABASE}' existe?" >&2
+        # Repete sem suprimir: o loop acima engole a causa, e "driver ausente"
+        # não é a mesma falha que "banco ainda subindo".
+        echo "Erro real:" >&2
+        php artisan db:show --quiet >&2 || true
+        exit 1
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+done
 
 php artisan migrate --force --ansi
 
-# O ledger fake é stateful e o estado precisa sobreviver a restart. Sem essa
-# marca, todo restart re-rodaria os seeders sobre um banco que já evoluiu
-# (saldos, ordens) e duplicaria dados.
-SEED_MARKER="$(dirname "$DB_PATH")/.seeded"
-if [ ! -f "$SEED_MARKER" ]; then
-    php artisan db:seed --force --ansi
-    touch "$SEED_MARKER"
-fi
+# Sem marcador externo: o estado vive no Postgres, que sobrevive ao volume e ao
+# container, então o próprio banco é a fonte da verdade sobre "já semeado".
+# Todos os seeders são idempotentes — o do ledger não recredita um ledger que já
+# tem contas (ver LedgerAccountSeeder), e o admin é firstOrCreate.
+php artisan db:seed --force --ansi
 
 exec "$@"
