@@ -6,7 +6,7 @@ The suite runs on **Pest 4**. Create tests with `php artisan make:test --pest {n
 
 ## Structure
 
-Three suites, declared in **both** `phpunit.xml` (testsuite `<directory>` globs) and
+Four suites, declared in **both** `phpunit.xml` (testsuite `<directory>` globs) and
 `tests/Pest.php` (the `pest()->…->in(...)` bindings). Each spans the root `tests/` dir
 **and** every module's `app-modules/*/tests/` dir — keep the two config files in sync when
 you add a suite or a module.
@@ -16,6 +16,10 @@ you add a suite or a module.
 | `Unit` | `tests/Unit`, `app-modules/*/tests/Unit` | group `unit` | no |
 | `Feature` | `tests/Feature`, `app-modules/*/tests/Feature` | group `feature` + `LazilyRefreshDatabase` | yes |
 | `Arch` | `tests/Arch`, `app-modules/*/tests/Arch` | group `arch` | no |
+| `Contract` | `tests/Contract`, `app-modules/*/tests/Contract` | group `contract` + `LazilyRefreshDatabase` | yes |
+
+Run each with `composer test:unit` · `test:feature` · `test:arch` · `test:contract`, or
+`php artisan test --group=<suite>` / `make test-<suite>`.
 
 ## Architecture test suite (`arch()` + reflection guards)
 

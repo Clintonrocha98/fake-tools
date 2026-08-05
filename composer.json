@@ -16,6 +16,7 @@
         "guava/filament-knowledge-base": "^3.3.2",
         "he4rt/identity": "^1.0.0",
         "he4rt/panel-admin": "^1.0.0",
+        "he4rt/venue": "^1.0.0",
         "internachi/modular": "^3.0.2",
         "joaopaulolndev/filament-edit-profile": "^3.0.2",
         "laravel/framework": "^13.22.0",
@@ -63,8 +64,9 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "He4rt\\PanelAdmin\\Tests\\": "app-modules/panel-admin/tests/",
             "He4rt\\Identity\\Tests\\": "app-modules/identity/tests/",
+            "He4rt\\PanelAdmin\\Tests\\": "app-modules/panel-admin/tests/",
+            "He4rt\\Venue\\Tests\\": "app-modules/venue/tests/",
             "Tests\\": "tests/"
         }
     },
@@ -91,6 +93,7 @@
         "test:unit": "vendor/bin/pest --compact --group=unit",
         "test:feature": "vendor/bin/pest --compact --group=feature",
         "test:arch": "vendor/bin/pest --compact --group=arch",
+        "test:contract": "vendor/bin/pest --compact --group=contract",
         "test:browser": "vendor/bin/pest --compact --group=browser",
         "test:cov": "vendor/bin/pest --compact --coverage",
         "test:shards": "vendor/bin/pest --update-shards",
@@ -124,7 +127,6 @@
             "@php artisan key:generate --ansi --env=testing"
         ],
         "post-create-project-cmd": [
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
             "@php artisan migrate --graceful --ansi"
         ]
     },

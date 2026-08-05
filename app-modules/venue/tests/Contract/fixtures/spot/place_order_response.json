@@ -1,0 +1,18 @@
+{
+    "symbol": "USDCBRL",
+    "orderId": 123,
+    "clientOrderId": "forex-1",
+    "status": "FILLED",
+    "side": "BUY",
+    "type": "MARKET",
+    "executedQty": "2.93000000",
+    "cummulativeQuoteQty": "15.00000000",
+    "fills": [
+        {
+            "price": "5.11",
+            "qty": "2.93",
+            "commission": "0.00293",
+            "commissionAsset": "USDC"
+        }
+    ]
+}

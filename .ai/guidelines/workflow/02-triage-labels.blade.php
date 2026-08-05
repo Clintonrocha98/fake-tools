@@ -41,6 +41,7 @@ Every issue must be tagged with the module(s) it affects. Labels follow the patt
 | ----------------- | ---------------- | ------------------------------ |
 | `mod:identity`    | `identity`       | Auth, users, teams, RBAC & external identities |
 | `mod:panel-admin` | `panel-admin`    | Admin Filament panel (namespace `He4rt\PanelAdmin`) |
+| `mod:venue`       | `venue`          | Fake Binance venue — ledger, `/api` e `/sapi` endpoints |
 
 Only modules that exist under `app-modules/` get a label. When a new module is
 scaffolded, create its label first (`gh label create "mod:<name>" --description "<short description>" --color "c2e0c6"`) and add a row here.

@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
+use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
+use He4rt\Venue\Database\Seeders\LedgerAccountSeeder;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 final class DatabaseSeeder extends Seeder
 {
@@ -15,6 +18,7 @@ final class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->syncPermissions();
+        $this->call(LedgerAccountSeeder::class);
 
         if (app()->isLocal()) {
             $this->spawnAdminUser();
@@ -23,13 +27,30 @@ final class DatabaseSeeder extends Seeder
         $this->output('Database seeding completed successfully. Have fun!');
     }
 
+    /**
+     * Cria o admin sem passar pela UserFactory: `fakerphp/faker` é dependência
+     * de dev e não existe num vendor buildado com `composer install --no-dev`
+     * (a imagem Docker deste servidor fake), então o seed automático do
+     * container quebraria se dependesse de `fake()`.
+     */
     public function spawnAdminUser(): void
     {
         $this->output('Creating admin user...');
 
-        User::factory()
-            ->admin()
-            ->create();
+        $admin = User::query()->firstOrCreate(
+            ['email' => 'admin@admin.com'],
+            [
+                'name' => 'admin',
+                'email_verified_at' => now(),
+                'password' => Hash::make('password'),
+                'locale' => 'en',
+                'theme_color' => '#4f46e5',
+            ],
+        );
+
+        if (!$admin->hasRole(Roles::SuperAdmin)) {
+            $admin->assignRole(Roles::SuperAdmin);
+        }
 
         $this->output('Admin user created successfully.');
     }
