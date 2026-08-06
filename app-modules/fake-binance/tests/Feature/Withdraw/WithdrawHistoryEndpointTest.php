@@ -21,6 +21,10 @@ it('advances a pending withdraw to Completed with a txId across two history read
     config(['fake-binance-withdraw.advance_seconds' => $freshConfig['advance_seconds']]);
     config(['fake-binance-withdraw.fees' => ['SOL' => '0.004']]);
 
+    // Relógio congelado: com advance_seconds=1, qualquer segundo REAL entre o
+    // apply e a primeira leitura já avançaria o status e flakearia o teste.
+    Date::setTestNow(Date::now());
+
     (new CreditLedgerAccount)->handle('USDC', '100');
 
     $applyResponse = $this->postJson(
