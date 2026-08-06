@@ -171,6 +171,13 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_TRAVEL_RULE_COUNTRY` | Travel rule questionnaire country. Unset/empty or `NIL` = no requirement (wallet delivery happy path); any country code makes the consumer refuse the delivery. |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
 
+| Env (fake-starkbank) | Meaning |
+| --- | --- |
+| `FAKE_STARKBANK_CLIENT_ACCESS_ID` | The `Access-Id` the fake accepts — the monolith's `STARKBANK_ACCESS_ID` (`project/{id}`). |
+| `FAKE_STARKBANK_CLIENT_PUBLIC_KEY_PATH` / `FAKE_STARKBANK_CLIENT_PUBLIC_KEY` | PEM (file, preferred; or inline) of the secp256k1 **public** key matching the monolith's signing key. The fake really verifies `Access-Signature` over `accessId:accessTime:body`; with no readable key every request is refused with `invalidSignature`. |
+| `FAKE_STARKBANK_RECV_WINDOW_SECONDS` | Tolerance between `Access-Time` and the fake's clock. Outside it: `expiredAccessTime`. |
+| `FAKE_STARKBANK_WORKSPACE_*` | The single workspace `GET /v2/workspace` serves (`id`, `username`, `name`, `allowed_tax_ids`, `status`, `organization_id`, `picture_url`, `created`). Defaults mirror the consumer's recorded fixture. |
+
 Override the defaults via the compose `environment:` block or a shell-exported env
 before `docker compose up` (`FAKE_BINANCE_API_KEY=... docker compose up fake-binance`).
 

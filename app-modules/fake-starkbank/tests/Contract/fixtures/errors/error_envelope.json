@@ -1,0 +1,8 @@
+{
+    "errors": [
+        {
+            "code": "invalidSignature",
+            "message": "Invalid access signature"
+        }
+    ]
+}

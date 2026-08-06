@@ -26,6 +26,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Janela do Access-Time
+    |--------------------------------------------------------------------------
+    |
+    | Tolerância, em segundos, entre o Access-Time do request e o relógio do
+    | fake: |now − Access-Time| ≤ recv_window_seconds, senão expiredAccessTime.
+    | A doc oficial do StarkBank não publica essa janela — o valor é decisão do
+    | fake, e reduzi-lo é o gancho para armar expiredAccessTime sob comando sem
+    | montar um request com timestamp velho na mão.
+    |
+    */
+
+    'recv_window_seconds' => (int) env('FAKE_STARKBANK_RECV_WINDOW_SECONDS', 300),
+
+    /*
+    |--------------------------------------------------------------------------
     | Webhook (fake → consumidor)
     |--------------------------------------------------------------------------
     |

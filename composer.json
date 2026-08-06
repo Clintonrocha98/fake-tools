@@ -25,6 +25,7 @@
         "league/flysystem-sftp-v3": "^3.33.0",
         "monicahq/laravel-cloudflare": "^4.1.0",
         "owenvoke/blade-fontawesome": "^3.3.1",
+        "phpseclib/phpseclib": "^3.0.55",
         "saloonphp/saloon": "^4.0.0",
         "spatie/laravel-activitylog": "^5.0.0",
         "spatie/laravel-backup": "^10.3.0",
