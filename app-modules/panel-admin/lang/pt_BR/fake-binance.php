@@ -89,8 +89,6 @@ return [
 
     'scenario_switches' => [
         'title' => 'Switches de cenário',
-        'turn_on' => 'Ligar o switch :switch?',
-        'turn_off' => 'Desligar o switch :switch?',
         'toggle_notification' => ':switch agora está :state',
         'state_on' => 'LIGADO',
         'state_off' => 'DESLIGADO',

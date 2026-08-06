@@ -89,8 +89,6 @@ return [
 
     'scenario_switches' => [
         'title' => 'Scenario Switches',
-        'turn_on' => 'Turn on the :switch switch?',
-        'turn_off' => 'Turn off the :switch switch?',
         'toggle_notification' => ':switch is now :state',
         'state_on' => 'ON',
         'state_off' => 'OFF',
