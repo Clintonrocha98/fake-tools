@@ -89,10 +89,20 @@ return [
 
     'scenario_switches' => [
         'title' => 'Scenario Switches',
-        'turn_on' => 'Turn on the :switch switch?',
-        'turn_off' => 'Turn off the :switch switch?',
         'toggle_notification' => ':switch is now :state',
         'state_on' => 'ON',
         'state_off' => 'OFF',
+    ],
+
+    'armed_scenarios' => [
+        'title' => 'Armed scenarios',
+        'fraction' => 'Fill fraction',
+        'fraction_helper' => 'How much of the order executes on the partial outcome, between 0 and 1. Empty means half.',
+        'error_code' => 'Error code',
+        'raw_status' => 'Arbitrary status',
+        'raw_status_helper' => 'Vocabulary outside the status enum. Empty means :default.',
+        'armed_notification' => 'Armed: :outcome — applies to the next request',
+        'rearmed_notification' => 'Re-armed: :outcome — the next request uses the new parameter',
+        'disarmed_notification' => 'Disarmed: :outcome',
     ],
 ];

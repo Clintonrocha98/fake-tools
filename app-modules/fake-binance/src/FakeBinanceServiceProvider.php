@@ -8,6 +8,7 @@ use He4rt\FakeBinance\Fiat\Models\FiatOrder;
 use He4rt\FakeBinance\Http\Middleware\VerifiesSignedRequest;
 use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
 use He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches;
+use He4rt\FakeBinance\Scenarios\Models\ArmedScenario;
 use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
@@ -39,6 +40,7 @@ class FakeBinanceServiceProvider extends ServiceProvider
             'spot_order' => SpotOrder::class,
             'withdrawal' => Withdrawal::class,
             'scenario_switchboard' => ScenarioSwitchboard::class,
+            'armed_scenario' => ArmedScenario::class,
         ]);
     }
 }

@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace He4rt\PanelAdmin\Tests\Feature\Filament;
 
-use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
-use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
+use He4rt\FakeBinance\Scenarios\Actions\GetScenarioSwitchboard;
+use He4rt\FakeBinance\Scenarios\Actions\ToggleScenarioSwitch;
+use He4rt\FakeBinance\Scenarios\Enums\ScenarioSwitch;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use He4rt\PanelAdmin\Filament\Pages\ScenarioSwitchesPage;
@@ -29,19 +30,28 @@ it('renders with every switch off by default', function (): void {
         ->assertSee('Modo relógio torto');
 });
 
-it('can turn the outage switch on', function (): void {
+it('turns a global switch on through its toggle', function (): void {
     livewire(ScenarioSwitchesPage::class)
-        ->callAction(TestAction::make('toggle')->arguments(['switch' => 'outage', 'enable' => true]))
+        ->set('data.outage', value: true)
         ->assertNotified();
 
-    expect(ScenarioSwitchboard::query()->first()->outage_mode)->toBeTrue();
+    expect((new GetScenarioSwitchboard)->handle()->outage_mode)->toBeTrue();
 });
 
-it('can turn a switch back off', function (): void {
-    livewire(ScenarioSwitchesPage::class)
-        ->callAction(TestAction::make('toggle')->arguments(['switch' => 'outage', 'enable' => true]))
-        ->callAction(TestAction::make('toggle')->arguments(['switch' => 'outage', 'enable' => false]))
-        ->assertNotified();
+it('turns a global switch back off through the same toggle', function (): void {
+    (new ToggleScenarioSwitch)->handle(ScenarioSwitch::Outage, enabled: true);
 
-    expect(ScenarioSwitchboard::query()->first()->outage_mode)->toBeFalse();
+    livewire(ScenarioSwitchesPage::class)
+        ->set('data.outage', value: false);
+
+    expect((new GetScenarioSwitchboard)->handle()->outage_mode)->toBeFalse();
+});
+
+it('loads each switch already reflecting the persisted state', function (): void {
+    (new ToggleScenarioSwitch)->handle(ScenarioSwitch::RateLimit, enabled: true);
+
+    livewire(ScenarioSwitchesPage::class)
+        ->assertSet('data.rate_limit', value: true)
+        ->assertSet('data.outage', value: false)
+        ->assertSet('data.clock_skew', value: false);
 });

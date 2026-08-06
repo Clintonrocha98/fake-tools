@@ -6,25 +6,30 @@ namespace He4rt\PanelAdmin\Filament\Pages;
 
 use App\Enums\NavigationGroup;
 use BackedEnum;
-use Filament\Actions\Action;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
 use He4rt\FakeBinance\Scenarios\Actions\GetScenarioSwitchboard;
 use He4rt\FakeBinance\Scenarios\Actions\ToggleScenarioSwitch;
 use He4rt\FakeBinance\Scenarios\Enums\ScenarioSwitch;
-use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
 use UnitEnum;
 
 /**
  * Os três switches globais aplicados ANTES de qualquer endpoint da fake Binance
- * ({@see \He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches}) — sem
- * clique, o happy path nunca os encontra ligados (persistem `false` por
- * padrão).
+ * ({@see \He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches}) —
+ * um toggle por switch, sem clique nem confirmação, e o happy path nunca os
+ * encontra ligados (persistem `false` por padrão).
+ *
+ * @property-read Schema $form
  */
 class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
 {
+    /** @var array<string, mixed> */
+    public array $data = [];
+
     protected string $view = 'panel-admin::filament.pages.scenario-switches';
 
     protected static ?string $slug = 'scenario-switches';
@@ -54,57 +59,47 @@ class ScenarioSwitchesPage extends Page implements HasKnowledgeBase
         return __('panel-admin::fake-binance.scenario_switches.title');
     }
 
+    public function mount(): void
+    {
+        $switchboard = resolve(GetScenarioSwitchboard::class)->handle();
+
+        $this->form->fill(collect(ScenarioSwitch::cases())
+            ->mapWithKeys(fn (ScenarioSwitch $switch): array => [
+                $switch->value => (bool) $switchboard->{$switch->column()},
+            ])
+            ->all());
+    }
+
     public function getTitle(): string
     {
         return __('panel-admin::fake-binance.scenario_switches.title');
     }
 
-    public function getSwitchboard(): ScenarioSwitchboard
+    public function form(Schema $schema): Schema
     {
-        return resolve(GetScenarioSwitchboard::class)->handle();
+        return $schema
+            ->components(array_map(
+                fn (ScenarioSwitch $switch): Toggle => Toggle::make($switch->value)
+                    ->label($switch->getLabel())
+                    ->helperText($switch->getDescription())
+                    ->onColor('danger')
+                    ->live()
+                    ->afterStateUpdated(fn (bool $state) => $this->toggle($switch, $state)),
+                ScenarioSwitch::cases(),
+            ))
+            ->statePath('data');
     }
 
-    /**
-     * @return array<int, array{switch: ScenarioSwitch, enabled: bool}>
-     */
-    public function getSwitchRows(): array
+    private function toggle(ScenarioSwitch $switch, bool $enabled): void
     {
-        $switchboard = $this->getSwitchboard();
+        resolve(ToggleScenarioSwitch::class)->handle($switch, $enabled);
 
-        return collect(ScenarioSwitch::cases())
-            ->map(fn (ScenarioSwitch $switch): array => [
-                'switch' => $switch,
-                'enabled' => (bool) $switchboard->{$switch->column()},
-            ])
-            ->all();
-    }
-
-    public function toggleAction(): Action
-    {
-        return Action::make('toggle')
-            ->requiresConfirmation()
-            ->modalHeading(function (array $arguments): string {
-                /** @var array{switch: string, enable: bool} $arguments */
-                $key = $arguments['enable'] ? 'turn_on' : 'turn_off';
-
-                return __('panel-admin::fake-binance.scenario_switches.'.$key, [
-                    'switch' => ScenarioSwitch::from($arguments['switch'])->getLabel(),
-                ]);
-            })
-            ->action(function (array $arguments): void {
-                /** @var array{switch: string, enable: bool} $arguments */
-                $switch = ScenarioSwitch::from($arguments['switch']);
-                $enable = $arguments['enable'];
-
-                resolve(ToggleScenarioSwitch::class)->handle($switch, $enable);
-
-                Notification::make()
-                    ->title(__('panel-admin::fake-binance.scenario_switches.toggle_notification', [
-                        'switch' => $switch->getLabel(),
-                        'state' => __('panel-admin::fake-binance.scenario_switches.'.($enable ? 'state_on' : 'state_off')),
-                    ]))
-                    ->success()
-                    ->send();
-            });
+        Notification::make()
+            ->title(__('panel-admin::fake-binance.scenario_switches.toggle_notification', [
+                'switch' => $switch->getLabel(),
+                'state' => __('panel-admin::fake-binance.scenario_switches.'.($enabled ? 'state_on' : 'state_off')),
+            ]))
+            ->success()
+            ->send();
     }
 }
