@@ -62,6 +62,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Livro sintético (GET /api/v3/depth)
+    |--------------------------------------------------------------------------
+    |
+    | Profundidade previsível em torno do bid/ask do símbolo (ADR-0002 — nunca
+    | simula volatilidade): `levels` níveis por lado, afastando-se `step` por
+    | nível, com a quantidade do próprio símbolo (`bid_qty`/`ask_qty`) em cada
+    | nível. O `limit` do request apara, nunca amplia.
+    |
+    */
+
+    'depth' => [
+        'levels' => (int) env('FAKE_BINANCE_DEPTH_LEVELS', 5),
+        'step' => env('FAKE_BINANCE_DEPTH_STEP', '0.01'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Comissão
     |--------------------------------------------------------------------------
     |
