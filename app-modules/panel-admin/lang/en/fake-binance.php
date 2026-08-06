@@ -97,10 +97,12 @@ return [
     'armed_scenarios' => [
         'title' => 'Armed scenarios',
         'fraction' => 'Fill fraction',
-        'fraction_helper' => 'How much of the order executes on the partial outcome. Empty means half.',
+        'fraction_helper' => 'How much of the order executes on the partial outcome, between 0 and 1. Empty means half.',
         'error_code' => 'Error code',
         'raw_status' => 'Arbitrary status',
+        'raw_status_helper' => 'Vocabulary outside the status enum. Empty means :default.',
         'armed_notification' => 'Armed: :outcome — applies to the next request',
+        'rearmed_notification' => 'Re-armed: :outcome — the next request uses the new parameter',
         'disarmed_notification' => 'Disarmed: :outcome',
     ],
 ];

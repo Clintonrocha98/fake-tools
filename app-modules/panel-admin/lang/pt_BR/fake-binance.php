@@ -97,10 +97,12 @@ return [
     'armed_scenarios' => [
         'title' => 'Cenários armados',
         'fraction' => 'Fração do fill',
-        'fraction_helper' => 'Quanto da ordem executa no desfecho parcial. Vazio usa metade.',
+        'fraction_helper' => 'Quanto da ordem executa no desfecho parcial, entre 0 e 1. Vazio usa metade.',
         'error_code' => 'Código de erro',
         'raw_status' => 'Status arbitrário',
+        'raw_status_helper' => 'Vocabulário fora do enum de status. Vazio usa :default.',
         'armed_notification' => 'Armado: :outcome — vale para o próximo pedido',
+        'rearmed_notification' => 'Re-armado: :outcome — o próximo pedido usa o parâmetro novo',
         'disarmed_notification' => 'Desarmado: :outcome',
     ],
 ];

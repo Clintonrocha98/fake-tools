@@ -16,10 +16,11 @@ Aqui você combina o que vai acontecer com o **próximo** pedido de uma perna. L
 - **Um desfecho por perna.** Ligar um desliga o anterior — dois desfechos para o mesmo pedido se contradizem. Pernas diferentes ficam armadas ao mesmo tempo.
 - **Os switches globais vencem.** Com o modo outage ligado, o pedido nem chega na perna, e o cenário armado continua de pé para depois.
 - **O ledger acompanha o desfecho.** Um fill parcial credita só a fração; uma recusa não move nada.
+- **Editar o parâmetro re-arma.** Trocar fração, código ou status com o switch já ligado grava o valor novo na hora e avisa. Digitar com todos os switches desligados não arma nada.
 
 ## Conversão spot
 
-- **Preencher parcial e expirar o resto** — executa só a fração informada e responde `EXPIRED`. Vazio usa metade.
-- **Recusar com código** — responde o envelope de erro de `/api/v3` e não cria ordem nenhuma.
+- **Preencher parcial e expirar o resto** — executa só a fração informada e responde `EXPIRED`. A fração vai de 0 a 1; vazio usa metade.
+- **Recusar com código** — responde o envelope de erro de `/api/v3` e não cria ordem nenhuma. A lista traz só os códigos que essa perna sabe emitir.
 - **Responder REJECTED** — HTTP 200 com `REJECTED` e fill zerado.
-- **Emitir vocabulário desconhecido** — executa normal, mas a wire responde o status que você digitar.
+- **Emitir vocabulário desconhecido** — executa normal, mas a wire responde o status que você digitar. Vazio usa `SOME_FUTURE_STATE`.

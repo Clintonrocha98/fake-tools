@@ -6,6 +6,7 @@ namespace He4rt\PanelAdmin\Filament\Pages;
 
 use App\Enums\NavigationGroup;
 use BackedEnum;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -21,7 +22,7 @@ use He4rt\FakeBinance\Scenarios\Contracts\LegOutcomeContract;
 use He4rt\FakeBinance\Scenarios\DTOs\ArmedScenarioPayload;
 use He4rt\FakeBinance\Scenarios\Enums\VenueLeg;
 use He4rt\FakeBinance\Scenarios\Models\ArmedScenario;
-use Illuminate\Contracts\Support\Htmlable;
+use He4rt\FakeBinance\Spot\DTOs\SpotExecutionPlan;
 use UnitEnum;
 
 /**
@@ -99,12 +100,23 @@ class ArmedScenariosPage extends Page implements HasKnowledgeBase
             TextInput::make($leg->value.'.fraction')
                 ->label(__('panel-admin::fake-binance.armed_scenarios.fraction'))
                 ->helperText(__('panel-admin::fake-binance.armed_scenarios.fraction_helper'))
-                ->numeric(),
-            TextInput::make($leg->value.'.errorCode')
+                ->numeric()
+                ->minValue(0)
+                ->maxValue(1)
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn () => $this->rearm($leg)),
+            Select::make($leg->value.'.errorCode')
                 ->label(__('panel-admin::fake-binance.armed_scenarios.error_code'))
-                ->numeric(),
+                ->options($this->refusalCodeOptions($leg))
+                ->live()
+                ->afterStateUpdated(fn () => $this->rearm($leg)),
             TextInput::make($leg->value.'.rawStatus')
-                ->label(__('panel-admin::fake-binance.armed_scenarios.raw_status')),
+                ->label(__('panel-admin::fake-binance.armed_scenarios.raw_status'))
+                ->helperText(__('panel-admin::fake-binance.armed_scenarios.raw_status_helper', [
+                    'default' => SpotExecutionPlan::DEFAULT_UNKNOWN_RAW_STATUS,
+                ]))
+                ->live(onBlur: true)
+                ->afterStateUpdated(fn () => $this->rearm($leg)),
         ];
 
         foreach ($leg->outcomes() as $outcome) {
@@ -127,7 +139,7 @@ class ArmedScenariosPage extends Page implements HasKnowledgeBase
 
         if (!$enabled) {
             resolve(DisarmScenario::class)->handle($leg);
-            $this->notifyState($outcome, armed: false);
+            $this->notify($outcome, 'disarmed_notification');
 
             return;
         }
@@ -141,7 +153,40 @@ class ArmedScenariosPage extends Page implements HasKnowledgeBase
             }
         }
 
-        $this->notifyState($outcome, armed: true);
+        $this->notify($outcome, 'armed_notification');
+    }
+
+    /**
+     * Editar fração / código / status com a perna já armada re-arma com o valor
+     * novo: sem isto a tela mostraria um parâmetro que o banco não tem, e o
+     * pedido seguinte sairia com o anterior, sem sinal nenhum. Perna desarmada
+     * não vira armada por digitação — só o switch arma.
+     */
+    private function rearm(VenueLeg $leg): void
+    {
+        $outcome = $this->armedOutcomeFor($leg);
+
+        if (!$outcome instanceof LegOutcomeContract) {
+            return;
+        }
+
+        resolve(ArmScenario::class)->handle($outcome, $this->payloadFor($leg));
+
+        $this->notify($outcome, 'rearmed_notification');
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function refusalCodeOptions(VenueLeg $leg): array
+    {
+        $options = [];
+
+        foreach ($leg->refusalCodes() as $code) {
+            $options[$code->value] = $code->getLabel().' ('.$code->value.')';
+        }
+
+        return $options;
     }
 
     private function payloadFor(VenueLeg $leg): ArmedScenarioPayload
@@ -156,15 +201,11 @@ class ArmedScenariosPage extends Page implements HasKnowledgeBase
         ]);
     }
 
-    private function notifyState(LegOutcomeContract $outcome, bool $armed): void
+    private function notify(LegOutcomeContract $outcome, string $messageKey): void
     {
-        // getLabel() vem do contrato Filament HasLabel (string|Htmlable|null); todo
-        // desfecho concreto devolve string, mas o contrato não garante isso aqui.
-        $label = $outcome->getLabel();
-
         Notification::make()
-            ->title(__('panel-admin::fake-binance.armed_scenarios.'.($armed ? 'armed_notification' : 'disarmed_notification'), [
-                'outcome' => $label instanceof Htmlable ? $label->toHtml() : ($label ?? ''),
+            ->title(__('panel-admin::fake-binance.armed_scenarios.'.$messageKey, [
+                'outcome' => $outcome->getLabel(),
             ]))
             ->success()
             ->send();

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Scenarios\Enums\SpotConversionOutcome;
 use He4rt\FakeBinance\Scenarios\Enums\VenueLeg;
 use He4rt\FakeBinance\Scenarios\Models\ArmedScenario;
@@ -69,3 +70,50 @@ it('arms the partial outcome with the fraction typed next to the switch', functi
 
     expect(ArmedScenario::query()->sole()->payload->fraction)->toBe('0.25');
 });
+
+it('re-arms with the new fraction when it is edited with the switch already on', function (): void {
+    $page = livewire(ArmedScenariosPage::class)
+        ->set('data.spot_conversion.fraction', '0.5')
+        ->set('data.spot_conversion.fill_partial_expired', value: true);
+
+    expect(ArmedScenario::query()->sole()->payload->fraction)->toBe('0.5');
+
+    $page->set('data.spot_conversion.fraction', '0.25')->assertNotified();
+
+    expect(ArmedScenario::query()->sole()->payload->fraction)->toBe('0.25')
+        ->and(ArmedScenario::query()->sole()->resolvedOutcome())->toBe(SpotConversionOutcome::FillPartialExpired);
+});
+
+it('re-arms with the new error code and the new raw status too', function (): void {
+    $page = livewire(ArmedScenariosPage::class)
+        ->set('data.spot_conversion.refuse_with_code', value: true)
+        ->set('data.spot_conversion.errorCode', (string) BinanceErrorCode::FilterFailure->value);
+
+    expect(ArmedScenario::query()->sole()->payload->binanceErrorCode())->toBe(BinanceErrorCode::FilterFailure);
+
+    $page->set('data.spot_conversion.emit_unknown_status', value: true)
+        ->set('data.spot_conversion.rawStatus', 'BANANA');
+
+    expect(ArmedScenario::query()->sole()->payload->rawStatus)->toBe('BANANA')
+        ->and(ArmedScenario::query()->sole()->resolvedOutcome())->toBe(SpotConversionOutcome::EmitUnknownStatus);
+});
+
+it('arms nothing when a parameter is edited with every switch off', function (): void {
+    livewire(ArmedScenariosPage::class)
+        ->set('data.spot_conversion.fraction', '0.25')
+        ->set('data.spot_conversion.rawStatus', 'BANANA');
+
+    expect(ArmedScenario::query()->count())->toBe(0);
+});
+
+it('never arms a fill fraction outside [0, 1], whatever reaches the state', function (string $fraction): void {
+    livewire(ArmedScenariosPage::class)
+        ->set('data.spot_conversion.fraction', $fraction)
+        ->set('data.spot_conversion.fill_partial_expired', value: true);
+
+    // O input tem `min`/`max`, mas eles só valem no navegador: esta página não
+    // tem submit, então nada roda a validação do schema. A garantia dura é do
+    // VO — fração fora de [0, 1] é lida como ausente e o desfecho cai no seu
+    // default, em vez de gravar um executedQty negativo (ou o dobro do pedido).
+    expect(ArmedScenario::query()->sole()->payload->fraction)->toBeNull();
+})->with(['-0.5', '2']);
