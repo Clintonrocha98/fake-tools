@@ -7,6 +7,11 @@ services:
     container_name: fake-tools
     restart: no
     hostname: fake-tools
+    extra_hosts:
+      # O fake-starkbank precisa SAIR do container para entregar webhooks no
+      # monolito, que roda no host — diferente do fake-binance, que só entra.
+      # `host.docker.internal` não resolve por padrão em Docker no Linux.
+      - 'host.docker.internal:host-gateway'
     environment:
       # Par que o monolito consumidor configura como BINANCE_API_KEY/SECRET
       # de dev — troque os defaults abaixo para casar com o outro lado.
@@ -30,6 +35,18 @@ services:
       DB_DATABASE: ${FAKE_TOOLS_DB_DATABASE:-dev_fake_tools}
       DB_USERNAME: ${FAKE_TOOLS_DB_USERNAME:-postgres}
       DB_PASSWORD: ${FAKE_TOOLS_DB_PASSWORD:-postgres}
+      # Contrato de env do fake-starkbank (ver README.md § Env contract) —
+      # mesmo padrão dos FAKE_BINANCE_* acima.
+      FAKE_STARKBANK_CLIENT_ACCESS_ID: ${FAKE_STARKBANK_CLIENT_ACCESS_ID:-project/6341320293482496}
+      FAKE_STARKBANK_CLIENT_PUBLIC_KEY_PATH: ${FAKE_STARKBANK_CLIENT_PUBLIC_KEY_PATH:-docker/dev-keys/client-dev.pub.pem}
+      FAKE_STARKBANK_RECV_WINDOW_SECONDS: ${FAKE_STARKBANK_RECV_WINDOW_SECONDS:-300}
+      FAKE_STARKBANK_WEBHOOK_URL: ${FAKE_STARKBANK_WEBHOOK_URL:-http://host.docker.internal:8000/webhooks/starkbank}
+      FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY_PATH: ${FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY_PATH:-docker/dev-keys/webhook-dev.pem}
+      FAKE_STARKBANK_INVOICE_ADVANCE_SECONDS: ${FAKE_STARKBANK_INVOICE_ADVANCE_SECONDS:-60}
+      FAKE_STARKBANK_TRANSFER_ADVANCE_SECONDS: ${FAKE_STARKBANK_TRANSFER_ADVANCE_SECONDS:-60}
+      FAKE_STARKBANK_BRCODE_ADVANCE_SECONDS: ${FAKE_STARKBANK_BRCODE_ADVANCE_SECONDS:-60}
+      FAKE_STARKBANK_FUNDING_PIX_KEY: ${FAKE_STARKBANK_FUNDING_PIX_KEY:-funding@fake-binance.dev}
+      FAKE_STARKBANK_FUNDING_TAX_ID: ${FAKE_STARKBANK_FUNDING_TAX_ID:-20.018.183/0001-80}
     ports:
       - '8080:8080'
     volumes:
