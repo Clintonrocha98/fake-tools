@@ -66,6 +66,7 @@ inteira".
 | D5 | **Consumo atômico.** Dois pedidos concorrentes: só um recebe o armado. | O poller do treasury pode disparar concorrente; um cenário aplicado duas vezes não é reprodutível. |
 | D6 | **As ações pós-fato continuam existindo.** | Rasurar um registro já emitido segue sendo um cenário real (a venue muda o status entre o POST e o GET). O mecanismo novo não substitui, complementa. |
 | D7 | **Mecanismo genérico desde o começo**, com desfechos declarados por perna. | As pernas do fluxo inverso (issue #12) herdam o mecanismo sem redesenho. |
+| D8 | **Ativação por switch, nunca por botão** — nos cenários armados e também nos três switches globais existentes. | Um gesto liga e desliga, o estado fica visível na tela. A página global se chama "Scenario Switches" e hoje usa botão com modal de confirmação. |
 
 ## 4. Duas naturezas de perna
 
@@ -229,27 +230,53 @@ return DB::transaction(function (): ?ArmedScenario {
 
 ## 7. Superfície no painel
 
-Uma página **Cenários armados** no grupo Fake Binance, um card por perna:
+**Toda ativação é um switch, nunca um botão.** Um gesto liga, o mesmo gesto desliga, o
+estado está visível sem abrir nada — é o que a tela de cenários promete pelo nome e não
+cumpre hoje.
+
+Uma página **Cenários armados** no grupo Fake Binance, um card por perna, um switch por
+desfecho:
 
 ```
-  ┌─ Conversão spot ─────────────────────── armado: nada ──┐
-  │  ( ) preencher parcial e expirar   fração [ 0.5    ]   │
-  │  ( ) recusar             código [ -2010          ▾ ]   │
-  │  ( ) responder REJECTED                                │
-  │  ( ) vocabulário desconhecido    status [          ]   │
-  │                                       [ armar ]        │
-  └────────────────────────────────────────────────────────┘
-  ┌─ Depósito fiat ──────────── armado: falhar (há 2 min) ─┐
-  │  ...                                  [ desarmar ]     │
-  └────────────────────────────────────────────────────────┘
-  ┌─ Saque de stablecoin ────────────────── armado: nada ──┐
-  │  ...                                                   │
-  └────────────────────────────────────────────────────────┘
+  ┌─ Conversão spot ──────────────────────────── armado: nada ──┐
+  │  preencher parcial e expirar        fração [ 0.5  ]  ( ◯━ ) │
+  │  recusar com código        [ -2010        ▾ ]        ( ◯━ ) │
+  │  responder REJECTED                                  ( ◯━ ) │
+  │  vocabulário desconhecido  status [        ]         ( ◯━ ) │
+  └─────────────────────────────────────────────────────────────┘
+  ┌─ Depósito fiat ───────────── armado: falhar · há 2 min ─────┐
+  │  creditar imediatamente                              ( ◯━ ) │
+  │  falhar                                              ( ━● ) │
+  │  expirar                                             ( ◯━ ) │
+  │  ...                                                        │
+  └─────────────────────────────────────────────────────────────┘
+  ┌─ Saque de stablecoin ─────────────────────── armado: nada ──┐
+  │  ...                                                        │
+  └─────────────────────────────────────────────────────────────┘
 ```
+
+Regras da interação:
+
+- **Exclusivos dentro do card.** Os desfechos de uma perna se contradizem (não dá para
+  recusar e preencher parcial no mesmo pedido), então ligar um desliga o que estava ligado
+  — a aparência é de switch, a semântica é de escolha única. Entre cards não há exclusão:
+  as três pernas podem estar armadas ao mesmo tempo (D2).
+- **Sem modal de confirmação.** Armar é reversível com o mesmo gesto e não move dinheiro;
+  o modal só somaria um clique. A notificação de sucesso continua.
+- **Parâmetro ao lado do switch.** Editar `fração` / `código` / `status` com o switch já
+  ligado re-arma com o novo valor.
+- **O cabeçalho do card é o estado**: `armado: <desfecho> · há N min`, ou `armado: nada`.
 
 Cada Resource de perna (`SpotOrders`, `FiatOrders`, `Withdrawals`) ganha uma **ação de
-cabeçalho** "Armar próximo" que abre o mesmo formulário — descoberta onde o operador já
-está olhando, com a página como fonte da verdade.
+cabeçalho** "Armar próximo" que abre o mesmo conjunto de switches — descoberta onde o
+operador já está olhando, com a página como fonte da verdade.
+
+### Os três switches globais também viram switches
+
+`ScenarioSwitchesPage` hoje liga `outage` / `rate_limit` / `clock_skew` por uma `Action`
+com botão e `requiresConfirmation()`. Trocar por switch, na mesma mudança: a tela ganha
+consistência com a página nova e passa a fazer o que o nome dela diz. `ToggleScenarioSwitch`
+não muda — só quem o chama.
 
 Enums de desfecho implementam `HasLabel`/`HasColor`/`HasDescription` (e `HasIcon` onde for
 significativo), como todo enum de domínio do repo.
@@ -315,7 +342,7 @@ significativo), como todo enum de domínio do repo.
 | `tests/Feature/Withdraw/` | cada desfecho da §5.3, incluindo a devolução ao ledger |
 | `tests/Contract/` | as respostas desviadas continuam casando por shape com os envelopes gravados do consumidor |
 | `tests/Arch/` | todo enum de desfecho implementa os contratos Filament; nenhum cast `array` solto no model novo |
-| `panel-admin/tests/Feature/` | a página arma/desarma cada perna e a ação de cabeçalho de cada Resource abre o formulário |
+| `panel-admin/tests/Feature/` | o switch de cada desfecho arma e desarma · ligar um desfecho desliga o anterior da mesma perna · pernas diferentes armam simultâneas · a ação de cabeçalho de cada Resource abre os mesmos switches · os três switches globais ligam/desligam sem modal |
 
 O plano neutro precisa de um teste nomeado: sem cenário armado, o happy path de cada perna
 é idêntico ao de hoje.
