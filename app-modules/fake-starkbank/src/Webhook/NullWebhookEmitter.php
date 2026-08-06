@@ -20,12 +20,13 @@ final class NullWebhookEmitter implements EmitsWebhookEvents
     /**
      * @param  array<string, mixed>  $entityPayload
      */
-    public function emit(string $subscription, string $logType, array $entityPayload): void
+    public function emit(string $subscription, string $logType, array $entityPayload, ?string $reason = null): void
     {
         Log::debug('fake-starkbank.webhook: emissão suprimida — emissor nulo vinculado no lugar do real, nenhum POST sai para o consumidor', [
             'subscription' => $subscription,
             'log_type' => $logType,
             'entity_id' => $entityPayload['id'] ?? null,
+            'reason' => $reason,
         ]);
     }
 }

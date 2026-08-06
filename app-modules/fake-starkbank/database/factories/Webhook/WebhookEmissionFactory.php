@@ -31,6 +31,7 @@ class WebhookEmissionFactory extends Factory
             'signature' => base64_encode('assinatura-de-fixture'),
             'response_code' => null,
             'sent_at' => null,
+            'held_at' => null,
             'failed_reason' => null,
         ];
     }
@@ -56,6 +57,19 @@ class WebhookEmissionFactory extends Factory
             'response_code' => null,
             'sent_at' => null,
             'failed_reason' => $reason,
+        ]);
+    }
+
+    /**
+     * Emissão represada pelo desfecho `HoldNext` — nunca foi POSTada e o flush
+     * a ignora até a liberação manual.
+     */
+    public function held(): static
+    {
+        return $this->state(fn (): array => [
+            'response_code' => null,
+            'sent_at' => null,
+            'held_at' => Date::now(),
         ]);
     }
 }

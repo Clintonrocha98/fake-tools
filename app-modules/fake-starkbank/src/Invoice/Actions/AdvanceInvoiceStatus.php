@@ -24,6 +24,10 @@ use Illuminate\Support\Facades\Log;
  *   2. o do pagamento simulado — `fake-starkbank-invoice.advance_seconds`
  *      desde a criação — que leva a `paid`.
  *
+ * Acima dos dois relógios está o destino gravado por cenário na criação
+ * (`destined_status`): quando ele existe, a primeira leitura o aplica e zera a
+ * coluna, e a invoice volta a envelhecer a partir dali.
+ *
  * O vencimento vem primeiro porque é do próprio documento: uma invoice lida
  * depois de vencida nunca "paga atrasado". Uma leitura muito posterior salta
  * direto ao estado final que os relógios já alcançaram e emite só o evento
@@ -100,6 +104,15 @@ final readonly class AdvanceInvoiceStatus
 
     private function targetStatus(Invoice $invoice): ?InvoiceStatus
     {
+        $destined = $invoice->destined_status;
+
+        // O destino gravado por cenário vence os dois relógios e é aplicado na
+        // primeira leitura. Depois de aplicado a coluna é zerada, e a invoice
+        // volta a envelhecer normalmente a partir do estado em que parou.
+        if ($destined instanceof InvoiceStatus) {
+            return $destined === $invoice->status ? null : $destined;
+        }
+
         $now = CarbonImmutable::now();
 
         if ($now->greaterThanOrEqualTo($invoice->graceEndsAt())) {
@@ -114,7 +127,9 @@ final readonly class AdvanceInvoiceStatus
             return null;
         }
 
-        $advanceSeconds = $this->advanceSeconds();
+        // O atraso armado soma ao relógio do pagamento simulado — a invoice
+        // paga do mesmo jeito, só mais tarde.
+        $advanceSeconds = $this->advanceSeconds() + $invoice->extra_advance_seconds;
 
         if ($advanceSeconds <= 0) {
             return null;
@@ -130,11 +145,16 @@ final readonly class AdvanceInvoiceStatus
      */
     private function transitionAttributes(InvoiceStatus $target): array
     {
+        // `destined_status` é zerado em toda transição: o destino de cenário
+        // vale uma vez, e mantê-lo gravado congelaria a invoice nesse estado
+        // para sempre.
+        $attributes = ['status' => $target, 'destined_status' => null];
+
         return match ($target) {
-            InvoiceStatus::Paid => ['status' => $target, 'paid_at' => CarbonImmutable::now()],
-            InvoiceStatus::Expired => ['status' => $target, 'expired_at' => CarbonImmutable::now()],
+            InvoiceStatus::Paid => [...$attributes, 'paid_at' => CarbonImmutable::now()],
+            InvoiceStatus::Expired => [...$attributes, 'expired_at' => CarbonImmutable::now()],
             InvoiceStatus::Created, InvoiceStatus::Credited, InvoiceStatus::Overdue,
-            InvoiceStatus::Canceled, InvoiceStatus::Reversed => ['status' => $target],
+            InvoiceStatus::Canceled, InvoiceStatus::Reversed => $attributes,
         };
     }
 

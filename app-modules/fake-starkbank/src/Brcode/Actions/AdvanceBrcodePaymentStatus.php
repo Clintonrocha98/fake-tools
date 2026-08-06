@@ -26,7 +26,9 @@ use Illuminate\Support\Facades\Log;
  * nada do lado do consumidor, que relê por GET.
  *
  * `failed` nunca é alcançado pelo relógio: é desfecho de cenário
- * ({@see ForceBrcodePaymentStatus}).
+ * ({@see ForceBrcodePaymentStatus}) ou o destino que
+ * {@see PlanNextBrcodePayment} gravou na criação. Um pagamento retido (`held`)
+ * sobe até `processing` e não passa daí.
  */
 final readonly class AdvanceBrcodePaymentStatus
 {
@@ -61,7 +63,9 @@ final readonly class AdvanceBrcodePaymentStatus
                 return null;
             }
 
-            $locked->update(['status' => $target]);
+            // `destined_status` é zerado na transição: o destino de cenário
+            // vale uma vez e não pode reaplicar-se a cada leitura.
+            $locked->update(['status' => $target, 'destined_status' => null]);
 
             return $locked->refresh();
         });
@@ -84,6 +88,7 @@ final readonly class AdvanceBrcodePaymentStatus
                 StarkbankSubscription::BrcodePayment->value,
                 $eventType->value,
                 BrcodePaymentView::fromModel($advanced)->jsonSerialize(),
+                $advanced->failure_reason,
             );
         }
 
@@ -92,6 +97,14 @@ final readonly class AdvanceBrcodePaymentStatus
 
     private function targetStatus(BrcodePayment $payment): ?BrcodePaymentStatus
     {
+        $destined = $payment->destined_status;
+
+        // O destino gravado por cenário vence o relógio e é aplicado na primeira
+        // leitura — é o único caminho até `failed` sem clique de operador.
+        if ($destined instanceof BrcodePaymentStatus) {
+            return $destined === $payment->status ? null : $destined;
+        }
+
         $advanceSeconds = $this->advanceSeconds();
 
         if ($advanceSeconds <= 0) {
@@ -99,6 +112,15 @@ final readonly class AdvanceBrcodePaymentStatus
         }
 
         $age = $payment->created_at?->diffInSeconds(CarbonImmutable::now()) ?? 0.0;
+
+        // Retido por cenário: chega a `processing` e para ali. Sem esta saída
+        // antecipada, uma leitura tardia saltaria direto para `success` e a
+        // retenção não teria acontecido.
+        if ($payment->held) {
+            return $payment->status === BrcodePaymentStatus::Created && $age >= $advanceSeconds
+                ? BrcodePaymentStatus::Processing
+                : null;
+        }
 
         if ($age >= $advanceSeconds * 2) {
             return BrcodePaymentStatus::Success;

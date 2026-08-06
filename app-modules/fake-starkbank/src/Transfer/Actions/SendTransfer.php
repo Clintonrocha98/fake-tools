@@ -24,10 +24,17 @@ use Illuminate\Support\Facades\Log;
  * Sem `externalId` não há o que deduplicar e cada POST cria uma transfer nova:
  * o campo é opcional no contrato, e inventar uma chave a partir do conteúdo
  * fundiria dois pagamentos legítimos de mesmo valor para o mesmo beneficiário.
+ *
+ * O cenário armado da perna é consumido só quando uma transfer NOVA nasce
+ * ({@see PlanNextTransfer}): um retry idempotente devolve a linha existente sem
+ * gastar o desvio que o operador armou para o próximo cash-out de verdade.
  */
 final readonly class SendTransfer
 {
-    public function __construct(private AdvanceTransferStatus $advance) {}
+    public function __construct(
+        private AdvanceTransferStatus $advance,
+        private PlanNextTransfer $planNext = new PlanNextTransfer,
+    ) {}
 
     public function handle(SendTransferData $data): Transfer
     {
@@ -43,6 +50,8 @@ final readonly class SendTransfer
             return $this->advance->handle($existing);
         }
 
+        $plan = $this->planNext->handle();
+
         try {
             $transfer = Transfer::query()->create([
                 'id' => NumericId::generate(),
@@ -56,6 +65,9 @@ final readonly class SendTransfer
                 'external_id' => $data->externalId,
                 'status' => TransferStatus::Created,
                 'tags' => $data->tags,
+                'destined_status' => $plan->destinedStatus,
+                'failure_reason' => $plan->failureReason,
+                'held' => $plan->held,
             ]);
         } catch (UniqueConstraintViolationException $uniqueConstraintViolationException) {
             // Dois POST simultâneos com o mesmo externalId: quem perde a corrida
@@ -82,6 +94,15 @@ final readonly class SendTransfer
             'external_id' => $transfer->external_id,
             'correlation_id' => $transfer->tags->correlationId(),
         ]);
+
+        if (!$plan->isNeutral()) {
+            Log::info('fake-starkbank.transfer: transfer nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
+                'transfer_id' => $transfer->id,
+                'destined_status' => $plan->destinedStatus?->value,
+                'held' => $plan->held,
+                'failure_reason' => $plan->failureReason,
+            ]);
+        }
 
         return $transfer;
     }

@@ -21,11 +21,18 @@ use Illuminate\Support\Collection;
  * {@see BrcodePaymentStatus::Created} pelo `POST /v2/brcode-payment` e depois só
  * avança na LEITURA, por idade — nunca por scheduler.
  *
+ * `destined_status`, `failure_reason` e `held` são o destino que um cenário
+ * armado gravou na criação: a partir daí a linha se basta, e nenhuma leitura
+ * volta à tabela de cenários.
+ *
  * @property string $id
  * @property string $brcode
  * @property string $tax_id
  * @property int $amount
  * @property BrcodePaymentStatus $status
+ * @property BrcodePaymentStatus|null $destined_status
+ * @property string|null $failure_reason
+ * @property bool $held
  * @property string|null $description
  * @property WireTags $tags
  * @property Carbon|null $created_at
@@ -77,6 +84,8 @@ final class BrcodePayment extends BaseModel
         return [
             'amount' => 'integer',
             'status' => BrcodePaymentStatus::class,
+            'destined_status' => BrcodePaymentStatus::class,
+            'held' => 'boolean',
             'tags' => AsWireTags::class,
         ];
     }

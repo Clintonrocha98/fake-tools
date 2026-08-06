@@ -26,7 +26,9 @@ use Illuminate\Support\Facades\Log;
  * nada do lado do consumidor, que relê por GET.
  *
  * `failed` e `returned` nunca são alcançados pelo relógio: são desfechos de
- * cenário ({@see ForceTransferStatus}).
+ * cenário ({@see ForceTransferStatus}) ou o destino que
+ * {@see PlanNextTransfer} gravou na criação. Uma transfer retida (`held`) sobe
+ * até `processing` e não passa daí.
  */
 final readonly class AdvanceTransferStatus
 {
@@ -61,7 +63,9 @@ final readonly class AdvanceTransferStatus
                 return null;
             }
 
-            $locked->update(['status' => $target]);
+            // `destined_status` é zerado na transição: o destino de cenário
+            // vale uma vez e não pode reaplicar-se a cada leitura.
+            $locked->update(['status' => $target, 'destined_status' => null]);
 
             return $locked->refresh();
         });
@@ -84,6 +88,7 @@ final readonly class AdvanceTransferStatus
                 StarkbankSubscription::Transfer->value,
                 $eventType->value,
                 TransferView::fromModel($advanced)->jsonSerialize(),
+                $advanced->failure_reason,
             );
         }
 
@@ -92,6 +97,14 @@ final readonly class AdvanceTransferStatus
 
     private function targetStatus(Transfer $transfer): ?TransferStatus
     {
+        $destined = $transfer->destined_status;
+
+        // O destino gravado por cenário vence o relógio e é aplicado na primeira
+        // leitura — é o único caminho até `failed` sem clique de operador.
+        if ($destined instanceof TransferStatus) {
+            return $destined === $transfer->status ? null : $destined;
+        }
+
         $advanceSeconds = $this->advanceSeconds();
 
         if ($advanceSeconds <= 0) {
@@ -99,6 +112,15 @@ final readonly class AdvanceTransferStatus
         }
 
         $age = $transfer->created_at?->diffInSeconds(CarbonImmutable::now()) ?? 0.0;
+
+        // Retida por cenário: chega a `processing` e para ali. Sem esta saída
+        // antecipada, uma leitura tardia saltaria direto para `success` e a
+        // retenção não teria acontecido.
+        if ($transfer->held) {
+            return $transfer->status === TransferStatus::Created && $age >= $advanceSeconds
+                ? TransferStatus::Processing
+                : null;
+        }
 
         if ($age >= $advanceSeconds * 2) {
             return TransferStatus::Success;

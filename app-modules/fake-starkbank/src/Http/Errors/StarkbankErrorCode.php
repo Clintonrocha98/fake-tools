@@ -21,9 +21,12 @@ use Filament\Support\Contracts\HasLabel;
  * `invalidId` é a releitura de um recurso que este fake nunca emitiu e
  * `invalidDictKey` é a chave PIX que o registro DICT não conhece.
  *
- * Os quatro últimos são as recusas da perna de BR Code: `invalidBrcode` para um
- * EMV que não decodifica, e `invalidJson`/`invalidTaxId`/`invalidAmount` para
- * um pagamento que descreve algo diferente do que o código carrega.
+ * Quatro deles são as recusas da perna de BR Code: `invalidBrcode` para um EMV
+ * que não decodifica, e `invalidJson`/`invalidTaxId`/`invalidAmount` para um
+ * pagamento que descreve algo diferente do que o código carrega.
+ *
+ * Os dois últimos não são recusa de conteúdo: são os switches globais do
+ * switchboard de cenários, que derrubam a rota antes de qualquer lógica.
  */
 enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
 {
@@ -37,6 +40,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
     case InvalidJson = 'invalidJson';
     case InvalidTaxId = 'invalidTaxId';
     case InvalidAmount = 'invalidAmount';
+    case InternalServerError = 'internalServerError';
+    case TooManyRequests = 'tooManyRequests';
 
     public function defaultMessage(): string
     {
@@ -51,6 +56,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidJson => 'Invalid json',
             self::InvalidTaxId => 'Invalid tax id',
             self::InvalidAmount => 'Invalid amount',
+            self::InternalServerError => 'Internal server error',
+            self::TooManyRequests => 'Too many requests',
         };
     }
 
@@ -60,6 +67,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidAccessId, self::InvalidSignature, self::ExpiredAccessTime => 401,
             self::InvalidRequest, self::InvalidBrcode, self::InvalidJson, self::InvalidTaxId, self::InvalidAmount => 400,
             self::InvalidId, self::InvalidDictKey => 404,
+            self::TooManyRequests => 429,
+            self::InternalServerError => 503,
         };
     }
 
@@ -76,6 +85,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidJson => 'Parâmetro desconhecido ou ausente',
             self::InvalidTaxId => 'Recebedor divergente do BR Code',
             self::InvalidAmount => 'Valor divergente do BR Code',
+            self::InternalServerError => 'Provedor indisponível',
+            self::TooManyRequests => 'Excesso de requisições',
         };
     }
 
@@ -101,6 +112,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidJson => Color::Teal,
             self::InvalidTaxId => Color::Fuchsia,
             self::InvalidAmount => Color::Lime,
+            self::InternalServerError => Color::Violet,
+            self::TooManyRequests => Color::Cyan,
         };
     }
 
@@ -117,6 +130,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidJson => 'Parâmetro que este endpoint não aceita (externalId) ou obrigatório e ausente (description)',
             self::InvalidTaxId => 'O taxId do pagamento não é o titular da chave embutida no BR Code',
             self::InvalidAmount => 'O amount do pagamento não é o valor embutido no campo 54 do BR Code',
+            self::InternalServerError => 'Modo outage armado no switchboard: toda rota /v2/* cai antes de qualquer lógica',
+            self::TooManyRequests => 'Modo rate limit armado no switchboard: toda rota /v2/* recusa com Retry-After',
         };
     }
 }

@@ -54,11 +54,15 @@ final readonly class ForceInvoiceStatus
      */
     private function transitionAttributes(InvoiceStatus $status): array
     {
+        // O operador que força um estado descarta qualquer destino de cenário
+        // ainda pendente — mantê-lo faria a próxima leitura desfazer o clique.
+        $attributes = ['status' => $status, 'destined_status' => null];
+
         return match ($status) {
-            InvoiceStatus::Paid => ['status' => $status, 'paid_at' => CarbonImmutable::now()],
-            InvoiceStatus::Expired => ['status' => $status, 'expired_at' => CarbonImmutable::now()],
+            InvoiceStatus::Paid => [...$attributes, 'paid_at' => CarbonImmutable::now()],
+            InvoiceStatus::Expired => [...$attributes, 'expired_at' => CarbonImmutable::now()],
             InvoiceStatus::Created, InvoiceStatus::Credited, InvoiceStatus::Overdue,
-            InvoiceStatus::Canceled, InvoiceStatus::Reversed => ['status' => $status],
+            InvoiceStatus::Canceled, InvoiceStatus::Reversed => $attributes,
         };
     }
 }

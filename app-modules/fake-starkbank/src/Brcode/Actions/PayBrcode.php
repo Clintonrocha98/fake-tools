@@ -33,6 +33,7 @@ final readonly class PayBrcode
     public function __construct(
         private DecodeBrcode $decode,
         private ResolveDictKey $resolveDictKey,
+        private PlanNextBrcodePayment $planNext = new PlanNextBrcodePayment,
     ) {}
 
     public function handle(PayBrcodeData $data): BrcodePayment
@@ -51,6 +52,11 @@ final readonly class PayBrcode
         $this->assertReceiver($data, $decoded);
         $this->assertAmount($data, $decoded);
 
+        // O plano é consumido só DEPOIS dos guards: um pagamento recusado por
+        // taxId ou valor divergente nunca existiu, e gastar o cenário nele
+        // deixaria o operador sem o desvio no pagamento que de fato acontece.
+        $plan = $this->planNext->handle();
+
         $payment = BrcodePayment::query()->create([
             'id' => NumericId::generate(),
             'brcode' => $data->brcode,
@@ -59,6 +65,9 @@ final readonly class PayBrcode
             'status' => BrcodePaymentStatus::Created,
             'description' => $data->description === '' ? null : $data->description,
             'tags' => $data->tags,
+            'destined_status' => $plan->destinedStatus,
+            'failure_reason' => $plan->failureReason,
+            'held' => $plan->held,
         ]);
 
         Log::info('fake-starkbank.brcode: funding despachado — o taxId e o valor do corpo foram conferidos contra os bytes do próprio código, que é o que o provedor faz antes de mover dinheiro', [
@@ -67,6 +76,15 @@ final readonly class PayBrcode
             'pix_key' => $decoded->pixKey,
             'correlation_id' => $payment->tags->correlationId(),
         ]);
+
+        if (!$plan->isNeutral()) {
+            Log::info('fake-starkbank.brcode: pagamento nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
+                'payment_id' => $payment->id,
+                'destined_status' => $plan->destinedStatus?->value,
+                'held' => $plan->held,
+                'failure_reason' => $plan->failureReason,
+            ]);
+        }
 
         return $payment;
     }

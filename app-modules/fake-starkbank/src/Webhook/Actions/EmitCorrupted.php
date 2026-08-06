@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Webhook\Actions;
 
+use He4rt\FakeStarkbank\Http\Auth\ThrowawayPrivateKey;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
 use Illuminate\Support\Facades\Log;
-use phpseclib3\Crypt\EC;
 
 /**
  * Emite um envelope bem formado com uma assinatura que NÃO fecha: mesma
@@ -25,6 +25,7 @@ final readonly class EmitCorrupted
 {
     public function __construct(
         private EmitWebhookEvent $emit = new EmitWebhookEvent,
+        private ThrowawayPrivateKey $throwawayKey = new ThrowawayPrivateKey,
     ) {}
 
     /**
@@ -41,11 +42,6 @@ final readonly class EmitCorrupted
             'entity_id' => $entity['id'] ?? null,
         ]);
 
-        return $this->emit->handle($subscription, $eventType, $entity, $this->throwawayPrivateKeyPem());
-    }
-
-    private function throwawayPrivateKeyPem(): string
-    {
-        return (string) EC::createKey('secp256k1');
+        return $this->emit->handle($subscription, $eventType, $entity, $this->throwawayKey->pem());
     }
 }

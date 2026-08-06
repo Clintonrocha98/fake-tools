@@ -21,6 +21,10 @@ use Illuminate\Support\Collection;
  * {@see TransferStatus::Created} pelo `POST /v2/transfer` e depois só avança na
  * LEITURA, por idade — nunca por scheduler.
  *
+ * `destined_status`, `failure_reason` e `held` são o destino que um cenário
+ * armado gravou na criação: a partir daí a linha se basta, e nenhuma leitura
+ * volta à tabela de cenários.
+ *
  * @property string $id
  * @property int $amount
  * @property string $name
@@ -31,6 +35,9 @@ use Illuminate\Support\Collection;
  * @property string $account_type
  * @property string|null $external_id
  * @property TransferStatus $status
+ * @property TransferStatus|null $destined_status
+ * @property string|null $failure_reason
+ * @property bool $held
  * @property WireTags $tags
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -81,6 +88,8 @@ final class Transfer extends BaseModel
         return [
             'amount' => 'integer',
             'status' => TransferStatus::class,
+            'destined_status' => TransferStatus::class,
+            'held' => 'boolean',
             'tags' => AsWireTags::class,
         ];
     }

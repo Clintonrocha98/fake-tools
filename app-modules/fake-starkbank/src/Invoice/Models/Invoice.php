@@ -22,6 +22,10 @@ use Illuminate\Support\Collection;
  * {@see InvoiceStatus::Created} pelo `POST /v2/invoice` e depois só avança na
  * LEITURA, por idade — nunca por scheduler.
  *
+ * `destined_status`, `extra_advance_seconds` e `frozen` são o destino que um
+ * cenário armado gravou na criação: a partir daí a linha se basta, e nenhuma
+ * leitura volta à tabela de cenários.
+ *
  * @property string $id
  * @property int $amount
  * @property string $name
@@ -34,6 +38,8 @@ use Illuminate\Support\Collection;
  * @property Carbon|null $paid_at
  * @property Carbon|null $expired_at
  * @property bool $frozen
+ * @property InvoiceStatus|null $destined_status
+ * @property int $extra_advance_seconds
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -97,6 +103,8 @@ final class Invoice extends BaseModel
             'paid_at' => 'datetime',
             'expired_at' => 'datetime',
             'frozen' => 'boolean',
+            'destined_status' => InvoiceStatus::class,
+            'extra_advance_seconds' => 'integer',
         ];
     }
 }

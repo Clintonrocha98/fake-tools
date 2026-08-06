@@ -9,6 +9,8 @@ use Filament\Support\Contracts\HasLabel;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
+use He4rt\FakeStarkbank\Scenarios\Casts\AsPixScenarioPayload;
+use He4rt\FakeStarkbank\Scenarios\Models\ArmedScenario;
 use He4rt\FakeStarkbank\Support\Casts\AsWireTags;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use He4rt\FakeStarkbank\Webhook\Casts\AsWebhookPayload;
@@ -162,4 +164,5 @@ test('toda coluna jsonb do módulo é lida por um cast tipado', function (string
     'tags do brcode-payment' => [BrcodePayment::class, 'tags', AsWireTags::class],
     'tags da transfer' => [Transfer::class, 'tags', AsWireTags::class],
     'payload da emissão' => [WebhookEmission::class, 'payload', AsWebhookPayload::class],
+    'payload do cenário armado' => [ArmedScenario::class, 'payload', AsPixScenarioPayload::class],
 ]);
