@@ -160,7 +160,7 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_API_KEY` / `FAKE_BINANCE_API_SECRET` | The pair the monolith configures as `BINANCE_API_KEY` / `BINANCE_API_SECRET` in dev. |
 | `FAKE_BINANCE_RECV_WINDOW` | Default signature window (ms) when the request omits `recvWindow`. Capped at 60000. |
 | `FAKE_BINANCE_SEED_BALANCES` | Starting ledger balances. Format: comma-separated `ASSET:AMOUNT` pairs (e.g. `BRL:100000,USDT:5000`). |
-| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` | Fiat / withdraw auto-advance cadences, in seconds. |
+| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` / `FAKE_BINANCE_DEPOSIT_ADVANCE_SECONDS` | Fiat / withdraw / crypto-deposit auto-advance cadences, in seconds. |
 | `FAKE_BINANCE_FIAT_STATUS_DIALECT` | `live` (SCREAMING_SNAKE, observed) or `classic` (documented). See ADR-0001. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_ENABLED` | `false` makes every fiat deposit refuse with `100001`. |
 | `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
