@@ -10,7 +10,7 @@ uses(SignsRequests::class);
 
 beforeEach(function (): void {
     $this->configureFakeBinanceCredentials();
-    config(['fake-binance-spot.usdcbrl.price' => '5.10', 'fake-binance-spot.usdcbrl.spread' => '0.02']);
+    config(['fake-binance-spot.symbols.USDCBRL.price' => '5.10', 'fake-binance-spot.symbols.USDCBRL.spread' => '0.02']);
 });
 
 it('retrieves an order by origClientOrderId with the same shape as the POST response, minus fills', function (): void {
@@ -40,6 +40,40 @@ it('retrieves an order by origClientOrderId with the same shape as the POST resp
     ]);
 
     expect($response->json())->not->toHaveKey('fills');
+});
+
+it('carries the reread-only fields of the documented query-order shape, never transactTime', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $this->postJson(
+        $this->signedUri('/api/v3/order', [
+            'symbol' => 'USDCBRL', 'side' => 'BUY', 'quoteOrderQty' => '51.1', 'newClientOrderId' => 'forex-get-shape-1',
+        ]),
+        [],
+        $this->apiKeyHeader(),
+    )->assertOk();
+
+    $response = $this->getJson(
+        $this->signedUri('/api/v3/order', ['symbol' => 'USDCBRL', 'origClientOrderId' => 'forex-get-shape-1']),
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk()->assertJson([
+        'orderListId' => -1,
+        'price' => '0.00000000',
+        'origQty' => '10',
+        'origQuoteOrderQty' => '51.1',
+        'timeInForce' => 'GTC',
+        'stopPrice' => '0.00000000',
+        'icebergQty' => '0.00000000',
+        'isWorking' => true,
+        'selfTradePreventionMode' => 'NONE',
+    ]);
+
+    $response->assertJsonStructure(['time', 'updateTime', 'workingTime']);
+
+    expect($response->json('time'))->toBeInt()->toBeGreaterThan(0)
+        ->and($response->json())->not->toHaveKey('transactTime');
 });
 
 it('returns the original order on a GET after a rejected duplicate POST', function (): void {

@@ -20,6 +20,24 @@ it('returns symbols[] with the base/quote precisions and the LOT_SIZE/NOTIONAL f
     ]);
 });
 
+it('serves USDTBRL with its own base asset and the LOT_SIZE/NOTIONAL filters', function (): void {
+    $response = $this->getJson('/api/v3/exchangeInfo?symbol=USDTBRL');
+
+    $response->assertOk()->assertJson([
+        'symbols' => [[
+            'symbol' => 'USDTBRL',
+            'baseAsset' => 'USDT',
+            'quoteAsset' => 'BRL',
+            'baseAssetPrecision' => 8,
+            'quoteAssetPrecision' => 8,
+            'filters' => [
+                ['filterType' => 'LOT_SIZE', 'minQty' => '0.00000001', 'maxQty' => '9000000.00000000', 'stepSize' => '0.00000001'],
+                ['filterType' => 'NOTIONAL', 'minNotional' => '10', 'applyToMarket' => true],
+            ],
+        ]],
+    ]);
+});
+
 it('refuses an unknown symbol with -1121', function (): void {
     $response = $this->getJson('/api/v3/exchangeInfo?symbol=BTCBRL');
 

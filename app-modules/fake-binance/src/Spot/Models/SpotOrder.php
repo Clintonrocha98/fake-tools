@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Support\Carbon;
 
 /**
- * Uma ordem Spot MARKET no par USDCBRL — sempre um único fill (o fake não
+ * Uma ordem Spot MARKET num par servido pelo fake ({@see \He4rt\FakeBinance\Spot\Enums\SpotSymbol})
+ * — sempre um único fill (o fake não
  * modela um order book real, preenche tudo de uma vez ao preço do
  * bookTicker), por isso o preço/comissão do fill vivem como colunas
  * escalares, nunca uma lista de fills em JSON.
@@ -56,7 +57,7 @@ final class SpotOrder extends BaseModel
      * uma relação e explode em `LogicException` no primeiro acesso a
      * `$order->fills`.
      *
-     * @return list<array{price: string, qty: string, commission: string, commissionAsset: string}>
+     * @return list<array{price: string, qty: string, commission: string, commissionAsset: string, tradeId: int}>
      */
     public function wireFills(): array
     {
@@ -64,11 +65,15 @@ final class SpotOrder extends BaseModel
             return [];
         }
 
+        // O fake preenche tudo num único fill, então o trade sintético herda o
+        // próprio order_id como tradeId — estável e único, e é o mesmo id que
+        // GET /api/v3/myTrades reporta para esta ordem.
         return [[
             'price' => LedgerAmount::wire((string) $this->fill_price),
             'qty' => LedgerAmount::wire((string) $this->executed_qty),
             'commission' => LedgerAmount::wire((string) $this->commission),
             'commissionAsset' => (string) $this->commission_asset,
+            'tradeId' => $this->order_id,
         ]];
     }
 

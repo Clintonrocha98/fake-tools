@@ -32,6 +32,33 @@ it('returns the documented balances shape backed by the ledger', function (): vo
     ]);
 });
 
+it('carries the full documented account shape, with commissions mirroring the spot commission_rate', function (): void {
+    config(['fake-binance-spot.commission_rate' => '0.001']);
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->getJson($this->signedUri('/api/v3/account'), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'makerCommission' => 10,
+        'takerCommission' => 10,
+        'buyerCommission' => 0,
+        'sellerCommission' => 0,
+        'commissionRates' => [
+            'maker' => '0.00100000',
+            'taker' => '0.00100000',
+            'buyer' => '0.00000000',
+            'seller' => '0.00000000',
+        ],
+        'brokered' => false,
+        'requireSelfTradePrevention' => false,
+        'preventSor' => false,
+        'accountType' => 'SPOT',
+        'permissions' => ['SPOT'],
+    ]);
+
+    expect($response->json('uid'))->toBeInt();
+});
+
 it('returns an empty balances list when the ledger has no accounts yet', function (): void {
     $response = $this->getJson($this->signedUri('/api/v3/account'), $this->apiKeyHeader());
 

@@ -7,6 +7,7 @@ namespace He4rt\FakeBinance\Spot\Actions;
 use He4rt\FakeBinance\Ledger\Actions\CreditLedgerAccount;
 use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Spot\Enums\OrderStatus;
+use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use Illuminate\Support\Facades\DB;
 
@@ -28,7 +29,7 @@ final readonly class RejectSpotOrder
     {
         return DB::transaction(function () use ($order): SpotOrder {
             if (bccomp((string) $order->executed_qty, '0', 18) > 0) {
-                $symbolConfig = config()->array('fake-binance-spot.usdcbrl');
+                $symbolConfig = SpotSymbol::from($order->symbol)->config();
 
                 $this->reverseLedger->handle(
                     $order->side,

@@ -34,4 +34,18 @@ return [
 
     'recv_window' => (int) env('FAKE_BINANCE_RECV_WINDOW', 5_000),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Travel Rule
+    |--------------------------------------------------------------------------
+    |
+    | País cujo questionário o gate de travel rule exige antes de um saque em
+    | carteira. Vazio/ausente = sem exigência ({"questionnaireCountryCode": null},
+    | o happy path do SendWalletWithdraw do consumidor). O valor é servido
+    | verbatim — `NIL` também é lido como "sem exigência" pelo consumidor.
+    |
+    */
+
+    'travel_rule_questionnaire_country' => env('FAKE_BINANCE_TRAVEL_RULE_COUNTRY'),
+
 ];

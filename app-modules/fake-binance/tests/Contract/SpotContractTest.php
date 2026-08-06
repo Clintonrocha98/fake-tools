@@ -22,7 +22,7 @@ uses(SignsRequests::class, AssertsRecordedShape::class);
 
 beforeEach(function (): void {
     $this->configureFakeBinanceCredentials();
-    config(['fake-binance-spot.usdcbrl.price' => '5.10', 'fake-binance-spot.usdcbrl.spread' => '0.02']);
+    config(['fake-binance-spot.symbols.USDCBRL.price' => '5.10', 'fake-binance-spot.symbols.USDCBRL.spread' => '0.02']);
 });
 
 it('answers GET /api/v3/ticker/bookTicker with the shape GetBookTickerRequest reads (public, unsigned)', function (): void {

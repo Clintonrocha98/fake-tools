@@ -160,13 +160,15 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_API_KEY` / `FAKE_BINANCE_API_SECRET` | The pair the monolith configures as `BINANCE_API_KEY` / `BINANCE_API_SECRET` in dev. |
 | `FAKE_BINANCE_RECV_WINDOW` | Default signature window (ms) when the request omits `recvWindow`. Capped at 60000. |
 | `FAKE_BINANCE_SEED_BALANCES` | Starting ledger balances. Format: comma-separated `ASSET:AMOUNT` pairs (e.g. `BRL:100000,USDT:5000`). |
-| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` | Fiat / withdraw auto-advance cadences, in seconds. |
+| `FAKE_BINANCE_FIAT_ADVANCE_SECONDS` / `FAKE_BINANCE_WITHDRAW_ADVANCE_SECONDS` / `FAKE_BINANCE_DEPOSIT_ADVANCE_SECONDS` | Fiat / withdraw / crypto-deposit auto-advance cadences, in seconds. |
 | `FAKE_BINANCE_FIAT_STATUS_DIALECT` | `live` (SCREAMING_SNAKE, observed) or `classic` (documented). See ADR-0001. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_ENABLED` | `false` makes every fiat deposit refuse with `100001`. |
 | `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_LIMIT` | Optional per-deposit ceiling; unset means no ceiling. |
 | `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
+| `FAKE_BINANCE_USDTBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDTBRL — the main flow's intermediate asset pair. |
 | `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |
+| `FAKE_BINANCE_TRAVEL_RULE_COUNTRY` | Travel rule questionnaire country. Unset/empty or `NIL` = no requirement (wallet delivery happy path); any country code makes the consumer refuse the delivery. |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
 
 Override the defaults via the compose `environment:` block or a shell-exported env

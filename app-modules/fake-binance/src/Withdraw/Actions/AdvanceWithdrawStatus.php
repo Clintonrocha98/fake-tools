@@ -41,6 +41,7 @@ final readonly class AdvanceWithdrawStatus
             $withdrawal->update([
                 'status' => WithdrawStatus::Completed,
                 'tx_id' => SyntheticTxId::generate(),
+                'completed_at' => Date::now(),
             ]);
 
             return $withdrawal;

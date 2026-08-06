@@ -24,6 +24,7 @@ it('returns the documented wire shape for a matching withdrawal', function (): v
         'status' => WithdrawStatus::Completed,
         'tx_id' => '0xdeadbeef',
         'applied_at' => $appliedAt,
+        'completed_at' => Date::parse('2019-10-12 11:14:30', 'UTC'),
     ]);
 
     $rows = (new GetWithdrawHistory)->handle(coin: 'USDC', withdrawOrderId: 'payout-1');
@@ -44,7 +45,40 @@ it('returns the documented wire shape for a matching withdrawal', function (): v
         'txId' => '0xdeadbeef',
         'info' => null,
         'applyTime' => '2019-10-12 11:12:02',
+        'completeTime' => '2019-10-12 11:14:30',
+        'transferType' => 0,
+        'confirmNo' => 1,
+        'walletType' => 0,
+        'txKey' => '',
     ]);
+});
+
+it('reports completeTime only once the withdraw actually completed', function (): void {
+    Withdrawal::factory()->create([
+        'withdraw_order_id' => 'payout-pending-complete-time',
+        'status' => WithdrawStatus::AwaitingApproval,
+        'applied_at' => Date::now(),
+    ]);
+
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-pending-complete-time');
+
+    expect($rows[0]->completeTime)->toBeNull();
+});
+
+it('stamps completed_at when the lazy advance reaches Completed', function (): void {
+    Withdrawal::factory()->create([
+        'withdraw_order_id' => 'payout-complete-stamp',
+        'status' => WithdrawStatus::AwaitingApproval,
+        'applied_at' => Date::now()->subSeconds(121),
+    ]);
+
+    $rows = (new GetWithdrawHistory)->handle(coin: null, withdrawOrderId: 'payout-complete-stamp');
+
+    expect($rows[0]->status)->toBe(WithdrawStatus::Completed->value)
+        ->and($rows[0]->completeTime)->not->toBeNull();
+
+    $persisted = Withdrawal::query()->where('withdraw_order_id', 'payout-complete-stamp')->firstOrFail();
+    expect($persisted->completed_at)->not->toBeNull();
 });
 
 it('filters by coin and withdrawOrderId', function (): void {

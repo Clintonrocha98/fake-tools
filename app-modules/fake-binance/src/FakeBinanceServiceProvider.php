@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance;
 
+use He4rt\FakeBinance\Console\AnnounceCryptoDepositCommand;
+use He4rt\FakeBinance\Deposit\Models\CryptoDeposit;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Fiat\Models\FiatWithdrawal;
 use He4rt\FakeBinance\Http\Middleware\VerifiesSignedRequest;
 use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
 use He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches;
@@ -25,6 +28,7 @@ class FakeBinanceServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/fake-binance-fiat.php', 'fake-binance-fiat');
         $this->mergeConfigFrom(__DIR__.'/../config/fake-binance-spot.php', 'fake-binance-spot');
         $this->mergeConfigFrom(__DIR__.'/../config/fake-binance-withdraw.php', 'fake-binance-withdraw');
+        $this->mergeConfigFrom(__DIR__.'/../config/fake-binance-deposit.php', 'fake-binance-deposit');
     }
 
     public function boot(Router $router): void
@@ -34,11 +38,19 @@ class FakeBinanceServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
 
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                AnnounceCryptoDepositCommand::class,
+            ]);
+        }
+
         Relation::morphMap([
             'ledger_account' => LedgerAccount::class,
             'fiat_order' => FiatOrder::class,
+            'fiat_withdrawal' => FiatWithdrawal::class,
             'spot_order' => SpotOrder::class,
             'withdrawal' => Withdrawal::class,
+            'crypto_deposit' => CryptoDeposit::class,
             'scenario_switchboard' => ScenarioSwitchboard::class,
             'armed_scenario' => ArmedScenario::class,
         ]);

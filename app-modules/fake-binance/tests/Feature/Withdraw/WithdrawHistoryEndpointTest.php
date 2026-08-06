@@ -74,6 +74,7 @@ it('returns the documented history array filtered by coin and withdrawOrderId', 
         'status' => WithdrawStatus::Completed,
         'tx_id' => '0xdeadbeef',
         'applied_at' => Date::parse('2019-10-12 11:12:02', 'UTC'),
+        'completed_at' => Date::parse('2019-10-12 11:14:30', 'UTC'),
     ]);
     Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'other-order']);
     Withdrawal::factory()->create(['coin' => 'USDT', 'withdraw_order_id' => 'other-order-usdt']);
@@ -95,7 +96,67 @@ it('returns the documented history array filtered by coin and withdrawOrderId', 
         'txId' => '0xdeadbeef',
         'info' => null,
         'applyTime' => '2019-10-12 11:12:02',
+        'completeTime' => '2019-10-12 11:14:30',
+        'transferType' => 0,
+        'confirmNo' => 1,
+        'walletType' => 0,
+        'txKey' => '',
     ]]);
+});
+
+it('honors the status filter over the wire status, returning only matching rows', function (): void {
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-completed', 'status' => WithdrawStatus::Completed, 'frozen' => true]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-rejected', 'status' => WithdrawStatus::Rejected]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-failure', 'status' => WithdrawStatus::Failure]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/capital/withdraw/history', [
+        'coin' => 'USDC',
+        'status' => 6,
+    ]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJsonCount(1)->assertJson([['withdrawOrderId' => 'f-completed', 'status' => 6]]);
+});
+
+it('honors status combined with limit, returning only the most recent completed row', function (): void {
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-old-completed', 'status' => WithdrawStatus::Completed, 'frozen' => true, 'applied_at' => Date::parse('2019-10-12 10:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-new-completed', 'status' => WithdrawStatus::Completed, 'frozen' => true, 'applied_at' => Date::parse('2019-10-12 12:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'f-processing', 'status' => WithdrawStatus::Processing, 'frozen' => true, 'applied_at' => Date::parse('2019-10-12 13:00:00', 'UTC')]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/capital/withdraw/history', [
+        'coin' => 'USDC',
+        'status' => 6,
+        'limit' => 1,
+    ]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJsonCount(1)->assertJson([['withdrawOrderId' => 'f-new-completed']]);
+});
+
+it('honors the startTime/endTime window over applied_at', function (): void {
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'w-before', 'frozen' => true, 'applied_at' => Date::parse('2019-10-10 00:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'w-inside', 'frozen' => true, 'applied_at' => Date::parse('2019-10-12 12:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'w-after', 'frozen' => true, 'applied_at' => Date::parse('2019-10-15 00:00:00', 'UTC')]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/capital/withdraw/history', [
+        'coin' => 'USDC',
+        'startTime' => Date::parse('2019-10-11 00:00:00', 'UTC')->getTimestampMs(),
+        'endTime' => Date::parse('2019-10-13 00:00:00', 'UTC')->getTimestampMs(),
+    ]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJsonCount(1)->assertJson([['withdrawOrderId' => 'w-inside']]);
+});
+
+it('honors offset, skipping the most recent rows', function (): void {
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'o-oldest', 'frozen' => true, 'applied_at' => Date::parse('2019-10-10 00:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'o-middle', 'frozen' => true, 'applied_at' => Date::parse('2019-10-11 00:00:00', 'UTC')]);
+    Withdrawal::factory()->create(['coin' => 'USDC', 'withdraw_order_id' => 'o-newest', 'frozen' => true, 'applied_at' => Date::parse('2019-10-12 00:00:00', 'UTC')]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/capital/withdraw/history', [
+        'coin' => 'USDC',
+        'offset' => 1,
+        'limit' => 1,
+    ]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJsonCount(1)->assertJson([['withdrawOrderId' => 'o-middle']]);
 });
 
 it('returns an empty array when nothing matches', function (): void {
