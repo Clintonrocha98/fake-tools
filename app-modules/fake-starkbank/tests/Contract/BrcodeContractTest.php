@@ -159,6 +159,46 @@ it('devolve o envelope de erro na recusa de um BR Code ilegível', function (): 
     $this->assertMatchesRecordedShape($fixture, (array) $response->json());
 });
 
+it('devolve o envelope de erro na recusa do externalId, com a mensagem literal do provedor', function (): void {
+    // O consumidor conta com esta mensagem específica para não voltar a mandar
+    // `externalId`: a correlação de brcode-payment viaja só em `tags`.
+    $response = $this->postSigned('/v2/brcode-payment', ['payments' => [[
+        'brcode' => $this->staticBrcode(),
+        'taxId' => '20.018.183/0001-80',
+        'amount' => 25_000,
+        'tags' => ['conversion-abc-123'],
+        'description' => 'BRD funding conversion-abc-123',
+        'externalId' => 'conversion-abc-123',
+    ]]]);
+
+    $response->assertStatus(400);
+
+    $fixture = $this->loadContractFixture('errors/error_envelope.json');
+    $fixture['errors'][0]['code'] = $this->exactValue('invalidJson');
+    $fixture['errors'][0]['message'] = $this->exactValue('Unknown parameters in payment: externalId');
+
+    $this->assertMatchesRecordedShape($fixture, (array) $response->json());
+});
+
+it('devolve o envelope de erro na recusa do BR Code dinâmico sem description', function (): void {
+    // Só o dinâmico exige `description` — o estático não, porque o próprio
+    // brcode já carrega o valor a pagar.
+    $response = $this->postSigned('/v2/brcode-payment', ['payments' => [[
+        'brcode' => $this->dynamicBrcode(),
+        'taxId' => '20.018.183/0001-80',
+        'amount' => 25_000,
+        'tags' => ['conversion-abc-123'],
+    ]]]);
+
+    $response->assertStatus(400);
+
+    $fixture = $this->loadContractFixture('errors/error_envelope.json');
+    $fixture['errors'][0]['code'] = $this->exactValue('invalidJson');
+    $fixture['errors'][0]['message'] = $this->exactValue('Missing parameters in payment: description');
+
+    $this->assertMatchesRecordedShape($fixture, (array) $response->json());
+});
+
 it('quebra quando o amount do preview deixa de ser inteiro de centavos', function (): void {
     // Prova do mecanismo: sem isto, a suíte de contrato é teatro.
     $fixture = $this->loadContractFixture('brcode/brcode_preview.json');
