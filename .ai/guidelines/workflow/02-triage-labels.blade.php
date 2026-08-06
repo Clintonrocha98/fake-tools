@@ -40,6 +40,7 @@ Every issue must be tagged with the module(s) it affects. Labels follow the patt
 | Label              | Module directory | Description                    |
 | ------------------ | ---------------- | ------------------------------ |
 | `mod:fake-binance` | `fake-binance`   | Fake Binance API — ledger, `/api` and `/sapi` endpoints |
+| `mod:fake-starkbank` | `fake-starkbank` | Fake StarkBank API — invoice, transfer, dict-key, webhook |
 | `mod:identity`     | `identity`       | Auth, users, teams, RBAC & external identities |
 | `mod:panel-admin`  | `panel-admin`    | Admin Filament panel (namespace `He4rt\PanelAdmin`) |
 

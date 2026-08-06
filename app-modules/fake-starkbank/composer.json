@@ -1,0 +1,25 @@
+{
+    "name": "he4rt/fake-starkbank",
+    "description": "",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "He4rt\\FakeStarkbank\\": "src/",
+            "He4rt\\FakeStarkbank\\Database\\Factories\\": "database/factories/",
+            "He4rt\\FakeStarkbank\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "He4rt\\FakeStarkbank\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": ["He4rt\\FakeStarkbank\\FakeStarkbankServiceProvider"]
+        }
+    }
+}
