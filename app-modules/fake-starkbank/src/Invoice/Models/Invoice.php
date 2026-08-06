@@ -7,10 +7,10 @@ namespace He4rt\FakeStarkbank\Invoice\Models;
 use App\Models\BaseModel;
 use Carbon\CarbonImmutable;
 use He4rt\FakeStarkbank\Database\Factories\Invoice\InvoiceFactory;
-use He4rt\FakeStarkbank\Invoice\Casts\AsInvoiceTags;
-use He4rt\FakeStarkbank\Invoice\DTOs\InvoiceTags;
 use He4rt\FakeStarkbank\Invoice\Enums\InvoiceStatus;
+use He4rt\FakeStarkbank\Support\Casts\AsWireTags;
 use He4rt\FakeStarkbank\Support\NumericId;
+use He4rt\FakeStarkbank\Support\WireTags;
 use Illuminate\Database\Eloquent\Attributes\Table;
 use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,7 +28,7 @@ use Illuminate\Support\Collection;
  * @property string $tax_id
  * @property InvoiceStatus $status
  * @property string $brcode
- * @property InvoiceTags $tags
+ * @property WireTags $tags
  * @property Carbon $due
  * @property int $expiration
  * @property Carbon|null $paid_at
@@ -91,7 +91,7 @@ final class Invoice extends BaseModel
         return [
             'amount' => 'integer',
             'status' => InvoiceStatus::class,
-            'tags' => AsInvoiceTags::class,
+            'tags' => AsWireTags::class,
             'due' => 'datetime',
             'expiration' => 'integer',
             'paid_at' => 'datetime',

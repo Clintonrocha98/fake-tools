@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Http\Errors;
 
+use Filament\Support\Colors\Color;
 use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasLabel;
@@ -16,8 +17,9 @@ use Filament\Support\Contracts\HasLabel;
  *
  * Quatro deles são o vocabulário da autenticação: um por caminho de rejeição
  * do middleware `fake-starkbank.signed`, na ordem em que ele checa.
- * `invalidRequest` também cobre corpo e parâmetros que um endpoint recusa, e
- * `invalidId` é a releitura de um recurso que este fake nunca emitiu.
+ * `invalidRequest` também cobre corpo e parâmetros que um endpoint recusa,
+ * `invalidId` é a releitura de um recurso que este fake nunca emitiu e
+ * `invalidDictKey` é a chave PIX que o registro DICT não conhece.
  */
 enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
 {
@@ -26,6 +28,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
     case ExpiredAccessTime = 'expiredAccessTime';
     case InvalidRequest = 'invalidRequest';
     case InvalidId = 'invalidId';
+    case InvalidDictKey = 'invalidDictKey';
 
     public function defaultMessage(): string
     {
@@ -35,6 +38,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::ExpiredAccessTime => 'Expired access time',
             self::InvalidRequest => 'Invalid request',
             self::InvalidId => 'Invalid id',
+            self::InvalidDictKey => 'PIX key not found',
         };
     }
 
@@ -43,7 +47,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidAccessId, self::InvalidSignature, self::ExpiredAccessTime => 401,
             self::InvalidRequest => 400,
-            self::InvalidId => 404,
+            self::InvalidId, self::InvalidDictKey => 404,
         };
     }
 
@@ -55,14 +59,20 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::ExpiredAccessTime => 'Access-Time fora da janela',
             self::InvalidRequest => 'Request malformado',
             self::InvalidId => 'Id desconhecido',
+            self::InvalidDictKey => 'Chave PIX não registrada',
         };
     }
 
     /**
      * Enum não-ordenado: os códigos são causas distintas, não uma escala de
-     * severidade — cada case recebe uma cor semântica própria, sem ramp.
+     * severidade — cada case recebe uma cor própria, sem ramp. Os cinco
+     * primeiros esgotaram as cores semânticas curtas; do sexto em diante o
+     * valor vem da paleta do Filament, que o contrato `HasColor` aceita como
+     * array.
+     *
+     * @return string|array<int, string>
      */
-    public function getColor(): string
+    public function getColor(): string|array
     {
         return match ($this) {
             self::InvalidAccessId => 'danger',
@@ -70,6 +80,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::ExpiredAccessTime => 'info',
             self::InvalidRequest => 'gray',
             self::InvalidId => 'primary',
+            self::InvalidDictKey => Color::Rose,
         };
     }
 
@@ -81,6 +92,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::ExpiredAccessTime => '|now − Access-Time| acima de fake-starkbank.recv_window_seconds',
             self::InvalidRequest => 'Headers de assinatura ausentes, ou corpo/parâmetros que o endpoint não aceita — quem rejeita passa a mensagem específica',
             self::InvalidId => 'Nenhum recurso com esse id foi emitido por este fake',
+            self::InvalidDictKey => 'A chave PIX consultada não está registrada no DICT deste fake',
         };
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Invoice\DTOs;
 
 use Carbon\CarbonImmutable;
+use He4rt\FakeStarkbank\Support\WireTags;
 
 /**
  * Um item do array `invoices` do `POST /v2/invoice`, já normalizado: o que a
@@ -48,7 +49,7 @@ final readonly class IssueInvoiceData
                 ? CarbonImmutable::parse($due)
                 : CarbonImmutable::now()->addDays(2),
             expiration: (int) ($item['expiration'] ?? 0),
-            tags: InvoiceTags::fromArray(is_array($tags) ? $tags : [])->toArray(),
+            tags: WireTags::fromArray(is_array($tags) ? $tags : [])->toArray(),
         );
     }
 }

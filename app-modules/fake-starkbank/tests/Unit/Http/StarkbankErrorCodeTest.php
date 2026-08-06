@@ -22,6 +22,7 @@ it('fixa o code de wire e o HTTP de cada caminho de rejeição', function (Stark
     'Access-Time fora da janela' => [StarkbankErrorCode::ExpiredAccessTime, 'expiredAccessTime', 401],
     'header de assinatura ausente' => [StarkbankErrorCode::InvalidRequest, 'invalidRequest', 400],
     'id desconhecido' => [StarkbankErrorCode::InvalidId, 'invalidId', 404],
+    'chave PIX fora do DICT' => [StarkbankErrorCode::InvalidDictKey, 'invalidDictKey', 404],
 ]);
 
 it('implementa os contratos Filament em todos os cases, sem buraco', function (): void {
@@ -37,7 +38,12 @@ it('implementa os contratos Filament em todos os cases, sem buraco', function ()
 });
 
 it('dá uma cor própria a cada case, porque os códigos são causas distintas e não uma escala', function (): void {
-    $cores = array_map(static fn (StarkbankErrorCode $code): string => $code->getColor(), StarkbankErrorCode::cases());
+    // O contrato HasColor aceita string semântica ou array da paleta; a
+    // comparação é sobre o valor serializado para que os dois convivam.
+    $cores = array_map(
+        static fn (StarkbankErrorCode $code): string => json_encode($code->getColor(), JSON_THROW_ON_ERROR),
+        StarkbankErrorCode::cases(),
+    );
 
     expect($cores)->toHaveSameSize(array_unique($cores));
 });

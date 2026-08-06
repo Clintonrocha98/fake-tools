@@ -2,20 +2,25 @@
 
 declare(strict_types=1);
 
-namespace He4rt\FakeStarkbank\Invoice\DTOs;
+namespace He4rt\FakeStarkbank\Support;
 
 use JsonSerializable;
 
 /**
- * As `tags` de uma invoice. Lista de strings na wire, mas nunca um array solto
- * aqui: `tags[0]` é o correlationId (o id do Deposit do consumidor) e é por ele
- * que `PollExtratoCommand` deduplica o extrato — ler essa posição por índice
- * cru espalha a convenção por todo call site.
+ * As `tags` de um recurso do StarkBank — invoice, transfer ou brcode-payment.
+ * Lista de strings na wire, mas nunca um array solto aqui: `tags[0]` é o
+ * correlationId (o id do Deposit ou do Payout do consumidor) e é por ele que
+ * as varreduras de extrato deduplicam — ler essa posição por índice cru
+ * espalha a convenção por todo call site.
+ *
+ * A convenção é a MESMA nas três pernas, por isso o VO mora no Support do
+ * módulo: uma cópia por subsistema seria a mesma regra em três lugares para
+ * divergir.
  *
  * A ordem é significativa e preservada: quem lê a posição 0 espera a primeira
  * tag que o consumidor enviou.
  */
-final readonly class InvoiceTags implements JsonSerializable
+final readonly class WireTags implements JsonSerializable
 {
     /**
      * @param  list<string>  $values
@@ -44,8 +49,8 @@ final readonly class InvoiceTags implements JsonSerializable
     }
 
     /**
-     * O correlationId que o consumidor carimbou na emissão — `null` quando a
-     * invoice nasceu sem tags (o extrato de lá simplesmente a ignora).
+     * O correlationId que o consumidor carimbou na emissão — `null` quando o
+     * recurso nasceu sem tags (o extrato de lá simplesmente o ignora).
      */
     public function correlationId(): ?string
     {

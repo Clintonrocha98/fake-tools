@@ -6,7 +6,13 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
+use He4rt\FakeStarkbank\Support\Casts\AsWireTags;
+use He4rt\FakeStarkbank\Transfer\Models\Transfer;
+use He4rt\FakeStarkbank\Webhook\Casts\AsWebhookPayload;
+use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
+use Symfony\Component\Finder\Finder;
 
 /*
 |--------------------------------------------------------------------------
@@ -69,3 +75,75 @@ arch('os DTOs da invoice são value objects imutáveis')
 arch('os controllers da invoice não conhecem o model, só as Actions')
     ->expect('He4rt\FakeStarkbank\Invoice\Http\Controllers')
     ->not->toUse(Invoice::class);
+
+arch('os enums da transfer implementam os contratos que o painel lê')
+    ->expect('He4rt\FakeStarkbank\Transfer\Enums')
+    ->toBeEnums()
+    ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
+
+arch('os DTOs da transfer são value objects imutáveis')
+    ->expect('He4rt\FakeStarkbank\Transfer\DTOs')
+    ->toBeFinal()
+    ->toBeReadonly();
+
+arch('os controllers da transfer não conhecem o model, só as Actions')
+    ->expect('He4rt\FakeStarkbank\Transfer\Http\Controllers')
+    ->not->toUse(Transfer::class);
+
+arch('os enums do DICT implementam os contratos que o painel lê')
+    ->expect('He4rt\FakeStarkbank\Dict\Enums')
+    ->toBeEnums()
+    ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
+
+arch('os DTOs do DICT são value objects imutáveis')
+    ->expect('He4rt\FakeStarkbank\Dict\DTOs')
+    ->toBeFinal()
+    ->toBeReadonly();
+
+arch('os controllers do DICT não conhecem o model, só as Actions')
+    ->expect('He4rt\FakeStarkbank\Dict\Http\Controllers')
+    ->not->toUse(DictEntry::class);
+
+/*
+ * Uma Action é uma operação só, chamada por um ponto de entrada canônico —
+ * `handle()` ou `__invoke()`. Uma classe de `Actions/` que só expõe verbos
+ * próprios virou Service, e o painel de cenários perde o gancho que ele chama.
+ */
+test('toda Action do módulo é final e tem ponto de entrada canônico', function (): void {
+    $infratores = [];
+
+    foreach (Finder::create()->files()->name('*.php')->in(dirname(__DIR__, 2).'/src') as $arquivo) {
+        $caminho = str_replace('\\', '/', $arquivo->getRelativePathname());
+
+        if (!str_contains($caminho, '/Actions/')) {
+            continue;
+        }
+
+        $classe = 'He4rt\\FakeStarkbank\\'.str_replace('/', '\\', mb_substr($caminho, 0, -4));
+        $reflexao = new ReflectionClass($classe);
+
+        if (!$reflexao->hasMethod('handle') && !$reflexao->hasMethod('__invoke')) {
+            $infratores[] = $classe.' não expõe handle() nem __invoke()';
+        }
+
+        if (!$reflexao->isFinal()) {
+            $infratores[] = $classe.' não é final';
+        }
+    }
+
+    expect($infratores)->toBeEmpty();
+});
+
+/*
+ * Um cast tipado é o que impede um jsonb de virar `mixed` no PHPStan e uma key
+ * mágica no call site. A regra global do repo (`NoLooseArrayCastsTest`) proíbe
+ * o cast solto; esta afirma o lado positivo para as colunas jsonb deste módulo.
+ */
+test('toda coluna jsonb do módulo é lida por um cast tipado', function (string $model, string $coluna, string $cast): void {
+    expect(new $model()->getCasts())->toHaveKey($coluna)
+        ->and(new $model()->getCasts()[$coluna])->toBe($cast);
+})->with([
+    'tags da invoice' => [Invoice::class, 'tags', AsWireTags::class],
+    'tags da transfer' => [Transfer::class, 'tags', AsWireTags::class],
+    'payload da emissão' => [WebhookEmission::class, 'payload', AsWebhookPayload::class],
+]);

@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank;
 
 use He4rt\FakeStarkbank\Console\FlushWebhooksCommand;
+use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Http\Middleware\VerifiesSignedRequest;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
+use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use He4rt\FakeStarkbank\Webhook\Actions\EmitWebhookEvent;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
@@ -20,6 +22,8 @@ class FakeStarkbankServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(__DIR__.'/../config/fake-starkbank.php', 'fake-starkbank');
         $this->mergeConfigFrom(__DIR__.'/../config/fake-starkbank-invoice.php', 'fake-starkbank-invoice');
+        $this->mergeConfigFrom(__DIR__.'/../config/fake-starkbank-dict.php', 'fake-starkbank-dict');
+        $this->mergeConfigFrom(__DIR__.'/../config/fake-starkbank-transfer.php', 'fake-starkbank-transfer');
 
         $this->app->bind(EmitsWebhookEvents::class, EmitWebhookEvent::class);
     }
@@ -37,7 +41,9 @@ class FakeStarkbankServiceProvider extends ServiceProvider
         }
 
         Relation::morphMap([
+            'starkbank_dict_entry' => DictEntry::class,
             'starkbank_invoice' => Invoice::class,
+            'starkbank_transfer' => Transfer::class,
             'starkbank_webhook_emission' => WebhookEmission::class,
         ]);
     }

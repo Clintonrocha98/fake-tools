@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Invoice\DTOs;
 
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
+use He4rt\FakeStarkbank\Support\WireTags;
 use He4rt\FakeStarkbank\Support\WireTimestamp;
 use JsonSerializable;
 
@@ -27,7 +28,7 @@ final readonly class InvoiceView implements JsonSerializable
         public string $taxId,
         public string $status,
         public string $brcode,
-        public InvoiceTags $tags,
+        public WireTags $tags,
         public string $created,
         public string $due,
         public int $expiration,

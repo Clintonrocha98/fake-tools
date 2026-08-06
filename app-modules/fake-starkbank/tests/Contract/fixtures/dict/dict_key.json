@@ -1,0 +1,15 @@
+{
+    "key": {
+        "id": "ada@brd.digital",
+        "type": "email",
+        "name": "Ada Lovelace",
+        "taxId": "012.345.678-90",
+        "ownerType": "naturalPerson",
+        "bankName": "Stark Bank S.A.",
+        "ispb": "20018183",
+        "branchCode": "*2Nq4Yw7cBw9utBZAgLOg4kKm8xNXJkYkqUzletoeOPM=",
+        "accountNumber": "*PnAoBLxISgcZ4Widbyqv0rvQx/NWaFn5NQXg/LpyFyICe3+MU9jQnGBiW6W1nTS7dNpqsi6w+3/s5l+ilXnTnhZWaC+88W3OadH5L/jehSc=",
+        "accountType": "checking",
+        "status": "registered"
+    }
+}
