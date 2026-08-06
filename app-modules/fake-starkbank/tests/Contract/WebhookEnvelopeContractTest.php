@@ -3,11 +3,14 @@
 declare(strict_types=1);
 
 use Carbon\CarbonImmutable;
+use He4rt\FakeStarkbank\Invoice\Actions\AdvanceInvoiceStatus;
+use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Tests\Contract\Support\AssertsRecordedShape;
 use He4rt\FakeStarkbank\Tests\Support\SignsWebhooks;
 use He4rt\FakeStarkbank\Webhook\Actions\EmitWebhookEvent;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
+use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\ExpectationFailedException;
 
@@ -29,10 +32,64 @@ it('emite no shape do fixture webhook_invoice_paid do consumidor', function (): 
     $emission = resolve(EmitWebhookEvent::class)
         ->handle(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
 
-    $this->assertMatchesRecordedShape(
-        $this->loadContractFixture('webhook/webhook_invoice_paid.json'),
-        $emission?->payload->decoded() ?? [],
-    );
+    $fixture = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+
+    // Vocabulário, não tipo: o consumidor faz `tryFrom()`/`match` sobre estes
+    // três: `StarkbankEventType::triggersSettlement()` decide por `log.type` se
+    // o Deposit concilia, e a key da entity dentro do log sai de `subscription`.
+    // Comparar só `string` contra `string` deixaria passar um `credited` no
+    // lugar de `paid` com a suíte verde e o consumidor mudo.
+    $fixture['event']['subscription'] = $this->exactValue('invoice');
+    $fixture['event']['log']['type'] = $this->exactValue('paid');
+    $fixture['event']['log']['invoice']['status'] = $this->exactValue('paid');
+
+    $this->assertMatchesRecordedShape($fixture, $emission?->payload->decoded() ?? []);
+});
+
+it('emite pelo caminho de produção o mesmo vocabulário do fixture', function (): void {
+    // O teste acima passa o par subscription/eventType à mão, então nenhuma
+    // troca em `InvoiceStatus::eventType()` o alcança. Este atravessa o avanço
+    // lazy de verdade: é ele que quebra se `Paid` passar a emitir `credited`
+    // (que a guarda exaustiva aceita, por estar no vocabulário do consumidor)
+    // ou se a invoice passar a anunciar outra subscription.
+    config(['fake-starkbank-invoice.advance_seconds' => 60]);
+
+    $invoice = Invoice::factory()->create(['due' => CarbonImmutable::now()->addDay()]);
+
+    $this->travel(61)->seconds();
+
+    resolve(AdvanceInvoiceStatus::class)->handle($invoice);
+
+    $emission = WebhookEmission::query()->firstOrFail();
+
+    $fixture = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+    $fixture['event']['subscription'] = $this->exactValue('invoice');
+    $fixture['event']['log']['type'] = $this->exactValue('paid');
+    $fixture['event']['log']['invoice']['status'] = $this->exactValue('paid');
+
+    $this->assertMatchesRecordedShape($fixture, $emission->payload->decoded());
+});
+
+it('quebra quando o log.type deixa de ser o que dispara a conciliação do consumidor', function (): void {
+    $fixture = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+    $fixture['event']['log']['type'] = $this->exactValue('paid');
+
+    $drifted = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+    $drifted['event']['log']['type'] = 'credited';
+
+    expect(fn () => $this->assertMatchesRecordedShape($fixture, $drifted))
+        ->toThrow(ExpectationFailedException::class);
+});
+
+it('quebra quando a subscription anuncia outra perna', function (): void {
+    $fixture = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+    $fixture['event']['subscription'] = $this->exactValue('invoice');
+
+    $drifted = $this->loadContractFixture('webhook/webhook_invoice_paid.json');
+    $drifted['event']['subscription'] = 'brcode-payment';
+
+    expect(fn () => $this->assertMatchesRecordedShape($fixture, $drifted))
+        ->toThrow(ExpectationFailedException::class);
 });
 
 it('carrega exatamente as keys camelCase do envelope, sem nenhuma em snake_case', function (): void {

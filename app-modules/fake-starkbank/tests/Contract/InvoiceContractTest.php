@@ -42,6 +42,8 @@ it('responde a emissão no shape do fixture invoice_issued', function (): void {
     // A mensagem de sucesso o consumidor não lê, mas é literal na wire: comparar
     // só o tipo aqui deixaria passar qualquer string.
     $fixture['message'] = $this->exactValue('Invoice successfully created');
+    // `status` é vocabulário: o consumidor faz `tryFrom()` sobre ele.
+    $fixture['invoices'][0]['status'] = $this->exactValue('created');
 
     $this->assertMatchesRecordedShape($fixture, (array) $response->json());
 });
@@ -53,10 +55,10 @@ it('responde a releitura no shape do fixture invoice_paid', function (): void {
 
     $response->assertOk();
 
-    $this->assertMatchesRecordedShape(
-        $this->loadContractFixture('invoice/invoice_paid.json'),
-        (array) $response->json(),
-    );
+    $fixture = $this->loadContractFixture('invoice/invoice_paid.json');
+    $fixture['invoice']['status'] = $this->exactValue('paid');
+
+    $this->assertMatchesRecordedShape($fixture, (array) $response->json());
 });
 
 it('responde o extrato no shape do fixture invoice_list_paid', function (): void {
@@ -66,10 +68,10 @@ it('responde o extrato no shape do fixture invoice_list_paid', function (): void
 
     $response->assertOk();
 
-    $this->assertMatchesRecordedShape(
-        $this->loadContractFixture('invoice/invoice_list_paid.json'),
-        (array) $response->json(),
-    );
+    $fixture = $this->loadContractFixture('invoice/invoice_list_paid.json');
+    $fixture['invoices'][0]['status'] = $this->exactValue('paid');
+
+    $this->assertMatchesRecordedShape($fixture, (array) $response->json());
 
     $response->assertJsonPath('cursor', null);
 });

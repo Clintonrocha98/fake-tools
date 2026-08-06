@@ -19,8 +19,11 @@ use Throwable;
  * `GET /v2/brcode-payment?status=success&after={cursor}` — o extrato de funding
  * que a rede de segurança da conciliação varre.
  *
- * Duas decisões governam a página, as mesmas das outras duas listagens:
+ * Três decisões governam a página, as mesmas das outras duas listagens:
  *
+ *   - **a página 1 é a janela RECENTE** (mais novo primeiro, ADR-0002). O
+ *     `poll-extrato` manda um request só e não segue o cursor: com o extrato
+ *     invertido, tudo que ele lê acima de 100 linhas é arquivo morto;
  *   - **o avanço lazy roda ANTES do filtro de status**, sobre a janela lida.
  *     Filtrar `status=success` no SQL esconderia justamente o pagamento que
  *     liquidou nesta leitura, e o ciclo pagar → avançar → varrer nunca fecharia
@@ -92,18 +95,19 @@ final readonly class ListBrcodePayments
         $cursor = PageCursor::tryDecode($after);
 
         if ($cursor instanceof PageCursor) {
-            // Keyset sobre o par que ordena a página: linhas novas chegando no
-            // meio da varredura não deslocam a página seguinte, como um OFFSET
+            // Keyset sobre o par que ordena a página, caminhando para TRÁS no
+            // tempo com ela (ADR-0002): linhas novas chegando no meio da
+            // varredura não deslocam a página seguinte, como um OFFSET
             // deslocaria.
             $query->where(
                 /** @param Builder<BrcodePayment> $scoped */
                 function (Builder $scoped) use ($cursor): void {
-                    $scoped->where('created_at', '>', $cursor->createdAt)
+                    $scoped->where('created_at', '<', $cursor->createdAt)
                         ->orWhere(
                             /** @param Builder<BrcodePayment> $tie */
                             function (Builder $tie) use ($cursor): void {
                                 $tie->where('created_at', '=', $cursor->createdAt)
-                                    ->where('id', '>', $cursor->id);
+                                    ->where('id', '<', $cursor->id);
                             }
                         );
                 }
@@ -115,6 +119,8 @@ final readonly class ListBrcodePayments
         $since = $this->tryDate($after);
 
         if ($since instanceof CarbonImmutable) {
+            // Data é FILTRO, não sentido de leitura: recorta a janela e deixa a
+            // ordem de sempre decidir por onde ela começa.
             $query->where('created_at', '>=', $since);
 
             return;

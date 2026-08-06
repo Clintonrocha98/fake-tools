@@ -59,6 +59,21 @@ enum BrcodePaymentStatus: string implements HasColor, HasDescription, HasIcon, H
         };
     }
 
+    /**
+     * Se um `failure_reason` gravado descreve ESTE status. O `reason` do
+     * envelope sai daquela coluna, então forçar um desfecho que não carrega
+     * motivo tem de limpá-la: um `success` anunciado com o motivo da recusa
+     * anterior descreve, dentro do envelope de liquidação, o oposto do que
+     * aconteceu.
+     */
+    public function carriesFailureReason(): bool
+    {
+        return match ($this) {
+            self::Failed => true,
+            self::Created, self::Processing, self::Success => false,
+        };
+    }
+
     public function getLabel(): string
     {
         return match ($this) {

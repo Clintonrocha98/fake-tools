@@ -41,6 +41,57 @@ beforeEach(function (): void {
     $this->seed(DictEntrySeeder::class);
 });
 
+/**
+ * O default CRU escrito no arquivo de config — o literal do segundo argumento de
+ * `env()`. Lido do FONTE de propósito: `config()` já resolveu e o `beforeEach`
+ * acima sobrescreve as duas metades para exercitar o CRC16, enquanto resolver
+ * `env()` de novo devolveria o que o `.env` do dev disser. O que precisa casar
+ * entre os dois fakes é o default combinado, não o valor de uma máquina.
+ */
+function envDefaultLiteral(string $configFile, string $envKey): string
+{
+    $matched = preg_match(
+        sprintf("/env\(\s*'%s'\s*,\s*'([^']*)'\s*\)/", preg_quote($envKey, '/')),
+        (string) file_get_contents($configFile),
+        $matches,
+    );
+
+    expect($matched)->toBe(1, sprintf('Nenhum default literal de %s em %s.', $envKey, $configFile));
+
+    return $matches[1];
+}
+
+it('mantém idênticos os defaults das duas metades do contrato cross-fake', function (): void {
+    // O contrato entre os dois fakes é uma constante replicada, não uma chamada:
+    // eles nunca se consultam em runtime (ADR-0001). Alterar o default de um
+    // lado só faz o `previewBrcode` devolver `taxId: ""` em dev e o
+    // `SendConversionFunding` recusar com `destinationUnverifiable` — sem que
+    // nada aqui fique vermelho, porque todo teste sobrescreve os dois lados.
+    $binance = envDefaultLiteral(
+        base_path('app-modules/fake-binance/config/fake-binance-fiat.php'),
+        'FAKE_BINANCE_FIAT_PIX_KEY',
+    );
+
+    $starkbank = envDefaultLiteral(
+        base_path('app-modules/fake-starkbank/config/fake-starkbank-dict.php'),
+        'FAKE_STARKBANK_FUNDING_PIX_KEY',
+    );
+
+    expect($starkbank)->toBe($binance)
+        ->and($binance)->toBe('funding@fake-binance.dev');
+});
+
+it('mantém o taxId de funding no valor que o consumidor confere', function (): void {
+    // Casa com `treasury.conversion.funding_expected_tax_id` do consumidor: é o
+    // segundo guard do SendConversionFunding, e ele é fail-closed.
+    $taxId = envDefaultLiteral(
+        base_path('app-modules/fake-starkbank/config/fake-starkbank-dict.php'),
+        'FAKE_STARKBANK_FUNDING_TAX_ID',
+    );
+
+    expect($taxId)->toBe('20.018.183/0001-80');
+});
+
 it('previsualiza, confere os guards, paga e liquida o BR Code que o fake-binance emitiu', function (): void {
     $brcode = new BuildStaticBrcode()->handle('250.00');
 

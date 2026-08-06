@@ -77,7 +77,24 @@ it('reenvia também uma emissão que já tinha sido entregue', function (): void
     Http::assertSentCount(1);
 });
 
-it('não tenta o POST de uma emissão gravada sem destino', function (): void {
+it('adota o destino configurado ao reenviar uma emissão gravada sem destino', function (): void {
+    // O replay manual do painel é a outra metade da recuperação (a primeira é o
+    // flush): a emissão nasceu num dev sem FAKE_STARKBANK_WEBHOOK_URL e o
+    // operador configurou a URL depois. Recusar por causa do destino congelado
+    // deixaria a linha pendente para sempre, sem caminho nenhum de saída.
+    $emission = WebhookEmission::factory()->create(['url' => '']);
+
+    resolve(ReplayEmission::class)($emission);
+
+    Http::assertSentCount(1);
+
+    expect($emission->refresh()->sent_at)->not->toBeNull()
+        ->and($emission->url)->toBe($this->webhookUrl());
+});
+
+it('não tenta o POST quando a emissão não tem destino e nenhuma URL está configurada', function (): void {
+    config(['fake-starkbank.webhook.url' => null]);
+
     $emission = WebhookEmission::factory()->create(['url' => '']);
 
     resolve(ReplayEmission::class)($emission);

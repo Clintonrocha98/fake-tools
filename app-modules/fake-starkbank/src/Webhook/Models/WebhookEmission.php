@@ -47,6 +47,14 @@ use Illuminate\Support\Carbon;
 final class WebhookEmission extends BaseModel
 {
     /**
+     * O `failed_reason` de uma emissão que nasceu sem assinatura porque não
+     * havia PEM legível. Dono único do texto: quem o grava ao emitir e quem o
+     * regrava ao falhar de novo na entrega precisam dizer a mesma coisa, ou o
+     * operador lê dois motivos para o mesmo defeito de configuração.
+     */
+    public const string UNSIGNED_REASON = 'Emissão não assinada: nenhuma chave privada de webhook legível (FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY_PATH)';
+
+    /**
      * O teste é contra {@see CarbonInterface}, não contra a classe concreta: o
      * app roda com `Date::use(CarbonImmutable::class)`, e um `instanceof` na
      * classe mutável devolveria `false` para toda emissão já entregue.

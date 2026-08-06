@@ -72,15 +72,15 @@ final class Transfer extends BaseModel
 
     /**
      * A ordem canônica de toda listagem do módulo — a mesma que o cursor de
-     * paginação codifica. `created_at` sozinho empata entre transfers
-     * despachadas no mesmo instante; o `id` desempata e torna a página
-     * determinística.
+     * paginação codifica: do mais NOVO para o mais antigo (ADR-0002).
+     * `created_at` sozinho empata entre transfers despachadas no mesmo
+     * instante; o `id` desempata e torna a página determinística.
      *
      * @param  Builder<Transfer>  $query
      */
     protected function scopeInPageOrder(Builder $query): void
     {
-        $query->oldest()->orderBy('id');
+        $query->latest()->orderByDesc('id');
     }
 
     protected function casts(): array

@@ -81,7 +81,7 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
         array $entity,
         ?string $signingKeyPem = null,
         ?string $reason = null,
-    ): ?WebhookEmission {
+    ): WebhookEmission {
         if (!$subscription->allows($eventType)) {
             Log::warning('fake-starkbank.webhook: log type fora do ciclo de vida da subscription — emitindo mesmo assim, mas o StarkBank real não produz esse par', [
                 'subscription' => $subscription->value,
@@ -89,7 +89,7 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
             ]);
         }
 
-        $plan = $this->planNext->handle();
+        $plan = $this->planFor($signingKeyPem);
 
         $now = CarbonImmutable::now()->utc()->format('Y-m-d\TH:i:s.uP');
 
@@ -109,18 +109,13 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
 
         $signature = new EcdsaSignatureSigner($this->signingPem($signingKeyPem, $plan))->sign($payload->rawBody);
 
-        if ($signature === null) {
-            Log::error('fake-starkbank.webhook: emissão abortada — sem chave privada legível não há o que o consumidor consiga verificar, e um webhook não assinado só viraria 401 do lado de lá', [
-                'subscription' => $subscription->value,
-                'log_type' => $eventType->value,
-                'entity_id' => $envelope->entityId(),
-            ]);
-
-            return null;
-        }
-
         $url = mb_trim((string) config('fake-starkbank.webhook.url', ''));
 
+        // Sem chave legível a emissão é GRAVADA assim mesmo, sem assinatura e
+        // com o motivo à vista — simetria com o destino não configurado logo
+        // abaixo. Abortar antes do insert faria a transição de estado acontecer
+        // no banco sem deixar rastro na única trilha que esta perna tem, e não
+        // sobraria linha para o replay reenviar depois de configurar o PEM.
         $emission = WebhookEmission::query()->create([
             'event_id' => $envelope->eventId,
             'subscription' => $subscription,
@@ -128,9 +123,21 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
             'entity_id' => $envelope->entityId(),
             'url' => $url,
             'payload' => $payload,
-            'signature' => $signature,
+            'signature' => $signature ?? '',
+            'failed_reason' => $signature === null ? WebhookEmission::UNSIGNED_REASON : null,
             'held_at' => $plan->held ? Date::now() : null,
         ]);
+
+        if ($signature === null) {
+            Log::error('fake-starkbank.webhook: emissão gravada SEM assinatura — sem chave privada legível não há o que o consumidor verifique, mas a linha fica na fila para o flush assiná-la e entregá-la quando o PEM aparecer', [
+                'event_id' => $emission->event_id,
+                'subscription' => $subscription->value,
+                'log_type' => $eventType->value,
+                'entity_id' => $envelope->entityId(),
+            ]);
+
+            return $emission;
+        }
 
         if ($plan->corruptSignature) {
             Log::warning('fake-starkbank.webhook: emissão assinada com chave alheia por cenário armado — o consumidor deve recusar com 401 e não persistir nada', [
@@ -188,11 +195,22 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
     }
 
     /**
-     * O PEM explícito de {@see EmitCorrupted} vence o cenário armado: quem
-     * pediu uma emissão corrompida sob comando já escolheu a chave, e deixar o
-     * plano trocá-la de novo não mudaria nada além de gastar o armado duas
-     * vezes na mesma emissão.
+     * A emissão com PEM explícito ({@see EmitCorrupted}, disparada à mão pelo
+     * operador) NÃO olha o cenário armado — nem para a chave, nem para
+     * `held`/`duplicate`.
+     *
+     * O armado espera o próximo evento REAL: gastá-lo num clique faria o
+     * `HoldNext` sumir sem ter valido para o evento que o operador queria
+     * observar, e faria o envelope corrompido nascer represado — o oposto exato
+     * do 401 que esse cenário existe para exercitar.
      */
+    private function planFor(?string $signingKeyPem): WebhookEmissionPlan
+    {
+        return $signingKeyPem === null
+            ? $this->planNext->handle()
+            : WebhookEmissionPlan::neutral();
+    }
+
     private function signingPem(?string $signingKeyPem, WebhookEmissionPlan $plan): string
     {
         if ($signingKeyPem !== null) {

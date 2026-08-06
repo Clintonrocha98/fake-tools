@@ -68,3 +68,23 @@ it('liquida na hora, encurtando a espera pelo avanço lazy', function (): void {
     expect($liquidada->status)->toBe(TransferStatus::Success)
         ->and(WebhookEmission::query()->firstOrFail()->event_type)->toBe(StarkbankEventType::Success);
 });
+
+it('limpa o motivo da recusa ao forçar a liquidação, e o envelope de success não anuncia uma recusa', function (): void {
+    // O operador arma Fail com reason, a leitura grava `failed` + motivo, e
+    // depois ele força `success` pelo botão da tabela: sem limpar a coluna, o
+    // webhook de liquidação sai descrevendo a recusa anterior.
+    $transfer = Transfer::factory()->failed()->create(['failure_reason' => 'saldo insuficiente']);
+
+    $liquidada = resolve(ForceTransferStatus::class)->handle($transfer, TransferStatus::Success);
+
+    expect($liquidada->failure_reason)->toBeNull()
+        ->and(WebhookEmission::query()->firstOrFail()->payload->decoded()['event']['log']['reason'] ?? null)->toBeNull();
+});
+
+it('preserva o motivo ao forçar um desfecho que carrega motivo', function (): void {
+    $transfer = Transfer::factory()->create(['failure_reason' => 'devolvida pelo recebedor']);
+
+    $devolvida = resolve(ForceTransferStatus::class)->handle($transfer, TransferStatus::Returned);
+
+    expect($devolvida->failure_reason)->toBe('devolvida pelo recebedor');
+});

@@ -30,8 +30,15 @@ final readonly class ForceBrcodePaymentStatus
         $from = $payment->status;
 
         // O operador que força um estado descarta qualquer destino de cenário
-        // ainda pendente — mantê-lo faria a próxima leitura desfazer o clique.
-        $payment->update(['status' => $status, 'destined_status' => null, 'held' => false]);
+        // ainda pendente — mantê-lo faria a próxima leitura desfazer o clique —
+        // e também o motivo de recusa que descrevia o estado anterior, que sai
+        // como `reason` do envelope logo abaixo.
+        $payment->update([
+            'status' => $status,
+            'destined_status' => null,
+            'held' => false,
+            'failure_reason' => $status->carriesFailureReason() ? $payment->failure_reason : null,
+        ]);
         $payment->refresh();
 
         Log::info('fake-starkbank.brcode: status forçado por cenário — o relógio é ignorado de propósito, para exercitar a recusa de funding que o consumidor trata mas o relógio nunca produz', [

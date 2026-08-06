@@ -30,8 +30,15 @@ final readonly class ForceTransferStatus
         $from = $transfer->status;
 
         // O operador que força um estado descarta qualquer destino de cenário
-        // ainda pendente — mantê-lo faria a próxima leitura desfazer o clique.
-        $transfer->update(['status' => $status, 'destined_status' => null, 'held' => false]);
+        // ainda pendente — mantê-lo faria a próxima leitura desfazer o clique —
+        // e também o motivo de recusa que descrevia o estado anterior, que sai
+        // como `reason` do envelope logo abaixo.
+        $transfer->update([
+            'status' => $status,
+            'destined_status' => null,
+            'held' => false,
+            'failure_reason' => $status->carriesFailureReason() ? $transfer->failure_reason : null,
+        ]);
         $transfer->refresh();
 
         Log::info('fake-starkbank.transfer: status forçado por cenário — o relógio é ignorado de propósito, para exercitar o ramo de devolução que o consumidor trata mas raramente vê', [

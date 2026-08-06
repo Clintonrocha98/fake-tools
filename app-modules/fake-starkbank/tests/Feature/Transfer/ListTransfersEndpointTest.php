@@ -72,6 +72,17 @@ it('sem filtro, lista todo o extrato', function (): void {
         ->assertJsonCount(3, 'transfers');
 });
 
+it('serve o extrato do mais novo para o mais antigo', function (): void {
+    // A página 1 precisa ser a janela recente: o `poll-extrato` manda um
+    // request só e não segue o cursor (ADR-0002).
+    $antiga = Transfer::factory()->settled()->create(['created_at' => CarbonImmutable::now()->subDays(2)]);
+    $recente = Transfer::factory()->settled()->create();
+
+    $ids = array_column((array) $this->getSigned('/v2/transfer?status=success', $this->signedHeaders())->assertOk()->json('transfers'), 'id');
+
+    expect($ids)->toBe([$recente->id, $antiga->id]);
+});
+
 it('pagina em 100 itens e encerra a segunda página com cursor null', function (): void {
     Transfer::factory()->count(ListTransfers::PAGE_SIZE + 5)->settled()->create();
 

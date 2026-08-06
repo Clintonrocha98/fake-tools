@@ -35,7 +35,7 @@ final readonly class EmitCorrupted
         StarkbankSubscription $subscription,
         StarkbankEventType $eventType,
         array $entity,
-    ): ?WebhookEmission {
+    ): WebhookEmission {
         Log::warning('fake-starkbank.webhook: emissão CORROMPIDA sob comando — assinada com um par gerado na hora, o consumidor deve recusar com 401 e não persistir nada', [
             'subscription' => $subscription->value,
             'event_type' => $eventType->value,

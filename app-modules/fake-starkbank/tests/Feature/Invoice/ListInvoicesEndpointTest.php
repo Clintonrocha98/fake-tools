@@ -98,6 +98,34 @@ it('pagina em 100 itens e encerra a segunda página com cursor null', function (
         ->and(count($idsPrimeira) + count($idsSegunda))->toBe(ListInvoices::PAGE_SIZE + 5);
 });
 
+it('serve o extrato do mais novo para o mais antigo', function (): void {
+    $antiga = Invoice::factory()->paid()->create(['created_at' => CarbonImmutable::now()->subDays(2), 'due' => now()->addDay()]);
+    $meio = Invoice::factory()->paid()->create(['created_at' => CarbonImmutable::now()->subDay(), 'due' => now()->addDay()]);
+    $recente = Invoice::factory()->paid()->create(['due' => now()->addDay()]);
+
+    $ids = array_column((array) $this->getSigned('/v2/invoice?status=paid', $this->signedHeaders())->assertOk()->json('invoices'), 'id');
+
+    expect($ids)->toBe([$recente->id, $meio->id, $antiga->id]);
+});
+
+it('mantém a invoice recém-paga na primeira página com o extrato acima do teto de 100', function (): void {
+    // O `poll-extrato` do consumidor manda UM request e ignora o cursor: se a
+    // página 1 fosse a das mais ANTIGAS, tudo que ele lê num banco de dev que
+    // sobrevive a restart seria arquivo morto, e a invoice desta sessão nunca
+    // reconciliaria (ADR-0002).
+    Invoice::factory()->count(ListInvoices::PAGE_SIZE)->paid()->create([
+        'created_at' => CarbonImmutable::now()->subDays(30),
+        'due' => now()->addDay(),
+    ]);
+
+    $recente = Invoice::factory()->paid()->create(['due' => now()->addDay()]);
+
+    $ids = array_column((array) $this->getSigned('/v2/invoice?status=paid', $this->signedHeaders())->assertOk()->json('invoices'), 'id');
+
+    expect($ids)->toHaveCount(ListInvoices::PAGE_SIZE)
+        ->and($ids[0])->toBe($recente->id);
+});
+
 it('aceita uma data ISO-8601 em after, que é o que --after de poll-extrato manda na primeira página', function (): void {
     $velha = Invoice::factory()->create(['created_at' => CarbonImmutable::now()->subDays(3), 'due' => now()->addDay()]);
     $nova = Invoice::factory()->create(['due' => now()->addDay()]);

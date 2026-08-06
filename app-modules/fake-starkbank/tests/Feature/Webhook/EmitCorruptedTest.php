@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use He4rt\FakeStarkbank\Scenarios\Actions\ArmScenario;
+use He4rt\FakeStarkbank\Scenarios\Enums\WebhookOutcome;
+use He4rt\FakeStarkbank\Scenarios\Models\ArmedScenario;
 use He4rt\FakeStarkbank\Tests\Support\SignsWebhooks;
 use He4rt\FakeStarkbank\Webhook\Actions\EmitCorrupted;
+use He4rt\FakeStarkbank\Webhook\Actions\EmitWebhookEvent;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
@@ -48,6 +52,43 @@ it('percorre a mesma persistência e a mesma entrega pós-resposta da emissão n
     expect($emission?->refresh()->response_code)->toBe(401)
         ->and($emission?->sent_at)->toBeNull()
         ->and($emission?->failed_reason)->toContain('HTTP 401');
+});
+
+it('não consome o cenário armado, que continua esperando o próximo evento real', function (): void {
+    // O operador arma `HoldNext` para represar o próximo evento REAL e só
+    // depois clica em "Emitir corrompida": o clique não pode gastar o armado.
+    new ArmScenario()->handle(WebhookOutcome::HoldNext);
+
+    resolve(EmitCorrupted::class)(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
+
+    expect(ArmedScenario::query()->count())->toBe(1);
+
+    $real = resolve(EmitWebhookEvent::class)->handle(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
+
+    expect($real?->isHeld())->toBeTrue()
+        ->and(ArmedScenario::query()->count())->toBe(0);
+});
+
+it('sai pela rede mesmo com HoldNext armado — represar aqui seria o oposto do 401 que o cenário exercita', function (): void {
+    new ArmScenario()->handle(WebhookOutcome::HoldNext);
+
+    $emission = resolve(EmitCorrupted::class)(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
+
+    expect($emission?->isHeld())->toBeFalse();
+
+    $this->app->terminate();
+
+    Http::assertSentCount(1);
+});
+
+it('sai uma vez só com DuplicateNext armado', function (): void {
+    new ArmScenario()->handle(WebhookOutcome::DuplicateNext);
+
+    resolve(EmitCorrupted::class)(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
+
+    $this->app->terminate();
+
+    Http::assertSentCount(1);
 });
 
 it('gera uma chave descartável diferente a cada emissão corrompida', function (): void {

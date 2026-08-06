@@ -135,7 +135,11 @@ it('vira no-op logado sem destino configurado: grava a emissão e não tenta o P
     Http::assertNothingSent();
 });
 
-it('aborta a emissão quando não há chave privada legível', function (): void {
+it('grava a emissão sem assinatura, com o motivo à vista, quando não há chave privada legível', function (): void {
+    // Simetria com o destino não configurado logo acima: a transição de estado
+    // já aconteceu no banco, e a fila de emissões é a única trilha que esta
+    // perna tem. Abortar antes do insert deixaria o painel vazio e o replay sem
+    // nada para reenviar depois de configurar o PEM.
     Http::fake();
     config([
         'fake-starkbank.webhook.private_key' => null,
@@ -145,8 +149,13 @@ it('aborta a emissão quando não há chave privada legível', function (): void
     $emission = resolve(EmitWebhookEvent::class)
         ->handle(StarkbankSubscription::Invoice, StarkbankEventType::Paid, $this->invoiceEntity());
 
-    expect($emission)->toBeNull()
-        ->and(WebhookEmission::query()->count())->toBe(0);
+    $this->app->terminate();
+
+    expect($emission)->toBeInstanceOf(WebhookEmission::class)
+        ->and($emission->signature)->toBeEmpty()
+        ->and($emission->failed_reason)->toBe(WebhookEmission::UNSIGNED_REASON)
+        ->and($emission->sent_at)->toBeNull()
+        ->and(WebhookEmission::query()->pending()->count())->toBe(1);
 
     Http::assertNothingSent();
 });

@@ -62,6 +62,26 @@ it('liquida na hora, encurtando a espera pelo avanço lazy', function (): void {
         ->and(WebhookEmission::query()->firstOrFail()->event_type)->toBe(StarkbankEventType::Success);
 });
 
+it('limpa o motivo da recusa ao forçar a liquidação, e o envelope de success não anuncia uma recusa', function (): void {
+    // Mesmo defeito da transfer: o `reason` do envelope sai de
+    // `failure_reason`, e um funding liquidado não pode anunciar o motivo da
+    // recusa que o antecedeu.
+    $pagamento = BrcodePayment::factory()->failed()->create(['failure_reason' => 'chave PIX inválida']);
+
+    $liquidado = resolve(ForceBrcodePaymentStatus::class)->handle($pagamento, BrcodePaymentStatus::Success);
+
+    expect($liquidado->failure_reason)->toBeNull()
+        ->and(WebhookEmission::query()->firstOrFail()->payload->decoded()['event']['log']['reason'] ?? null)->toBeNull();
+});
+
+it('preserva o motivo ao forçar a recusa', function (): void {
+    $pagamento = BrcodePayment::factory()->create(['failure_reason' => 'chave PIX inválida']);
+
+    $recusado = resolve(ForceBrcodePaymentStatus::class)->handle($pagamento, BrcodePaymentStatus::Failed);
+
+    expect($recusado->failure_reason)->toBe('chave PIX inválida');
+});
+
 it('remover a chave do DICT torna o destino não verificável no preview', function (): void {
     // O cenário que exercita o guard `destinationUnverifiable` do consumidor
     // sem tocar no BR Code: o código continua o mesmo, o registro é que muda.
