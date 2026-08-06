@@ -49,12 +49,18 @@ return [
     | body. As chaves de dev e o contrato de env chegam em ticket próprio;
     | aqui só a estrutura que vai recebê-las.
     |
+    | `url` vazio faz a emissão virar um no-op logado: a linha é gravada para
+    | inspeção no painel, mas nenhum POST sai — dev sem webhook configurado não
+    | derruba o resto do fluxo. `timeout_seconds` é curto de propósito: a
+    | entrega é pós-resposta, mas ainda segura o worker do fake enquanto espera.
+    |
     */
 
     'webhook' => [
         'url' => env('FAKE_STARKBANK_WEBHOOK_URL'),
         'private_key' => env('FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY'),
         'private_key_path' => env('FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY_PATH'),
+        'timeout_seconds' => (int) env('FAKE_STARKBANK_WEBHOOK_TIMEOUT_SECONDS', 5),
     ],
 
     /*

@@ -15,6 +15,12 @@ fixtures vencem a doc.
 | `workspace/workspace_list_page1.json` | `tests/Fixtures/workspace_list_page1.json` (verbatim) |
 | `workspace/workspace_list_page2.json` | `tests/Fixtures/workspace_list_page2.json` (verbatim) |
 | `errors/error_envelope.json` | `Rails/Pix/StarkbankGateway::providerError()` — lê `errors.0.code` + `errors.0.message` |
+| `webhook/webhook_invoice_paid.json` | `tests/Fixtures/webhook_invoice_paid.json` (verbatim) |
+
+O fixture de webhook é o único que descreve o sentido **fake → consumidor**: é o
+envelope que sai no `POST /webhooks/starkbank`, não uma resposta do fake. Repare na
+assimetria da key da entity dentro do log — subscription `brcode-payment`, key
+`payment` —, que `WebhookEvent::fromWebhookBody()` do consumidor lê posicionalmente.
 
 As duas páginas de workspace são dois **schemas** comparados isoladamente
 (`pictureUrl` string + `cursor` string na página 1; ambos `null` na página 2), nunca

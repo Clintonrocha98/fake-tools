@@ -2,6 +2,11 @@
 
 declare(strict_types=1);
 
+use Filament\Support\Contracts\HasColor;
+use Filament\Support\Contracts\HasDescription;
+use Filament\Support\Contracts\HasIcon;
+use Filament\Support\Contracts\HasLabel;
+
 /*
 |--------------------------------------------------------------------------
 | Fake Starkbank module architecture rules
@@ -29,3 +34,18 @@ arch('módulos de domínio não dependem da camada de apresentação')
 arch('um fake nunca consulta o outro em runtime')
     ->expect('He4rt\FakeStarkbank')
     ->not->toUse('He4rt\FakeBinance');
+
+arch('os DTOs do webhook são value objects imutáveis')
+    ->expect('He4rt\FakeStarkbank\Webhook\DTOs')
+    ->toBeFinal()
+    ->toBeReadonly();
+
+/*
+ * Os enums do webhook são vocabulário que o painel de cenários vai renderizar
+ * (badge de subscription, badge de log type na fila de emissões) — os contratos
+ * do Filament entram junto com o enum, nunca numa passada depois.
+ */
+arch('os enums do webhook implementam os contratos que o painel lê')
+    ->expect('He4rt\FakeStarkbank\Webhook\Enums')
+    ->toBeEnums()
+    ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
