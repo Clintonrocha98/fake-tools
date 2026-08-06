@@ -140,7 +140,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::InvalidSide => '`side` diferente de BUY ou SELL',
             self::InvalidSymbol => '`symbol` ausente ou diferente de um par servido pelo fake',
             self::FilterFailure => '`quantity` abaixo de `LOT_SIZE.minQty` ou `quoteOrderQty` abaixo de `NOTIONAL.minNotional`',
-            self::NewOrderRejected => 'Saldo insuficiente (ordem ou withdraw), `newClientOrderId` ou `withdrawOrderId` duplicado',
+            self::NewOrderRejected => 'Saldo insuficiente (ordem ou withdraw) ou `newClientOrderId` duplicado — `withdrawOrderId` repetido é idempotente, nunca -2010',
             self::NoSuchOrder => '`origClientOrderId` não corresponde a nenhuma ordem conhecida',
             self::ApiKeyMissing => 'Header X-MBX-APIKEY não enviado',
             self::ApiKeyInvalid => 'Header X-MBX-APIKEY não confere com a chave configurada',

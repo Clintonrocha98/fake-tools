@@ -12,6 +12,7 @@ use He4rt\FakeBinance\Withdraw\Actions\ApplyWithdraw;
 use He4rt\FakeBinance\Withdraw\DTOs\ApplyWithdrawData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * POST /sapi/v1/capital/withdraw/apply — tudo assinado na query (`fake-binance.signed`).
@@ -49,7 +50,15 @@ final readonly class ApplyWithdrawController
 
         try {
             $withdrawal = $this->apply->handle($data);
-        } catch (InsufficientLedgerBalanceException) {
+        } catch (InsufficientLedgerBalanceException $insufficientLedgerBalanceException) {
+            Log::warning('fake-binance.withdraw: apply recusado com -2010 — saldo insuficiente no ledger', [
+                'coin' => $coin,
+                'network' => $network,
+                'amount' => $amount,
+                'withdraw_order_id' => $data->withdrawOrderId,
+                'reason' => $insufficientLedgerBalanceException->getMessage(),
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected);
         }
 

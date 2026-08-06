@@ -14,7 +14,7 @@ beforeEach(function (): void {
     config(['fake-binance-withdraw.fees' => ['SOL' => '0.004']]);
 });
 
-it('applies a withdraw and returns only the id, debiting amount+fee from the ledger', function (): void {
+it('applies a withdraw and returns only the id, debiting exactly amount from the ledger', function (): void {
     (new CreditLedgerAccount)->handle('USDC', '100');
 
     $response = $this->postJson(

@@ -15,10 +15,11 @@ it('subtracts the amount from the free balance', function (): void {
     expect($account->free)->toBe('70.000000000000000000');
 });
 
-it('debits amount+fee as a single already-summed value', function (): void {
+it('debits the exact value the caller resolved, without adding anything on top', function (): void {
     (new CreditLedgerAccount)->handle('USDC', '100');
 
-    // O caller (ticket do withdraw) já soma taxa e valor antes de chamar o ledger.
+    // O caller decide o total (um withdraw debita exatamente o amount pedido);
+    // o ledger nunca soma nada por conta própria.
     $account = (new DebitLedgerAccount)->handle('USDC', '31.5');
 
     expect($account->free)->toBe('68.500000000000000000');
