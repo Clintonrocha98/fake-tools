@@ -25,6 +25,10 @@ use Illuminate\Http\Request;
  * mandatório ausente, `symbol`/`type`/`side` inválidos); saldo insuficiente
  * e `newClientOrderId` duplicado colapsam no mesmo -2010 (NEW_ORDER_REJECTED)
  * que a Binance real usa para ambos os casos.
+ *
+ * Exatamente UM de `quantity`/`quoteOrderQty` é aceito, independente do lado —
+ * a venue real não amarra parâmetro a side: `quantity` denomina a base,
+ * `quoteOrderQty` o quote, tanto no BUY quanto no SELL.
  */
 final readonly class PlaceOrderController
 {
@@ -83,12 +87,8 @@ final readonly class PlaceOrderController
             return $this->errors->make($family, BinanceErrorCode::InvalidSide);
         }
 
-        if ($side === OrderSide::Buy && !is_numeric($quoteOrderQty)) {
-            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing, 'quoteOrderQty is required for a BUY MARKET order.');
-        }
-
-        if ($side === OrderSide::Sell && !is_numeric($quantity)) {
-            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing, 'quantity is required for a SELL MARKET order.');
+        if (is_numeric($quantity) === is_numeric($quoteOrderQty)) {
+            return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing, 'Exactly one of quantity or quoteOrderQty must be sent for a MARKET order.');
         }
 
         return new PlaceMarketOrderData(
