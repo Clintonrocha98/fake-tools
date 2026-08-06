@@ -13,6 +13,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Guava\FilamentKnowledgeBase\Contracts\HasKnowledgeBase;
 use He4rt\FakeBinance\Scenarios\Actions\ArmScenario;
 use He4rt\FakeBinance\Scenarios\Actions\DisarmScenario;
 use He4rt\FakeBinance\Scenarios\Actions\GetArmedScenario;
@@ -31,10 +32,11 @@ use UnitEnum;
  *
  * @property-read Schema $form
  */
-class ArmedScenariosPage extends Page
+class ArmedScenariosPage extends Page implements HasKnowledgeBase
 {
     /** @var array<string, mixed> */
     public array $data = [];
+
     protected string $view = 'panel-admin::filament.pages.armed-scenarios';
 
     protected static ?string $slug = 'armed-scenarios';
@@ -48,6 +50,16 @@ class ArmedScenariosPage extends Page
     protected static string|UnitEnum|null $navigationGroup = NavigationGroup::FakeBinance;
 
     protected static ?int $navigationSort = 6;
+
+    /**
+     * @return string[]
+     */
+    public static function getDocumentation(): array
+    {
+        return [
+            'fake-binance.armed-scenarios',
+        ];
+    }
 
     public static function getNavigationLabel(): string
     {
@@ -68,7 +80,7 @@ class ArmedScenariosPage extends Page
     {
         return $schema
             ->components(array_map(
-                fn (VenueLeg $leg): Section => $this->legSection($leg),
+                $this->legSection(...),
                 VenueLeg::cases(),
             ))
             ->statePath('data');
