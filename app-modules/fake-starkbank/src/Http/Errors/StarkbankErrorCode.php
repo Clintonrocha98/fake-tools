@@ -20,6 +20,10 @@ use Filament\Support\Contracts\HasLabel;
  * `invalidRequest` também cobre corpo e parâmetros que um endpoint recusa,
  * `invalidId` é a releitura de um recurso que este fake nunca emitiu e
  * `invalidDictKey` é a chave PIX que o registro DICT não conhece.
+ *
+ * Os quatro últimos são as recusas da perna de BR Code: `invalidBrcode` para um
+ * EMV que não decodifica, e `invalidJson`/`invalidTaxId`/`invalidAmount` para
+ * um pagamento que descreve algo diferente do que o código carrega.
  */
 enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
 {
@@ -29,6 +33,10 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
     case InvalidRequest = 'invalidRequest';
     case InvalidId = 'invalidId';
     case InvalidDictKey = 'invalidDictKey';
+    case InvalidBrcode = 'invalidBrcode';
+    case InvalidJson = 'invalidJson';
+    case InvalidTaxId = 'invalidTaxId';
+    case InvalidAmount = 'invalidAmount';
 
     public function defaultMessage(): string
     {
@@ -39,6 +47,10 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidRequest => 'Invalid request',
             self::InvalidId => 'Invalid id',
             self::InvalidDictKey => 'PIX key not found',
+            self::InvalidBrcode => 'Invalid brcode',
+            self::InvalidJson => 'Invalid json',
+            self::InvalidTaxId => 'Invalid tax id',
+            self::InvalidAmount => 'Invalid amount',
         };
     }
 
@@ -46,7 +58,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
     {
         return match ($this) {
             self::InvalidAccessId, self::InvalidSignature, self::ExpiredAccessTime => 401,
-            self::InvalidRequest => 400,
+            self::InvalidRequest, self::InvalidBrcode, self::InvalidJson, self::InvalidTaxId, self::InvalidAmount => 400,
             self::InvalidId, self::InvalidDictKey => 404,
         };
     }
@@ -60,6 +72,10 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidRequest => 'Request malformado',
             self::InvalidId => 'Id desconhecido',
             self::InvalidDictKey => 'Chave PIX não registrada',
+            self::InvalidBrcode => 'BR Code ilegível',
+            self::InvalidJson => 'Parâmetro desconhecido ou ausente',
+            self::InvalidTaxId => 'Recebedor divergente do BR Code',
+            self::InvalidAmount => 'Valor divergente do BR Code',
         };
     }
 
@@ -81,6 +97,10 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidRequest => 'gray',
             self::InvalidId => 'primary',
             self::InvalidDictKey => Color::Rose,
+            self::InvalidBrcode => Color::Amber,
+            self::InvalidJson => Color::Teal,
+            self::InvalidTaxId => Color::Fuchsia,
+            self::InvalidAmount => Color::Lime,
         };
     }
 
@@ -93,6 +113,10 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidRequest => 'Headers de assinatura ausentes, ou corpo/parâmetros que o endpoint não aceita — quem rejeita passa a mensagem específica',
             self::InvalidId => 'Nenhum recurso com esse id foi emitido por este fake',
             self::InvalidDictKey => 'A chave PIX consultada não está registrada no DICT deste fake',
+            self::InvalidBrcode => 'O BR Code não decodifica: TLV truncado, CRC16 que não fecha ou sem o arranjo br.gov.bcb.pix',
+            self::InvalidJson => 'Parâmetro que este endpoint não aceita (externalId) ou obrigatório e ausente (description)',
+            self::InvalidTaxId => 'O taxId do pagamento não é o titular da chave embutida no BR Code',
+            self::InvalidAmount => 'O amount do pagamento não é o valor embutido no campo 54 do BR Code',
         };
     }
 }

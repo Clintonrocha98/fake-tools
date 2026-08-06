@@ -6,6 +6,7 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Support\Casts\AsWireTags;
@@ -90,6 +91,20 @@ arch('os controllers da transfer não conhecem o model, só as Actions')
     ->expect('He4rt\FakeStarkbank\Transfer\Http\Controllers')
     ->not->toUse(Transfer::class);
 
+arch('os enums do brcode implementam os contratos que o painel lê')
+    ->expect('He4rt\FakeStarkbank\Brcode\Enums')
+    ->toBeEnums()
+    ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
+
+arch('os DTOs do brcode são value objects imutáveis')
+    ->expect('He4rt\FakeStarkbank\Brcode\DTOs')
+    ->toBeFinal()
+    ->toBeReadonly();
+
+arch('os controllers do brcode não conhecem o model, só as Actions')
+    ->expect('He4rt\FakeStarkbank\Brcode\Http\Controllers')
+    ->not->toUse(BrcodePayment::class);
+
 arch('os enums do DICT implementam os contratos que o painel lê')
     ->expect('He4rt\FakeStarkbank\Dict\Enums')
     ->toBeEnums()
@@ -144,6 +159,7 @@ test('toda coluna jsonb do módulo é lida por um cast tipado', function (string
         ->and(new $model()->getCasts()[$coluna])->toBe($cast);
 })->with([
     'tags da invoice' => [Invoice::class, 'tags', AsWireTags::class],
+    'tags do brcode-payment' => [BrcodePayment::class, 'tags', AsWireTags::class],
     'tags da transfer' => [Transfer::class, 'tags', AsWireTags::class],
     'payload da emissão' => [WebhookEmission::class, 'payload', AsWebhookPayload::class],
 ]);

@@ -1,0 +1,16 @@
+{
+    "previews": [
+        {
+            "status": "active",
+            "name": "Ada Lovelace",
+            "taxId": "012.345.678-90",
+            "bankCode": "20018183",
+            "accountType": "checking",
+            "allowChange": false,
+            "amount": 25000,
+            "nominalAmount": 25000,
+            "reconciliationId": "recon-9f2c",
+            "description": "Invoice 2026-07"
+        }
+    ]
+}

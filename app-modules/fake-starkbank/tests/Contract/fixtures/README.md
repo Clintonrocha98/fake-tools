@@ -19,6 +19,10 @@ fixtures vencem a doc.
 | `transfer/transfer_created.json` | `tests/Fixtures/transfer_created.json` (verbatim) |
 | `transfer/transfer_settled.json` | `tests/Fixtures/transfer_settled.json` (verbatim) |
 | `transfer/transfer_list_settled.json` | `tests/Fixtures/transfer_list_settled.json` (verbatim) |
+| `brcode/brcode_preview.json` | `tests/Fixtures/brcode_preview.json` (verbatim) |
+| `brcode/brcode_payment_created.json` | `tests/Fixtures/brcode_payment_created.json` (verbatim) |
+| `brcode/brcode_payment_settled.json` | `tests/Fixtures/brcode_payment_settled.json` (verbatim) |
+| `brcode/brcode_payment_list_settled.json` | `tests/Fixtures/brcode_payment_list_settled.json` (verbatim) |
 | `workspace/workspace_list_page1.json` | `tests/Fixtures/workspace_list_page1.json` (verbatim) |
 | `workspace/workspace_list_page2.json` | `tests/Fixtures/workspace_list_page2.json` (verbatim) |
 | `errors/error_envelope.json` | `Rails/Pix/StarkbankGateway::providerError()` — lê `errors.0.code` + `errors.0.message` |
@@ -35,6 +39,13 @@ releitura singular e o item da listagem. A assimetria gordo/magro é só da invo
 repetir aqui a assimetria de lá seria inventá-la. Repare no que **não** volta:
 `branchCode` e `accountNumber` entram no POST e não são ecoados, porque no provedor
 real são blobs opacos de ida.
+
+Os três fixtures de brcode-payment repetem a simetria da transfer — as MESMAS keys
+no eco do POST, na releitura singular e no item da listagem. Repare no que **não**
+volta: a `description` entra no POST e não é ecoada. `brcode_preview.json` é de outra
+natureza: não descreve um recurso do fake, e sim a LEITURA de um código de terceiro —
+`taxId` vazio ali é resposta legítima ("recebedor fora do registro DICT") e é o sinal
+que dispara `FundingNotSendable::destinationUnverifiable` no consumidor.
 
 `dict/dict_key.json` é o insumo que antecede o cash-out: `DictKeyResponse` lê `id`
 como a chave PIX, `ispb` (com fallback `bankCode`) como o banco e trata
