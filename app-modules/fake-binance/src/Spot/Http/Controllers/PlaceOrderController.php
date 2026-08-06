@@ -8,6 +8,7 @@ use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Http\Errors\ErrorFamily;
 use He4rt\FakeBinance\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException;
+use He4rt\FakeBinance\Scenarios\Exceptions\ScenarioRefusedRequestException;
 use He4rt\FakeBinance\Spot\Actions\PlaceMarketOrder;
 use He4rt\FakeBinance\Spot\DTOs\PlaceMarketOrderData;
 use He4rt\FakeBinance\Spot\DTOs\SpotOrderView;
@@ -44,6 +45,8 @@ final readonly class PlaceOrderController
 
         try {
             $order = $this->placeOrder->handle($data);
+        } catch (ScenarioRefusedRequestException $exception) {
+            return $this->errors->make($family, $exception->errorCode, $exception->getMessage());
         } catch (DuplicateClientOrderIdException|InsufficientLedgerBalanceException $exception) {
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected, $exception->getMessage());
         } catch (SpotFilterViolationException $exception) {

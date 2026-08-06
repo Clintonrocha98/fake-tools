@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Spot\Actions;
 
+use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Ledger\Actions\SwapLedgerAssets;
 use He4rt\FakeBinance\Ledger\DTOs\LedgerFill;
 use He4rt\FakeBinance\Ledger\Enums\Side as LedgerSide;
+use He4rt\FakeBinance\Scenarios\Exceptions\ScenarioRefusedRequestException;
 use He4rt\FakeBinance\Spot\DTOs\PlaceMarketOrderData;
+use He4rt\FakeBinance\Spot\DTOs\SpotExecutionPlan;
 use He4rt\FakeBinance\Spot\Enums\OrderSide;
-use He4rt\FakeBinance\Spot\Enums\OrderStatus;
 use He4rt\FakeBinance\Spot\Exceptions\DuplicateClientOrderIdException;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +24,11 @@ use RuntimeException;
  * `quoteOrderQty`; SELL preenche no bid e vende `quantity`. A comissão incide
  * sobre o ativo recebido — nunca sobre o gasto — e o `SwapLedgerAssets` já
  * aplica essa dedução ao creditar o ledger.
+ *
+ * O desfecho vem de um {@see SpotExecutionPlan}: no happy path é o plano
+ * neutro (fração `1`, FILLED), e um cenário armado o substitui por parcial,
+ * recusa ou vocabulário desconhecido. O ledger recebe exatamente a fração
+ * executada — nunca o fill cheio seguido de estorno.
  */
 final readonly class PlaceMarketOrder
 {
@@ -40,6 +47,7 @@ final readonly class PlaceMarketOrder
         private NextSpotOrderId $nextOrderId,
         private SwapLedgerAssets $swap,
         private AssertSpotSymbolFilters $assertFilters,
+        private PlanNextSpotExecution $planNextExecution,
     ) {}
 
     public function handle(PlaceMarketOrderData $data): SpotOrder
@@ -49,6 +57,12 @@ final readonly class PlaceMarketOrder
         }
 
         $this->assertFilters->handle($data->side, $data->quantity, $data->quoteOrderQty);
+
+        $plan = $this->planNextExecution->handle();
+
+        if ($plan->refusal instanceof BinanceErrorCode) {
+            throw ScenarioRefusedRequestException::withCode($plan->refusal);
+        }
 
         $symbolConfig = config()->array('fake-binance-spot.usdcbrl');
         $baseAsset = (string) $symbolConfig['base_asset'];
@@ -66,18 +80,23 @@ final readonly class PlaceMarketOrder
             ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $baseAsset)
             : $this->baseSell($data, $book->bidPrice, $quoteAsset);
 
+        $executedQty = $plan->applyFraction($executedQty, $basePrecision);
+        $cummulativeQuoteQty = $plan->applyFraction($cummulativeQuoteQty, self::LEDGER_SCALE);
+
         $receivedGross = $this->receivedGross($data->side, $executedQty, $cummulativeQuoteQty);
         $commission = bcmul($receivedGross, $commissionRate, 18);
 
         return DB::transaction(function () use (
-            $data, $executedQty, $cummulativeQuoteQty, $price, $commission, $receivedAsset, $baseAsset, $quoteAsset,
+            $data, $executedQty, $cummulativeQuoteQty, $price, $commission, $receivedAsset, $baseAsset, $quoteAsset, $plan,
         ): SpotOrder {
-            $this->swap->handle(
-                from: $data->side === OrderSide::Buy ? $quoteAsset : $baseAsset,
-                to: $data->side === OrderSide::Buy ? $baseAsset : $quoteAsset,
-                fills: [new LedgerFill(qty: $executedQty, price: $price, commission: $commission, commissionAsset: $receivedAsset)],
-                side: $data->side === OrderSide::Buy ? LedgerSide::Buy : LedgerSide::Sell,
-            );
+            if (!$plan->fillsNothing()) {
+                $this->swap->handle(
+                    from: $data->side === OrderSide::Buy ? $quoteAsset : $baseAsset,
+                    to: $data->side === OrderSide::Buy ? $baseAsset : $quoteAsset,
+                    fills: [new LedgerFill(qty: $executedQty, price: $price, commission: $commission, commissionAsset: $receivedAsset)],
+                    side: $data->side === OrderSide::Buy ? LedgerSide::Buy : LedgerSide::Sell,
+                );
+            }
 
             return SpotOrder::query()->create([
                 'order_id' => $this->nextOrderId->handle(),
@@ -85,14 +104,15 @@ final readonly class PlaceMarketOrder
                 'symbol' => $data->symbol,
                 'side' => $data->side,
                 'type' => 'MARKET',
-                'status' => OrderStatus::Filled,
+                'status' => $plan->finalStatus,
                 'quantity' => $data->quantity,
                 'quote_order_qty' => $data->quoteOrderQty,
                 'executed_qty' => $executedQty,
                 'cummulative_quote_qty' => $cummulativeQuoteQty,
-                'fill_price' => $price,
-                'commission' => $commission,
-                'commission_asset' => $receivedAsset,
+                'fill_price' => $plan->fillsNothing() ? null : $price,
+                'commission' => $plan->fillsNothing() ? '0' : $commission,
+                'commission_asset' => $plan->fillsNothing() ? null : $receivedAsset,
+                'raw_status_override' => $plan->rawStatusOverride,
             ]);
         });
     }
