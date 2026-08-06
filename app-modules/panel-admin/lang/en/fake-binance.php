@@ -95,4 +95,14 @@ return [
         'state_on' => 'ON',
         'state_off' => 'OFF',
     ],
+
+    'armed_scenarios' => [
+        'title' => 'Armed scenarios',
+        'fraction' => 'Fill fraction',
+        'fraction_helper' => 'How much of the order executes on the partial outcome. Empty means half.',
+        'error_code' => 'Error code',
+        'raw_status' => 'Arbitrary status',
+        'armed_notification' => 'Armed: :outcome — applies to the next request',
+        'disarmed_notification' => 'Disarmed: :outcome',
+    ],
 ];

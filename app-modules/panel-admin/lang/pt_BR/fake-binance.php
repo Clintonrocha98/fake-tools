@@ -95,4 +95,14 @@ return [
         'state_on' => 'LIGADO',
         'state_off' => 'DESLIGADO',
     ],
+
+    'armed_scenarios' => [
+        'title' => 'Cenários armados',
+        'fraction' => 'Fração do fill',
+        'fraction_helper' => 'Quanto da ordem executa no desfecho parcial. Vazio usa metade.',
+        'error_code' => 'Código de erro',
+        'raw_status' => 'Status arbitrário',
+        'armed_notification' => 'Armado: :outcome — vale para o próximo pedido',
+        'disarmed_notification' => 'Desarmado: :outcome',
+    ],
 ];
