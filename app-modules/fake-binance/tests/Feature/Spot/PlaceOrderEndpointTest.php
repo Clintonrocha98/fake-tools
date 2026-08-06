@@ -75,6 +75,77 @@ it('fills a SELL MARKET order at the bid price, selling quantity and crediting t
         ->and($brl->free)->toBe('50.849100000000000000');
 });
 
+it('fills a SELL MARKET order denominated in the quote asset, selling quoteOrderQty / bid of the base', function (): void {
+    (new CreditLedgerAccount)->handle('USDC', '1000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL',
+        'side' => 'SELL',
+        'type' => 'MARKET',
+        'quoteOrderQty' => '50.9',
+        'newClientOrderId' => 'forex-sell-quote-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'status' => 'FILLED',
+        'side' => 'SELL',
+        'executedQty' => '10',
+        'cummulativeQuoteQty' => '50.9',
+        'fills' => [
+            ['price' => '5.09', 'qty' => '10', 'commission' => '0.0509', 'commissionAsset' => 'BRL'],
+        ],
+    ]);
+
+    $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
+    $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+
+    expect($usdc->free)->toBe('990.000000000000000000')
+        ->and($brl->free)->toBe('50.849100000000000000');
+});
+
+it('fills a BUY MARKET order denominated in the base asset, spending quantity * ask of the quote', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL',
+        'side' => 'BUY',
+        'type' => 'MARKET',
+        'quantity' => '10',
+        'newClientOrderId' => 'forex-buy-base-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'status' => 'FILLED',
+        'side' => 'BUY',
+        'executedQty' => '10',
+        'cummulativeQuoteQty' => '51.1',
+        'fills' => [
+            ['price' => '5.11', 'qty' => '10', 'commission' => '0.01', 'commissionAsset' => 'USDC'],
+        ],
+    ]);
+
+    $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+    $usdc = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
+
+    expect($brl->free)->toBe('99948.900000000000000000')
+        ->and($usdc->free)->toBe('9.990000000000000000');
+});
+
+it('refuses quantity and quoteOrderQty together with -1102', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL',
+        'side' => 'BUY',
+        'quantity' => '10',
+        'quoteOrderQty' => '51.1',
+        'newClientOrderId' => 'forex-both-params-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_102]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-both-params-1')->exists())->toBeFalse();
+});
+
 it('refuses a duplicate newClientOrderId with -2010 without re-executing the swap', function (): void {
     (new CreditLedgerAccount)->handle('BRL', '100000');
 
@@ -186,4 +257,27 @@ it('refuses a BUY below minNotional with a filter failure', function (): void {
 
     $response->assertStatus(400)->assertJson(['code' => -1_013]);
     expect(SpotOrder::query()->where('client_order_id', 'forex-notional-1')->exists())->toBeFalse();
+});
+
+it('gates a BUY denominated in the base by minQty — the parameter, not the side, picks the filter', function (): void {
+    config(['fake-binance-spot.usdcbrl.filters.min_qty' => '5']);
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'BUY', 'quantity' => '1', 'newClientOrderId' => 'forex-buy-lot-size-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_013]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-buy-lot-size-1')->exists())->toBeFalse();
+});
+
+it('gates a SELL denominated in the quote by minNotional — the parameter, not the side, picks the filter', function (): void {
+    (new CreditLedgerAccount)->handle('USDC', '1000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL', 'side' => 'SELL', 'quoteOrderQty' => '1', 'newClientOrderId' => 'forex-sell-notional-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertStatus(400)->assertJson(['code' => -1_013]);
+    expect(SpotOrder::query()->where('client_order_id', 'forex-sell-notional-1')->exists())->toBeFalse();
 });

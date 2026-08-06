@@ -15,15 +15,17 @@ use He4rt\FakeBinance\Spot\Enums\OrderSide;
 use He4rt\FakeBinance\Spot\Exceptions\DuplicateClientOrderIdException;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
  * Executa UMA ordem MARKET ao preço do book (sem re-order loop — a mesma
  * disciplina do `BinanceMarketExecution` do monolito consumidor: uma MARKET
- * não fica pendente, preenche de uma vez). BUY preenche no ask e gasta
- * `quoteOrderQty`; SELL preenche no bid e vende `quantity`. A comissão incide
- * sobre o ativo recebido — nunca sobre o gasto — e o `SwapLedgerAssets` já
- * aplica essa dedução ao creditar o ledger.
+ * não fica pendente, preenche de uma vez). BUY preenche no ask, SELL no bid;
+ * a denominação é ortogonal ao lado — `quantity` (base) executa como veio,
+ * `quoteOrderQty` (quote) vira base por `quoteOrderQty / preço`, floored à
+ * precisão da base. A comissão incide sobre o ativo recebido — nunca sobre o
+ * gasto — e o `SwapLedgerAssets` já aplica essa dedução ao creditar o ledger.
  *
  * O desfecho vem de um {@see SpotExecutionPlan}: no happy path é o plano
  * neutro (fração `1`, FILLED), e um cenário armado o substitui por parcial,
@@ -56,7 +58,7 @@ final readonly class PlaceMarketOrder
             throw DuplicateClientOrderIdException::forClientOrderId($data->newClientOrderId);
         }
 
-        $this->assertFilters->handle($data->side, $data->quantity, $data->quoteOrderQty);
+        $this->assertFilters->handle($data->quantity, $data->quoteOrderQty);
 
         $plan = $this->planNextExecution->handle();
 
@@ -76,17 +78,16 @@ final readonly class PlaceMarketOrder
 
         $book = $this->bookTicker->handle($data->symbol);
 
-        [$executedQty, $price, $receivedAsset] = $data->side === OrderSide::Buy
-            ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $baseAsset)
-            : $this->baseSell($data, $book->bidPrice, $quoteAsset);
+        $price = $data->side === OrderSide::Buy ? $book->askPrice : $book->bidPrice;
+        $receivedAsset = $data->side === OrderSide::Buy ? $baseAsset : $quoteAsset;
 
-        $executedQty = $plan->applyFraction($executedQty, $basePrecision);
+        $executedQty = $plan->applyFraction($this->executedBaseQty($data, $price, $basePrecision), $basePrecision);
         $cummulativeQuoteQty = $this->quoteTotal($executedQty, $price);
 
         $receivedGross = $this->receivedGross($data->side, $executedQty, $cummulativeQuoteQty);
         $commission = bcmul($receivedGross, $commissionRate, 18);
 
-        return DB::transaction(function () use (
+        $order = DB::transaction(function () use (
             $data, $executedQty, $cummulativeQuoteQty, $price, $commission, $receivedAsset, $baseAsset, $quoteAsset, $plan,
         ): SpotOrder {
             if (!$plan->fillsNothing()) {
@@ -115,6 +116,20 @@ final readonly class PlaceMarketOrder
                 'raw_status_override' => $plan->rawStatusOverride,
             ]);
         });
+
+        Log::info('fake-binance.spot: ordem MARKET registrada', [
+            'symbol' => $order->symbol,
+            'side' => $order->side->value,
+            'denomination' => $data->quantity !== null ? 'base (quantity)' : 'quote (quoteOrderQty)',
+            'requested' => $data->quantity ?? $data->quoteOrderQty,
+            'executed_qty' => $executedQty,
+            'cummulative_quote_qty' => $cummulativeQuoteQty,
+            'fill_price' => $price,
+            'status' => $order->raw_status_override ?? $order->status->value,
+            'client_order_id' => $order->client_order_id,
+        ]);
+
+        return $order;
     }
 
     /**
@@ -136,32 +151,24 @@ final readonly class PlaceMarketOrder
     }
 
     /**
-     * BUY: gasta `quoteOrderQty` no ask, recebe base. `executedQty` é
-     * floored à precisão da base — nunca arredondado para cima, para nunca
-     * entregar mais do que o preço do book realmente compra.
+     * A quantidade base executada, qualquer que seja a denominação do pedido:
+     * `quantity` já É a base; `quoteOrderQty` vira base por `quoteOrderQty /
+     * preço` — floored à precisão da base, nunca arredondado para cima, para
+     * nunca entregar (BUY) nem vender (SELL) mais do que o preço do book
+     * realmente cobre.
      *
-     * @param  numeric-string  $askPrice
-     * @return array{0: numeric-string, 1: numeric-string, 2: string}
+     * @param  numeric-string  $price
+     * @return numeric-string
      */
-    private function quoteSpend(PlaceMarketOrderData $data, string $askPrice, int $basePrecision, string $baseAsset): array
+    private function executedBaseQty(PlaceMarketOrderData $data, string $price, int $basePrecision): string
     {
-        throw_if($data->quoteOrderQty === null, RuntimeException::class, 'quoteOrderQty is required for a BUY MARKET order.');
+        if ($data->quantity !== null) {
+            return $data->quantity;
+        }
 
-        return [bcdiv($data->quoteOrderQty, $askPrice, $basePrecision), $askPrice, $baseAsset];
-    }
+        throw_if($data->quoteOrderQty === null, RuntimeException::class, 'Exactly one of quantity or quoteOrderQty must be provided for a MARKET order.');
 
-    /**
-     * SELL: vende `quantity` (já floored ao lot step pelo chamador) no bid,
-     * recebe quote.
-     *
-     * @param  numeric-string  $bidPrice
-     * @return array{0: numeric-string, 1: numeric-string, 2: string}
-     */
-    private function baseSell(PlaceMarketOrderData $data, string $bidPrice, string $quoteAsset): array
-    {
-        throw_if($data->quantity === null, RuntimeException::class, 'quantity is required for a SELL MARKET order.');
-
-        return [$data->quantity, $bidPrice, $quoteAsset];
+        return bcdiv($data->quoteOrderQty, $price, $basePrecision);
     }
 
     /**

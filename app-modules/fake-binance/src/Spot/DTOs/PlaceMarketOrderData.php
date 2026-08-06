@@ -9,8 +9,9 @@ use He4rt\FakeBinance\Spot\Enums\OrderSide;
 /**
  * O que o monolito consumidor envia em POST /api/v3/order (`PlaceSpotOrderRequest`):
  * `type=MARKET` é sempre implícito, e exatamente um de `quoteOrderQty`/`quantity`
- * é informado — `quoteOrderQty` no BUY (gasta o quote), `quantity` no SELL
- * (vende uma quantidade fixa da base, já floored ao lot step pelo chamador).
+ * é informado — a denominação é ortogonal ao lado (`BinanceMarket` do consumidor
+ * escolhe pelo par lado × basis): `quantity` denomina a base, `quoteOrderQty` o
+ * quote, tanto no BUY quanto no SELL.
  */
 final readonly class PlaceMarketOrderData
 {
