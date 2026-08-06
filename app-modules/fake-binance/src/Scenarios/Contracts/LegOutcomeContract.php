@@ -20,6 +20,14 @@ interface LegOutcomeContract extends BackedEnum, HasColor, HasDescription, HasLa
     public function leg(): VenueLeg;
 
     /**
+     * Estreitamento covariante sobre {@see HasLabel::getLabel()}, que admite
+     * `Htmlable|null` para os componentes do Filament: todo desfecho é rótulo
+     * de texto, e assumir isso aqui poupa cada chamador de um branch que nunca
+     * roda.
+     */
+    public function getLabel(): string;
+
+    /**
      * Os campos de {@see \He4rt\FakeBinance\Scenarios\DTOs\ArmedScenarioPayload}
      * que este desfecho usa — a UI só mostra estes, e armar com qualquer outro
      * é ruído descartado.

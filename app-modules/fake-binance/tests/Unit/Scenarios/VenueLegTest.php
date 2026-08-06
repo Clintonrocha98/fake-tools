@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Scenarios\Contracts\LegOutcomeContract;
 use He4rt\FakeBinance\Scenarios\Enums\SpotConversionOutcome;
 use He4rt\FakeBinance\Scenarios\Enums\VenueLeg;
@@ -13,6 +14,21 @@ it('lists the outcomes of the spot leg', function (): void {
 it('resolves a stored outcome value back into the leg enum', function (): void {
     expect(VenueLeg::SpotConversion->outcomeFrom('fill_partial_expired'))
         ->toBe(SpotConversionOutcome::FillPartialExpired);
+});
+
+it('gives back null for a value that is not an outcome of the leg', function (): void {
+    expect(VenueLeg::SpotConversion->outcomeFrom('fill_partial_and_dance'))->toBeNull();
+});
+
+it('offers only refusal codes of its own error family', function (): void {
+    expect(VenueLeg::SpotConversion->refusalCodes())->toBe([
+        BinanceErrorCode::NewOrderRejected,
+        BinanceErrorCode::FilterFailure,
+    ]);
+
+    foreach (VenueLeg::SpotConversion->refusalCodes() as $code) {
+        expect($code->httpStatus())->not->toBe(200);
+    }
 });
 
 it('points every outcome back at its own leg', function (LegOutcomeContract $outcome): void {

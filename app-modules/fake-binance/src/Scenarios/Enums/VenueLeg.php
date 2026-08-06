@@ -9,6 +9,7 @@ use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 use Filament\Support\Icons\Heroicon;
+use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Scenarios\Contracts\LegOutcomeContract;
 
 /**
@@ -31,10 +32,33 @@ enum VenueLeg: string implements HasColor, HasDescription, HasIcon, HasLabel
         };
     }
 
-    public function outcomeFrom(string $value): LegOutcomeContract
+    /**
+     * `null` quando o valor não é um desfecho DESTA perna. Um `outcome`
+     * obsoleto na coluna (caso removido do enum, edição manual) faz quem
+     * planeja cair no plano neutro, em vez de estourar dentro do POST do
+     * consumidor e o fake responder 500 num cenário que ele deveria ignorar.
+     */
+    public function outcomeFrom(string $value): ?LegOutcomeContract
     {
         return match ($this) {
-            self::SpotConversion => SpotConversionOutcome::from($value),
+            self::SpotConversion => SpotConversionOutcome::tryFrom($value),
+        };
+    }
+
+    /**
+     * Os códigos de recusa que fazem sentido nesta perna — o envelope de erro
+     * é o da família do path da perna, então um código de outra família (fiat,
+     * por exemplo) sairia dentro do envelope errado.
+     *
+     * @return list<BinanceErrorCode>
+     */
+    public function refusalCodes(): array
+    {
+        return match ($this) {
+            self::SpotConversion => [
+                BinanceErrorCode::NewOrderRejected,
+                BinanceErrorCode::FilterFailure,
+            ],
         };
     }
 

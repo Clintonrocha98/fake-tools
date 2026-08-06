@@ -38,8 +38,11 @@ final class ArmedScenario extends BaseModel
      * Nome deliberadamente diferente da coluna `outcome`: um método público
      * homônimo de um atributo é lido por `isRelation()` como relação e explode
      * no primeiro acesso ao atributo.
+     *
+     * `null` quando a coluna guarda um desfecho que a perna não conhece mais
+     * ({@see VenueLeg::outcomeFrom()}) — quem chama trata como "nada armado".
      */
-    public function resolvedOutcome(): LegOutcomeContract
+    public function resolvedOutcome(): ?LegOutcomeContract
     {
         return $this->leg->outcomeFrom($this->outcome);
     }

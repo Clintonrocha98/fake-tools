@@ -9,11 +9,21 @@ use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 /**
  * O parâmetro de um cenário armado — só os campos que algum desfecho usa. O
  * VO é a única fonte do shape desse JSON: `fromArray()` descarta o que não
- * reconhece e normaliza vazio para `null`, então uma coluna adulterada à mão
- * nunca vira um campo meio preenchido dentro do plano de execução.
+ * reconhece, normaliza vazio para `null` e recusa valor fora do domínio do
+ * campo, então uma coluna adulterada à mão nunca vira um campo meio preenchido
+ * dentro do plano de execução.
  */
 final readonly class ArmedScenarioPayload
 {
+    /**
+     * A fração de fill vive em `[0, 1]`, escrita em decimal simples. Fora disso
+     * não é fração nenhuma: negativa faria a wire reportar quantidade negativa
+     * e acima de `1` faria a execução mover mais ledger do que o pedido pediu.
+     * Notação exponencial fica fora de propósito — as contas de fill são todas
+     * `bc*`, que só aceita decimal bem formado.
+     */
+    private const string FRACTION_PATTERN = '/^-?(\d+(\.\d*)?|\.\d+)$/';
+
     /**
      * @param  numeric-string|null  $fraction  Fração do fill (desfecho parcial)
      * @param  int|null  $errorCode  Valor de {@see BinanceErrorCode} (desfecho de recusa)
@@ -43,7 +53,7 @@ final readonly class ArmedScenarioPayload
         $reason = $payload['reason'] ?? null;
 
         return new self(
-            fraction: is_string($fraction) && is_numeric($fraction) ? $fraction : null,
+            fraction: self::fillFraction($fraction),
             errorCode: is_numeric($errorCode) ? (int) $errorCode : null,
             rawStatus: is_string($rawStatus) && $rawStatus !== '' ? $rawStatus : null,
             reason: is_string($reason) && $reason !== '' ? $reason : null,
@@ -75,5 +85,24 @@ final readonly class ArmedScenarioPayload
     public function fractionOr(string $default): string
     {
         return $this->fraction ?? $default;
+    }
+
+    public function rawStatusOr(string $default): string
+    {
+        return $this->rawStatus ?? $default;
+    }
+
+    /**
+     * @return numeric-string|null
+     */
+    private static function fillFraction(mixed $value): ?string
+    {
+        if (!is_string($value) || !is_numeric($value) || preg_match(self::FRACTION_PATTERN, $value) !== 1) {
+            return null;
+        }
+
+        $withinRange = bccomp($value, '0', 18) >= 0 && bccomp($value, '1', 18) <= 0;
+
+        return $withinRange ? $value : null;
     }
 }

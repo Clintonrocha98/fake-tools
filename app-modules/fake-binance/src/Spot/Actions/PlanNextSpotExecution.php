@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Spot\Actions;
 
 use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Scenarios\Actions\ConsumeArmedScenario;
+use He4rt\FakeBinance\Scenarios\DTOs\ArmedScenarioPayload;
 use He4rt\FakeBinance\Scenarios\Enums\SpotConversionOutcome;
 use He4rt\FakeBinance\Scenarios\Enums\VenueLeg;
 use He4rt\FakeBinance\Scenarios\Models\ArmedScenario;
@@ -48,7 +49,7 @@ final readonly class PlanNextSpotExecution
                 fillFraction: '1',
                 finalStatus: OrderStatus::Filled,
                 refusal: null,
-                rawStatusOverride: $armed->payload->rawStatus,
+                rawStatusOverride: $armed->payload->rawStatusOr(SpotExecutionPlan::DEFAULT_UNKNOWN_RAW_STATUS),
             ),
             SpotConversionOutcome::RespondRejected => new SpotExecutionPlan(
                 fillFraction: '0',
@@ -59,9 +60,24 @@ final readonly class PlanNextSpotExecution
             SpotConversionOutcome::RefuseWithCode => new SpotExecutionPlan(
                 fillFraction: '0',
                 finalStatus: OrderStatus::Rejected,
-                refusal: $armed->payload->binanceErrorCode() ?? BinanceErrorCode::NewOrderRejected,
+                refusal: $this->refusalCode($armed->payload),
                 rawStatusOverride: null,
             ),
         };
+    }
+
+    /**
+     * Só um código que a perna declara ({@see VenueLeg::refusalCodes()}) pode
+     * sair daqui. Um código de outra família armado na coluna viajaria dentro
+     * do envelope errado — um `-16009` fiat, que responde HTTP 200, no meio de
+     * `/api/v3`.
+     */
+    private function refusalCode(ArmedScenarioPayload $payload): BinanceErrorCode
+    {
+        $code = $payload->binanceErrorCode();
+
+        return in_array($code, VenueLeg::SpotConversion->refusalCodes(), strict: true)
+            ? $code
+            : BinanceErrorCode::NewOrderRejected;
     }
 }
