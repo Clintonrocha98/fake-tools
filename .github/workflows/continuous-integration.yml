@@ -91,6 +91,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      # Num pull_request o paths-filter não compara commits localmente: ele
+      # chama a API `listFiles` do PR. Sem este escopo a chamada volta
+      # "Resource not accessible by integration", o job falha e o CI Gate
+      # reprova o PR inteiro — mesmo com todos os checks de código verdes.
+      pull-requests: read
     outputs:
       docker: ${{ steps.filter.outputs.docker }}
     steps:
