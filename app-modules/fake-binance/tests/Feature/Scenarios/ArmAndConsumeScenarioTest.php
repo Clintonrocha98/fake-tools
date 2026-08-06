@@ -33,6 +33,17 @@ it('replaces the armed scenario of a leg instead of stacking a second one', func
         ->and(ArmedScenario::query()->sole()->resolvedOutcome())->toBe(SpotConversionOutcome::RespondRejected);
 });
 
+it('arms the same leg twice in a row without ever violating the leg unique index', function (): void {
+    $arm = new ArmScenario;
+
+    $first = $arm->handle(SpotConversionOutcome::FillPartialExpired, new ArmedScenarioPayload(fraction: '0.25'));
+    $second = $arm->handle(SpotConversionOutcome::RespondRejected);
+
+    expect(ArmedScenario::query()->count())->toBe(1)
+        ->and($second->id)->toBe($first->id)
+        ->and(ArmedScenario::query()->sole()->resolvedOutcome())->toBe(SpotConversionOutcome::RespondRejected);
+});
+
 it('disarms a leg, leaving nothing behind', function (): void {
     (new ArmScenario)->handle(SpotConversionOutcome::RespondRejected);
 
