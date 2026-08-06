@@ -76,12 +76,12 @@ final readonly class PlaceMarketOrder
 
         $book = $this->bookTicker->handle($data->symbol);
 
-        [$executedQty, $cummulativeQuoteQty, $price, $receivedAsset] = $data->side === OrderSide::Buy
+        [$executedQty, $price, $receivedAsset] = $data->side === OrderSide::Buy
             ? $this->quoteSpend($data, $book->askPrice, $basePrecision, $baseAsset)
             : $this->baseSell($data, $book->bidPrice, $quoteAsset);
 
         $executedQty = $plan->applyFraction($executedQty, $basePrecision);
-        $cummulativeQuoteQty = $plan->applyFraction($cummulativeQuoteQty, self::LEDGER_SCALE);
+        $cummulativeQuoteQty = $this->quoteTotal($executedQty, $price);
 
         $receivedGross = $this->receivedGross($data->side, $executedQty, $cummulativeQuoteQty);
         $commission = bcmul($receivedGross, $commissionRate, 18);
@@ -118,21 +118,36 @@ final readonly class PlaceMarketOrder
     }
 
     /**
+     * O total quote de um fill é SEMPRE `qty * price` sobre o `executedQty`
+     * final — o mesmo produto, na mesma escala, que {@see SwapLedgerAssets}
+     * refaz para mover o ledger. Derivar aqui, depois da fração, é o que
+     * mantém `cummulativeQuoteQty` igual ao que foi debitado e
+     * `fills[0].qty * fills[0].price == cummulativeQuoteQty` na wire: fracionar
+     * o quote em paralelo ao qty separa os dois em qualquer fração que não
+     * feche na precisão da base.
+     *
+     * @param  numeric-string  $executedQty
+     * @param  numeric-string  $price
+     * @return numeric-string
+     */
+    private function quoteTotal(string $executedQty, string $price): string
+    {
+        return bcmul($executedQty, $price, self::LEDGER_SCALE);
+    }
+
+    /**
      * BUY: gasta `quoteOrderQty` no ask, recebe base. `executedQty` é
      * floored à precisão da base — nunca arredondado para cima, para nunca
      * entregar mais do que o preço do book realmente compra.
      *
      * @param  numeric-string  $askPrice
-     * @return array{0: numeric-string, 1: numeric-string, 2: numeric-string, 3: string}
+     * @return array{0: numeric-string, 1: numeric-string, 2: string}
      */
     private function quoteSpend(PlaceMarketOrderData $data, string $askPrice, int $basePrecision, string $baseAsset): array
     {
         throw_if($data->quoteOrderQty === null, RuntimeException::class, 'quoteOrderQty is required for a BUY MARKET order.');
 
-        $executedQty = bcdiv($data->quoteOrderQty, $askPrice, $basePrecision);
-        $cummulativeQuoteQty = bcmul($executedQty, $askPrice, self::LEDGER_SCALE);
-
-        return [$executedQty, $cummulativeQuoteQty, $askPrice, $baseAsset];
+        return [bcdiv($data->quoteOrderQty, $askPrice, $basePrecision), $askPrice, $baseAsset];
     }
 
     /**
@@ -140,15 +155,13 @@ final readonly class PlaceMarketOrder
      * recebe quote.
      *
      * @param  numeric-string  $bidPrice
-     * @return array{0: numeric-string, 1: numeric-string, 2: numeric-string, 3: string}
+     * @return array{0: numeric-string, 1: numeric-string, 2: string}
      */
     private function baseSell(PlaceMarketOrderData $data, string $bidPrice, string $quoteAsset): array
     {
         throw_if($data->quantity === null, RuntimeException::class, 'quantity is required for a SELL MARKET order.');
 
-        $cummulativeQuoteQty = bcmul($data->quantity, $bidPrice, self::LEDGER_SCALE);
-
-        return [$data->quantity, $cummulativeQuoteQty, $bidPrice, $quoteAsset];
+        return [$data->quantity, $bidPrice, $quoteAsset];
     }
 
     /**

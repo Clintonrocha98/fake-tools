@@ -17,10 +17,14 @@ use Illuminate\Support\Carbon;
  * Uma ordem Spot MARKET no par USDCBRL — sempre um único fill (o fake não
  * modela um order book real, preenche tudo de uma vez ao preço do
  * bookTicker), por isso o preço/comissão do fill vivem como colunas
- * escalares, nunca uma lista de fills em JSON. `status` REJECTED e o par
- * parcial+EXPIRED são produzíveis diretamente por estado no banco;
- * {@see \He4rt\FakeBinance\Spot\Actions\PlaceMarketOrder} só produz o caminho
- * feliz (FILLED).
+ * escalares, nunca uma lista de fills em JSON.
+ *
+ * O status nasce do {@see \He4rt\FakeBinance\Spot\DTOs\SpotExecutionPlan} que
+ * {@see \He4rt\FakeBinance\Spot\Actions\PlaceMarketOrder} executa: FILLED no
+ * plano neutro, e parcial+EXPIRED, REJECTED zerado ou `raw_status_override`
+ * quando há cenário armado. As ações pós-fato do painel continuam rasurando o
+ * registro depois de emitido — a venue real também muda de status entre o POST
+ * e o GET.
  *
  * @property string $id
  * @property int $order_id

@@ -19,6 +19,13 @@ final readonly class SpotExecutionPlan
     public const string DEFAULT_PARTIAL_FRACTION = '0.5';
 
     /**
+     * Status de wire do desfecho de vocabulário desconhecido quando o operador
+     * não informou um. Sem este default o desfecho seria um no-op silencioso: o
+     * switch fica verde, o cenário é consumido e a resposta sai FILLED limpa.
+     */
+    public const string DEFAULT_UNKNOWN_RAW_STATUS = 'SOME_FUTURE_STATE';
+
+    /**
      * @param  numeric-string  $fillFraction
      */
     public function __construct(
@@ -44,10 +51,15 @@ final readonly class SpotExecutionPlan
     }
 
     /**
-     * A fração é aplicada na MESMA escala em que o valor original foi
-     * calculado — `executedQty` na precisão da base, `cummulativeQuoteQty` na
-     * escala do ledger. Multiplicar tudo numa escala só faria a wire reportar
-     * um número que o ledger não moveu.
+     * A fração incide sobre UMA grandeza só — a quantidade base executada, na
+     * precisão do ativo base. Todo total quote é derivado desse resultado
+     * ({@see \He4rt\FakeBinance\Spot\Actions\PlaceMarketOrder}); fracionar
+     * qty e quote em paralelo os separaria em qualquer fração que não feche na
+     * precisão da base, e a wire reportaria um total que o ledger não moveu.
+     *
+     * O atalho da fração `1` devolve o valor intocado de propósito: é ele que
+     * garante que o plano neutro não reescale nada, mantendo o happy path bit a
+     * bit igual ao de antes do mecanismo de cenário existir.
      *
      * @param  numeric-string  $amount
      * @return numeric-string
