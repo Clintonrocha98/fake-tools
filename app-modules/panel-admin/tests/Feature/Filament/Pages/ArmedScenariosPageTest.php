@@ -15,10 +15,11 @@ beforeEach(function (): void {
 });
 
 it('renders with every spot outcome switch off when nothing is armed', function (): void {
-    livewire(ArmedScenariosPage::class)
-        ->assertOk()
-        ->assertSet('data.spot_conversion.fill_partial_expired', false)
-        ->assertSet('data.spot_conversion.refuse_with_code', false);
+    $component = livewire(ArmedScenariosPage::class)->assertOk();
+
+    foreach (VenueLeg::SpotConversion->outcomes() as $outcome) {
+        $component->assertSet('data.spot_conversion.'.$outcome->value, false);
+    }
 });
 
 it('arms an outcome when its switch is turned on', function (): void {
@@ -43,11 +44,22 @@ it('turns off the previously armed outcome of the same leg', function (): void {
 });
 
 it('disarms the leg when the switch is turned back off', function (): void {
-    livewire(ArmedScenariosPage::class)
-        ->set('data.spot_conversion.respond_rejected', true)
-        ->set('data.spot_conversion.respond_rejected', false);
+    $page = livewire(ArmedScenariosPage::class)
+        ->set('data.spot_conversion.respond_rejected', true);
+
+    // Prova a primeira transição: sem isto, um `set(false)` num banco que já
+    // começa vazio passaria mesmo que a página nunca tivesse armado nada.
+    expect(ArmedScenario::query()->count())->toBe(1);
+
+    $page->set('data.spot_conversion.respond_rejected', false)
+        ->assertSet('data.spot_conversion.respond_rejected', false);
 
     expect(ArmedScenario::query()->count())->toBe(0);
+
+    // Prova que o desarme também se reflete na UI de um mount novo — não só
+    // no estado Livewire que este mesmo teste acabou de setar para false.
+    livewire(ArmedScenariosPage::class)
+        ->assertSet('data.spot_conversion.respond_rejected', false);
 });
 
 it('arms the partial outcome with the fraction typed next to the switch', function (): void {
