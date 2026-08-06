@@ -21,6 +21,7 @@ it('fixa o code de wire e o HTTP de cada caminho de rejeição', function (Stark
     'assinatura inválida' => [StarkbankErrorCode::InvalidSignature, 'invalidSignature', 401],
     'Access-Time fora da janela' => [StarkbankErrorCode::ExpiredAccessTime, 'expiredAccessTime', 401],
     'header de assinatura ausente' => [StarkbankErrorCode::InvalidRequest, 'invalidRequest', 400],
+    'id desconhecido' => [StarkbankErrorCode::InvalidId, 'invalidId', 404],
 ]);
 
 it('implementa os contratos Filament em todos os cases, sem buraco', function (): void {

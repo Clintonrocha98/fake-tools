@@ -7,6 +7,7 @@ namespace He4rt\FakeStarkbank\Webhook\Actions;
 use Carbon\CarbonImmutable;
 use He4rt\FakeStarkbank\Http\Auth\EcdsaSignatureSigner;
 use He4rt\FakeStarkbank\Http\Auth\WebhookPrivateKey;
+use He4rt\FakeStarkbank\Support\NumericId;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\DTOs\WebhookEnvelope;
 use He4rt\FakeStarkbank\Webhook\DTOs\WebhookPayload;
@@ -139,13 +140,8 @@ final readonly class EmitWebhookEvent implements EmitsWebhookEvents
         return $emission;
     }
 
-    /**
-     * Id no formato do StarkBank: string numérica de 16 dígitos. A unicidade
-     * real é da coluna `event_id` — este gerador só precisa não colidir na
-     * prática.
-     */
     private function numericId(): string
     {
-        return (string) random_int(1_000_000_000_000_000, 9_999_999_999_999_999);
+        return NumericId::generate();
     }
 }

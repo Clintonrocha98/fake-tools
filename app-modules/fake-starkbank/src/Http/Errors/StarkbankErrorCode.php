@@ -14,8 +14,10 @@ use Filament\Support\Contracts\HasLabel;
  * [{"code", "message"}]}` — montado exclusivamente por
  * {@see ErrorResponseFactory}.
  *
- * Os quatro cases de hoje são o vocabulário da autenticação: um por caminho de
- * rejeição do middleware `fake-starkbank.signed`, na ordem em que ele checa.
+ * Quatro deles são o vocabulário da autenticação: um por caminho de rejeição
+ * do middleware `fake-starkbank.signed`, na ordem em que ele checa.
+ * `invalidRequest` também cobre corpo e parâmetros que um endpoint recusa, e
+ * `invalidId` é a releitura de um recurso que este fake nunca emitiu.
  */
 enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
 {
@@ -23,6 +25,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
     case InvalidSignature = 'invalidSignature';
     case ExpiredAccessTime = 'expiredAccessTime';
     case InvalidRequest = 'invalidRequest';
+    case InvalidId = 'invalidId';
 
     public function defaultMessage(): string
     {
@@ -30,7 +33,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidAccessId => 'Invalid access id',
             self::InvalidSignature => 'Invalid access signature',
             self::ExpiredAccessTime => 'Expired access time',
-            self::InvalidRequest => 'Missing Access-Id, Access-Time or Access-Signature header',
+            self::InvalidRequest => 'Invalid request',
+            self::InvalidId => 'Invalid id',
         };
     }
 
@@ -39,6 +43,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
         return match ($this) {
             self::InvalidAccessId, self::InvalidSignature, self::ExpiredAccessTime => 401,
             self::InvalidRequest => 400,
+            self::InvalidId => 404,
         };
     }
 
@@ -49,12 +54,13 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'Assinatura inválida',
             self::ExpiredAccessTime => 'Access-Time fora da janela',
             self::InvalidRequest => 'Request malformado',
+            self::InvalidId => 'Id desconhecido',
         };
     }
 
     /**
-     * Enum não-ordenado: os quatro códigos são causas distintas, não uma escala
-     * de severidade — cada case recebe uma cor semântica própria, sem ramp.
+     * Enum não-ordenado: os códigos são causas distintas, não uma escala de
+     * severidade — cada case recebe uma cor semântica própria, sem ramp.
      */
     public function getColor(): string
     {
@@ -63,6 +69,7 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidSignature => 'warning',
             self::ExpiredAccessTime => 'info',
             self::InvalidRequest => 'gray',
+            self::InvalidId => 'primary',
         };
     }
 
@@ -72,7 +79,8 @@ enum StarkbankErrorCode: string implements HasColor, HasDescription, HasLabel
             self::InvalidAccessId => 'Header Access-Id não confere com fake-starkbank.client.access_id',
             self::InvalidSignature => 'verify() recusou a Access-Signature — chave errada, mensagem errada ou base64 corrompido',
             self::ExpiredAccessTime => '|now − Access-Time| acima de fake-starkbank.recv_window_seconds',
-            self::InvalidRequest => 'Falta ao menos um dos três headers Access-Id/Access-Time/Access-Signature',
+            self::InvalidRequest => 'Headers de assinatura ausentes, ou corpo/parâmetros que o endpoint não aceita — quem rejeita passa a mensagem específica',
+            self::InvalidId => 'Nenhum recurso com esse id foi emitido por este fake',
         };
     }
 }

@@ -47,7 +47,10 @@ final readonly class VerifiesSignedRequest
                 'has_access_signature' => $signature !== '',
             ]);
 
-            return $this->errors->make(StarkbankErrorCode::InvalidRequest);
+            return $this->errors->make(
+                StarkbankErrorCode::InvalidRequest,
+                'Missing Access-Id, Access-Time or Access-Signature header',
+            );
         }
 
         if (!hash_equals((string) config('fake-starkbank.client.access_id', ''), $accessId)) {

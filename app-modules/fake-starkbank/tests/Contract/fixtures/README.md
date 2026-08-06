@@ -12,10 +12,19 @@ fixtures vencem a doc.
 
 | Fixture | Origem no consumidor |
 |---|---|
+| `invoice/invoice_issued.json` | `tests/Fixtures/invoice_issued.json` (verbatim) |
+| `invoice/invoice_paid.json` | `tests/Fixtures/invoice_paid.json` (verbatim) |
+| `invoice/invoice_list_paid.json` | `tests/Fixtures/invoice_list_paid.json` (verbatim) |
 | `workspace/workspace_list_page1.json` | `tests/Fixtures/workspace_list_page1.json` (verbatim) |
 | `workspace/workspace_list_page2.json` | `tests/Fixtures/workspace_list_page2.json` (verbatim) |
 | `errors/error_envelope.json` | `Rails/Pix/StarkbankGateway::providerError()` — lê `errors.0.code` + `errors.0.message` |
 | `webhook/webhook_invoice_paid.json` | `tests/Fixtures/webhook_invoice_paid.json` (verbatim) |
+
+Os três fixtures de invoice são dois shapes diferentes do mesmo recurso: o eco
+GORDO da emissão (`invoice_issued.json`, com `nominalAmount`, `fee`, `fine`,
+`link`, `pdf`…) e o shape MAGRO da releitura (`invoice_paid.json` e cada item de
+`invoice_list_paid.json`). Servir o gordo na releitura faria o fake aceitar um
+consumidor que o StarkBank real quebraria.
 
 O fixture de webhook é o único que descreve o sentido **fake → consumidor**: é o
 envelope que sai no `POST /webhooks/starkbank`, não uma resposta do fake. Repare na

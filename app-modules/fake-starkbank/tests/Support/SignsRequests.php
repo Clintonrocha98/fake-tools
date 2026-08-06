@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Tests\Support;
 
 use Illuminate\Testing\TestResponse;
+use JsonException;
 use phpseclib3\Crypt\EC;
 use phpseclib3\Crypt\EC\PrivateKey;
 
@@ -87,5 +88,42 @@ trait SignsRequests
     protected function getSigned(string $uri, array $headers = []): TestResponse
     {
         return $this->get($uri, $headers + ['Accept' => 'application/json']);
+    }
+
+    /**
+     * POST assinado sobre os bytes EXATOS do corpo. `postJson()` não serve pelo
+     * mesmo motivo que `getJson()`: quem assina precisa do JSON já serializado,
+     * e reencodá-lo depois produz outra mensagem.
+     *
+     * @param  array<array-key, mixed>  $body
+     * @param  array<string, string>|null  $headers  headers de assinatura já prontos — só
+     *                                               quem quer assinar errado (chave alheia, corpo divergente) passa isto
+     *
+     * @throws JsonException
+     */
+    protected function postSigned(string $uri, array $body = [], ?array $headers = null): TestResponse
+    {
+        $content = $this->jsonBody($body);
+        $headers ??= $this->signedHeaders($content);
+
+        return $this->call(
+            method: 'POST',
+            uri: $uri,
+            server: $this->transformHeadersToServerVars($headers + [
+                'CONTENT_TYPE' => 'application/json',
+                'Accept' => 'application/json',
+            ]),
+            content: $content,
+        );
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $body
+     *
+     * @throws JsonException
+     */
+    protected function jsonBody(array $body): string
+    {
+        return json_encode($body, JSON_THROW_ON_ERROR);
     }
 }

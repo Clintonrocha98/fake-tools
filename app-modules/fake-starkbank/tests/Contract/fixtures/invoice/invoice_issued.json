@@ -1,0 +1,35 @@
+{
+    "invoices": [
+        {
+            "id": "5155165527080960",
+            "amount": 10000,
+            "nominalAmount": 10000,
+            "name": "Ada Lovelace",
+            "taxId": "012.345.678-90",
+            "status": "created",
+            "brcode": "00020101021226930014br.gov.bcb.pix2571brcode-h.starkbank.com/v2/5155165527080960520400005303986540510.005802BR5913Ada Lovelace6009Sao Paulo62070503***63041D3D",
+            "tags": ["deposit-abc-123"],
+            "created": "2026-07-09T12:00:00.762238+00:00",
+            "due": "2026-07-09T12:15:00+00:00",
+            "expiration": 0,
+            "fee": 0,
+            "fine": 2,
+            "fineAmount": 0,
+            "interest": 1,
+            "interestAmount": 0,
+            "discountAmount": 0,
+            "discounts": [],
+            "descriptions": [],
+            "displayDescription": "",
+            "reversalDisplayDescription": "",
+            "rules": [],
+            "splits": [],
+            "metadata": [],
+            "transactionIds": [],
+            "link": "https://brdcapital.sandbox.starkbank.com/invoicelink/5155165527080960",
+            "pdf": "https://sandbox.api.starkbank.com/v2/invoice/5155165527080960.pdf",
+            "updated": "2026-07-09T12:00:00.997807+00:00"
+        }
+    ],
+    "message": "Invoice successfully created"
+}

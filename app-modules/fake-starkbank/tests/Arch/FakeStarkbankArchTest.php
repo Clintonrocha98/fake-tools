@@ -6,6 +6,7 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasDescription;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
+use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 
 /*
 |--------------------------------------------------------------------------
@@ -49,3 +50,22 @@ arch('os enums do webhook implementam os contratos que o painel lê')
     ->expect('He4rt\FakeStarkbank\Webhook\Enums')
     ->toBeEnums()
     ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
+
+arch('os enums da invoice implementam os contratos que o painel lê')
+    ->expect('He4rt\FakeStarkbank\Invoice\Enums')
+    ->toBeEnums()
+    ->toImplement([HasColor::class, HasDescription::class, HasIcon::class, HasLabel::class]);
+
+arch('os DTOs da invoice são value objects imutáveis')
+    ->expect('He4rt\FakeStarkbank\Invoice\DTOs')
+    ->toBeFinal()
+    ->toBeReadonly();
+
+/*
+ * As Actions da invoice são o único lugar onde uma transição de estado
+ * acontece: um controller que gravasse status direto pularia o log de negócio e
+ * a emissão de webhook que acompanham cada transição.
+ */
+arch('os controllers da invoice não conhecem o model, só as Actions')
+    ->expect('He4rt\FakeStarkbank\Invoice\Http\Controllers')
+    ->not->toUse(Invoice::class);
