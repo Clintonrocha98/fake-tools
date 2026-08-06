@@ -14,7 +14,8 @@ use Illuminate\Database\Eloquent\Attributes\UseFactory;
 use Illuminate\Support\Carbon;
 
 /**
- * Uma ordem Spot MARKET no par USDCBRL — sempre um único fill (o fake não
+ * Uma ordem Spot MARKET num par servido pelo fake ({@see \He4rt\FakeBinance\Spot\Enums\SpotSymbol})
+ * — sempre um único fill (o fake não
  * modela um order book real, preenche tudo de uma vez ao preço do
  * bookTicker), por isso o preço/comissão do fill vivem como colunas
  * escalares, nunca uma lista de fills em JSON.

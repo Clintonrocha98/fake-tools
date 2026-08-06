@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Spot\DTOs;
 
 use He4rt\FakeBinance\Spot\Enums\OrderSide;
+use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 
 /**
  * O que o monolito consumidor envia em POST /api/v3/order (`PlaceSpotOrderRequest`):
@@ -20,7 +21,7 @@ final readonly class PlaceMarketOrderData
      * @param  numeric-string|null  $quantity
      */
     public function __construct(
-        public string $symbol,
+        public SpotSymbol $symbol,
         public OrderSide $side,
         public string $newClientOrderId,
         public ?string $quoteOrderQty = null,

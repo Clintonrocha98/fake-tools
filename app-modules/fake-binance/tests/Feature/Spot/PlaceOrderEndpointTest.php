@@ -11,7 +11,7 @@ uses(SignsRequests::class);
 
 beforeEach(function (): void {
     $this->configureFakeBinanceCredentials();
-    config(['fake-binance-spot.usdcbrl.price' => '5.10', 'fake-binance-spot.usdcbrl.spread' => '0.02']);
+    config(['fake-binance-spot.symbols.USDCBRL.price' => '5.10', 'fake-binance-spot.symbols.USDCBRL.spread' => '0.02']);
 });
 
 it('fills a BUY MARKET order at the ask price, spending quoteOrderQty and crediting the ledger net of commission', function (): void {
@@ -131,6 +131,36 @@ it('fills a BUY MARKET order denominated in the base asset, spending quantity * 
         ->and($usdc->free)->toBe('9.990000000000000000');
 });
 
+it('fills a BUY MARKET order on USDTBRL, debiting BRL and crediting USDT net of commission', function (): void {
+    config(['fake-binance-spot.symbols.USDTBRL.price' => '5.10', 'fake-binance-spot.symbols.USDTBRL.spread' => '0.02']);
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDTBRL',
+        'side' => 'BUY',
+        'type' => 'MARKET',
+        'quoteOrderQty' => '51.1',
+        'newClientOrderId' => 'forex-usdt-buy-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'symbol' => 'USDTBRL',
+        'status' => 'FILLED',
+        'side' => 'BUY',
+        'executedQty' => '10',
+        'cummulativeQuoteQty' => '51.1',
+        'fills' => [
+            ['price' => '5.11', 'qty' => '10', 'commission' => '0.01', 'commissionAsset' => 'USDT'],
+        ],
+    ]);
+
+    $brl = LedgerAccount::query()->where('asset', 'BRL')->firstOrFail();
+    $usdt = LedgerAccount::query()->where('asset', 'USDT')->firstOrFail();
+
+    expect($brl->free)->toBe('99948.900000000000000000')
+        ->and($usdt->free)->toBe('9.990000000000000000');
+});
+
 it('refuses quantity and quoteOrderQty together with -1102', function (): void {
     (new CreditLedgerAccount)->handle('BRL', '100000');
 
@@ -237,7 +267,7 @@ it('debits BRL byte-for-byte equal to the cummulativeQuoteQty reported on the wi
 });
 
 it('refuses a SELL below minQty with a filter failure', function (): void {
-    config(['fake-binance-spot.usdcbrl.filters.min_qty' => '5']);
+    config(['fake-binance-spot.symbols.USDCBRL.filters.min_qty' => '5']);
     (new CreditLedgerAccount)->handle('USDC', '1000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [
@@ -260,7 +290,7 @@ it('refuses a BUY below minNotional with a filter failure', function (): void {
 });
 
 it('gates a BUY denominated in the base by minQty — the parameter, not the side, picks the filter', function (): void {
-    config(['fake-binance-spot.usdcbrl.filters.min_qty' => '5']);
+    config(['fake-binance-spot.symbols.USDCBRL.filters.min_qty' => '5']);
     (new CreditLedgerAccount)->handle('BRL', '100000');
 
     $response = $this->postJson($this->signedUri('/api/v3/order', [

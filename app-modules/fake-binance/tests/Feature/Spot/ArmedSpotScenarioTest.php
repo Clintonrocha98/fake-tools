@@ -16,6 +16,7 @@ use He4rt\FakeBinance\Spot\Actions\PlaceMarketOrder;
 use He4rt\FakeBinance\Spot\DTOs\PlaceMarketOrderData;
 use He4rt\FakeBinance\Spot\Enums\OrderSide;
 use He4rt\FakeBinance\Spot\Enums\OrderStatus;
+use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
 use He4rt\FakeBinance\Tests\Support\SignsRequests;
 
@@ -24,7 +25,7 @@ uses(SignsRequests::class);
 function armedBuyOrder(string $clientOrderId = 'forex-armed-1'): PlaceMarketOrderData
 {
     return new PlaceMarketOrderData(
-        symbol: 'USDCBRL',
+        symbol: SpotSymbol::UsdcBrl,
         side: OrderSide::Buy,
         newClientOrderId: $clientOrderId,
         quoteOrderQty: '15',
@@ -92,7 +93,7 @@ it('leaves the ledger matching the partial fill on the SELL side too', function 
     // `2.93542074` × `0.25` não fecha em 8 casas — a fração trunca, e é aí que
     // um quote fracionado à parte se separaria do que o ledger recalcula.
     $order = resolve(PlaceMarketOrder::class)->handle(new PlaceMarketOrderData(
-        symbol: 'USDCBRL',
+        symbol: SpotSymbol::UsdcBrl,
         side: OrderSide::Sell,
         newClientOrderId: 'forex-armed-sell',
         quantity: '2.93542074',

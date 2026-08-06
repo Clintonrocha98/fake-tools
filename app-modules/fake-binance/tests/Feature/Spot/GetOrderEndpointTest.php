@@ -10,7 +10,7 @@ uses(SignsRequests::class);
 
 beforeEach(function (): void {
     $this->configureFakeBinanceCredentials();
-    config(['fake-binance-spot.usdcbrl.price' => '5.10', 'fake-binance-spot.usdcbrl.spread' => '0.02']);
+    config(['fake-binance-spot.symbols.USDCBRL.price' => '5.10', 'fake-binance-spot.symbols.USDCBRL.spread' => '0.02']);
 });
 
 it('retrieves an order by origClientOrderId with the same shape as the POST response, minus fills', function (): void {
