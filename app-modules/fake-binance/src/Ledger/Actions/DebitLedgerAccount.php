@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Debita `amount` do saldo livre de `asset` (normalizado para maiúsculas — mesma
- * fronteira de {@see CreditLedgerAccount}). Chamado com o total já somado — um
- * withdraw passa `amount + fee` como um único valor ({@see SwapLedgerAssets}
- * para o caso de swap, que soma múltiplos fills antes de debitar).
+ * fronteira de {@see CreditLedgerAccount}). Chamado com o total já resolvido pelo
+ * chamador — um withdraw debita exatamente o `amount` pedido (a fee sai de dentro,
+ * nunca por fora); {@see SwapLedgerAssets} soma múltiplos fills antes de debitar.
  */
 final readonly class DebitLedgerAccount
 {

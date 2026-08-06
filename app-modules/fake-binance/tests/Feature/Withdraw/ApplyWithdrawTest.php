@@ -15,7 +15,7 @@ beforeEach(function (): void {
     config(['fake-binance-withdraw.fees' => ['SOL' => '0.004']]);
 });
 
-it('debits amount+fee from the ledger and creates an awaiting-approval withdrawal', function (): void {
+it('debits exactly amount from the ledger and creates an awaiting-approval withdrawal', function (): void {
     (new CreditLedgerAccount)->handle('USDC', '100');
 
     $withdrawal = (new ApplyWithdraw)->handle(new ApplyWithdrawData(
@@ -35,7 +35,26 @@ it('debits amount+fee from the ledger and creates an awaiting-approval withdrawa
 
     $account = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
 
-    expect($account->free)->toBe('91.086000000000000000');
+    expect($account->free)->toBe('91.090000000000000000');
+});
+
+it('accepts a withdraw of the exact available balance — the fee comes out of amount, never on top of it', function (): void {
+    (new CreditLedgerAccount)->handle('USDC', '100');
+
+    $withdrawal = (new ApplyWithdraw)->handle(new ApplyWithdrawData(
+        coin: 'USDC',
+        address: 'SomeSolanaAddress',
+        amount: '100',
+        network: 'SOL',
+        withdrawOrderId: 'payout-full-balance',
+    ));
+
+    expect($withdrawal->amount)->toBe('100.000000000000000000')
+        ->and($withdrawal->transaction_fee)->toBe('0.004000000000000000');
+
+    $account = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
+
+    expect($account->free)->toBe('0.000000000000000000');
 });
 
 it('throws without creating a withdrawal when the ledger balance is insufficient', function (): void {
@@ -97,5 +116,5 @@ it('is idempotent: repeating the same withdrawOrderId does not debit twice', fun
 
     $account = LedgerAccount::query()->where('asset', 'USDC')->firstOrFail();
 
-    expect($account->free)->toBe('91.086000000000000000');
+    expect($account->free)->toBe('91.090000000000000000');
 });

@@ -12,11 +12,15 @@ use He4rt\FakeBinance\Withdraw\Exceptions\UnsupportedWithdrawNetworkException;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 /**
- * POST /sapi/v1/capital/withdraw/apply: debita `amount + fee` do ledger e cria o
- * withdrawal em `AwaitingApproval` (status 2) — nunca cria o registro se o débito
- * falhar por saldo insuficiente ({@see \He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException},
+ * POST /sapi/v1/capital/withdraw/apply: debita exatamente `amount` do ledger —
+ * a fee sai de DENTRO do amount (o destino recebe `amount − fee`, a mesma
+ * leitura que o `ReconcileWalletWithdraw` do consumidor faz sobre a history) —
+ * e cria o withdrawal em `AwaitingApproval` (status 2). Nunca cria o registro
+ * se o débito falhar por saldo insuficiente
+ * ({@see \He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException},
  * deixada propagar para o controller mapear no envelope de erro).
  *
  * Idempotente por `withdrawOrderId`: repetir o mesmo id devolve o withdrawal já
@@ -34,6 +38,12 @@ final readonly class ApplyWithdraw
             $existing = Withdrawal::query()->where('withdraw_order_id', $data->withdrawOrderId)->first();
 
             if ($existing instanceof Withdrawal) {
+                Log::info('fake-binance.withdraw: apply idempotente — withdrawOrderId repetido, devolvendo o withdrawal existente sem debitar', [
+                    'withdraw_order_id' => $data->withdrawOrderId,
+                    'withdrawal_id' => $existing->id,
+                    'status' => $existing->status->value,
+                ]);
+
                 return $existing;
             }
         }
@@ -41,10 +51,17 @@ final readonly class ApplyWithdraw
         $coin = mb_strtoupper($data->coin);
         $network = mb_strtoupper($data->network);
         $fee = $this->feeFor($network);
-        $total = bcadd($data->amount, $fee, 18);
 
-        return DB::transaction(function () use ($data, $coin, $network, $fee, $total): Withdrawal {
-            $this->debit->handle($coin, $total);
+        return DB::transaction(function () use ($data, $coin, $network, $fee): Withdrawal {
+            $this->debit->handle($coin, $data->amount);
+
+            Log::info('fake-binance.withdraw: apply aceito — amount debitado do ledger (fee sai de dentro, destino recebe amount − fee)', [
+                'coin' => $coin,
+                'network' => $network,
+                'amount' => $data->amount,
+                'transaction_fee' => $fee,
+                'withdraw_order_id' => $data->withdrawOrderId,
+            ]);
 
             return Withdrawal::query()->create([
                 'coin' => $coin,
