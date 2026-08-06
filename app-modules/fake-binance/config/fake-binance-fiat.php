@@ -85,4 +85,29 @@ return [
 
     'deposit_limit' => env('FAKE_BINANCE_FIAT_DEPOSIT_LIMIT'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | BR Code EMV estático do depósito
+    |--------------------------------------------------------------------------
+    |
+    | O que o `pixcode` de GET /sapi/v1/fiat/get-order-detail carrega: chave PIX
+    | (campo 26, sub 01) e nome/cidade do merchant (campos 59/60) do BR Code que
+    | He4rt\FakeBinance\Fiat\Actions\BuildStaticBrcode monta. O valor (campo 54)
+    | nunca é config — é sempre o `amount` da FiatOrder.
+    |
+    | `pix_key` é metade de um contrato entre dois serviços que nunca se
+    | consultam em runtime: o fake-starkbank resolve exatamente esta chave no seu
+    | registro DICT (`FAKE_STARKBANK_FUNDING_PIX_KEY`, mesmo default) e devolve
+    | dela o taxId que o consumidor confere contra
+    | `treasury.conversion.funding_expected_tax_id`. Mudar um lado só e os dois
+    | guards do SendConversionFunding viram teatro.
+    |
+    */
+
+    'pix_key' => env('FAKE_BINANCE_FIAT_PIX_KEY', 'funding@fake-binance.dev'),
+
+    'merchant_name' => env('FAKE_BINANCE_FIAT_MERCHANT_NAME', 'Fake Binance'),
+
+    'merchant_city' => env('FAKE_BINANCE_FIAT_MERCHANT_CITY', 'Sao Paulo'),
+
 ];

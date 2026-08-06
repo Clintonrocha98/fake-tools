@@ -165,6 +165,8 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_FIAT_DEPOSIT_ENABLED` | `false` makes every fiat deposit refuse with `100001`. |
 | `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_LIMIT` | Optional per-deposit ceiling; unset means no ceiling. |
+| `FAKE_BINANCE_FIAT_PIX_KEY` | PIX key embedded in field `26` of the static EMV BR Code served as `pixcode`. Must equal `FAKE_STARKBANK_FUNDING_PIX_KEY` — that is the whole cross-fake contract; the two fakes never call each other. |
+| `FAKE_BINANCE_FIAT_MERCHANT_NAME` / `..._MERCHANT_CITY` | Merchant name (≤ 25 chars) and city (≤ 15 chars) in fields `59` / `60` of the BR Code. Folded to ASCII and truncated. |
 | `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
 | `FAKE_BINANCE_USDTBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDTBRL — the main flow's intermediate asset pair. |
 | `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |

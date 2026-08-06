@@ -6,6 +6,7 @@ use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Enums\FiatStatusDialect;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
 use He4rt\FakeBinance\Tests\Contract\Support\AssertsRecordedShape;
+use He4rt\FakeBinance\Tests\Support\EmvDecoder;
 use He4rt\FakeBinance\Tests\Support\SignsRequests;
 
 /*
@@ -187,6 +188,26 @@ it('extracts the brcode via the same key-normalization walk BinanceVenueFundingG
     expect($normalizedKeys)->toContain('pixcode')
         ->and($response->json('data.pixcode'))->toBe($order->brcode)
         ->and(str_starts_with((string) $response->json('data.pixcode'), '000201'))->toBeTrue();
+});
+
+it('serves a pixcode the fake-starkbank preview can decode — the cross-fake contract travels in the payload, never over the wire', function (): void {
+    // Os dois fakes nunca se consultam: o preview do fake-starkbank recebe este
+    // mesmo texto e resolve a chave PIX do campo 26 no seu registro DICT. Se o
+    // TLV não fechar aqui, a perna de funding do consumidor morre lá.
+    config(['fake-binance-fiat.pix_key' => 'funding@fake-binance.dev']);
+
+    $order = FiatOrder::factory()->create([
+        'status' => FiatOrderStatus::Processing,
+        'amount' => '4924.50',
+    ]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $pixcode = (string) $response->json('data.pixcode');
+
+    expect(EmvDecoder::crcIsValid($pixcode))->toBeTrue()
+        ->and(EmvDecoder::value($pixcode, '54'))->toBe('4924.50')
+        ->and(EmvDecoder::value(EmvDecoder::value($pixcode, '26'), '01'))->toBe('funding@fake-binance.dev');
 });
 
 it('drops the brcode once the order dies in a terminal failure state, so extractBrcode() finds nothing', function (): void {

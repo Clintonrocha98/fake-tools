@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Database\Factories\Fiat;
 
+use He4rt\FakeBinance\Fiat\Actions\BuildStaticBrcode;
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -22,7 +23,14 @@ class FiatOrderFactory extends Factory
             'amount' => fake()->randomFloat(2, 100, 10_000),
             'status' => FiatOrderStatus::Processing,
             'forced_status' => null,
-            'brcode' => sprintf('000201BR.GOV.BCB.PIX-FAKE-%s-EMV', fake()->unique()->numerify(str_repeat('#', 8))),
+            // O brcode nasce do `amount` já resolvido (inclusive quando um state
+            // o sobrescreve), como no depósito real — o campo 54 do EMV e a
+            // coluna nunca divergem.
+            'brcode' => static function (array $attributes): string {
+                $amount = $attributes['amount'] ?? '0';
+
+                return (new BuildStaticBrcode)->handle(is_numeric($amount) ? (string) $amount : '0');
+            },
             'credited_at' => null,
         ];
     }
