@@ -58,7 +58,7 @@ final readonly class PlaceMarketOrder
             throw DuplicateClientOrderIdException::forClientOrderId($data->newClientOrderId);
         }
 
-        $this->assertFilters->handle($data->quantity, $data->quoteOrderQty);
+        $this->assertFilters->handle($data->symbol, $data->quantity, $data->quoteOrderQty);
 
         $plan = $this->planNextExecution->handle();
 
@@ -66,7 +66,7 @@ final readonly class PlaceMarketOrder
             throw ScenarioRefusedRequestException::withCode($plan->refusal);
         }
 
-        $symbolConfig = config()->array('fake-binance-spot.usdcbrl');
+        $symbolConfig = $data->symbol->config();
         $baseAsset = (string) $symbolConfig['base_asset'];
         $quoteAsset = (string) $symbolConfig['quote_asset'];
         $basePrecision = (int) $symbolConfig['base_asset_precision'];
@@ -102,7 +102,7 @@ final readonly class PlaceMarketOrder
             return SpotOrder::query()->create([
                 'order_id' => $this->nextOrderId->handle(),
                 'client_order_id' => $data->newClientOrderId,
-                'symbol' => $data->symbol,
+                'symbol' => $data->symbol->value,
                 'side' => $data->side,
                 'type' => 'MARKET',
                 'status' => $plan->finalStatus,

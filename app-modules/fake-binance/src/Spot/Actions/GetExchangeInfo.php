@@ -5,20 +5,21 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Spot\Actions;
 
 use He4rt\FakeBinance\Spot\DTOs\ExchangeSymbolInfo;
+use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 
 /**
- * As regras de negociação de um símbolo, lidas do config fixo do fake — hoje
- * só USDCBRL é servido.
+ * As regras de negociação de um símbolo, lidas do config fixo do fake —
+ * resolvidas pelo caso do {@see SpotSymbol}, nunca por uma chave literal.
  */
 final readonly class GetExchangeInfo
 {
-    public function handle(string $symbol): ExchangeSymbolInfo
+    public function handle(SpotSymbol $symbol): ExchangeSymbolInfo
     {
-        $config = config()->array('fake-binance-spot.usdcbrl');
+        $config = $symbol->config();
         $filters = $config['filters'];
 
         return new ExchangeSymbolInfo(
-            symbol: $symbol,
+            symbol: $symbol->value,
             baseAsset: (string) $config['base_asset'],
             quoteAsset: (string) $config['quote_asset'],
             baseAssetPrecision: (int) $config['base_asset_precision'],

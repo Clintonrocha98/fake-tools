@@ -166,6 +166,7 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_LIMIT` | Optional per-deposit ceiling; unset means no ceiling. |
 | `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
+| `FAKE_BINANCE_USDTBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDTBRL — the main flow's intermediate asset pair. |
 | `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
 

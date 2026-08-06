@@ -73,7 +73,9 @@ final readonly class PlaceOrderController
             return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
         }
 
-        if (!SpotSymbol::tryFromWire($symbol) instanceof SpotSymbol) {
+        $spotSymbol = SpotSymbol::tryFromWire($symbol);
+
+        if (!$spotSymbol instanceof SpotSymbol) {
             return $this->errors->make($family, BinanceErrorCode::InvalidSymbol);
         }
 
@@ -92,7 +94,7 @@ final readonly class PlaceOrderController
         }
 
         return new PlaceMarketOrderData(
-            symbol: $symbol,
+            symbol: $spotSymbol,
             side: $side,
             newClientOrderId: $newClientOrderId,
             quoteOrderQty: is_numeric($quoteOrderQty) ? (string) $quoteOrderQty : null,
