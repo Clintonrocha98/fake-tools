@@ -168,6 +168,7 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
 | `FAKE_BINANCE_USDTBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDTBRL — the main flow's intermediate asset pair. |
 | `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |
+| `FAKE_BINANCE_TRAVEL_RULE_COUNTRY` | Travel rule questionnaire country. Unset/empty or `NIL` = no requirement (wallet delivery happy path); any country code makes the consumer refuse the delivery. |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
 
 Override the defaults via the compose `environment:` block or a shell-exported env
