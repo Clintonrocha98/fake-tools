@@ -12,7 +12,7 @@ it('is empty by default', function (): void {
         ->and($payload->errorCode)->toBeNull()
         ->and($payload->rawStatus)->toBeNull()
         ->and($payload->reason)->toBeNull()
-        ->and($payload->toArray())->toBe([]);
+        ->and($payload->toArray())->toBeEmpty();
 });
 
 it('keeps only the fields it knows, dropping anything else', function (): void {

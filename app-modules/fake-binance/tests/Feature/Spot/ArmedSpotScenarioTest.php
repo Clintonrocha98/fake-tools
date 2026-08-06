@@ -24,7 +24,6 @@ function armedBuyOrder(string $clientOrderId = 'forex-armed-1'): PlaceMarketOrde
         side: OrderSide::Buy,
         newClientOrderId: $clientOrderId,
         quoteOrderQty: '15',
-        quantity: null,
     );
 }
 

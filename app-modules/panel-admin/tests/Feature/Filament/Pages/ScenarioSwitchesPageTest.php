@@ -32,7 +32,7 @@ it('renders with every switch off by default', function (): void {
 
 it('turns a global switch on through its toggle', function (): void {
     livewire(ScenarioSwitchesPage::class)
-        ->set('data.outage', true)
+        ->set('data.outage', value: true)
         ->assertNotified();
 
     expect((new GetScenarioSwitchboard)->handle()->outage_mode)->toBeTrue();
@@ -42,7 +42,7 @@ it('turns a global switch back off through the same toggle', function (): void {
     (new ToggleScenarioSwitch)->handle(ScenarioSwitch::Outage, enabled: true);
 
     livewire(ScenarioSwitchesPage::class)
-        ->set('data.outage', false);
+        ->set('data.outage', value: false);
 
     expect((new GetScenarioSwitchboard)->handle()->outage_mode)->toBeFalse();
 });
@@ -51,7 +51,7 @@ it('loads each switch already reflecting the persisted state', function (): void
     (new ToggleScenarioSwitch)->handle(ScenarioSwitch::RateLimit, enabled: true);
 
     livewire(ScenarioSwitchesPage::class)
-        ->assertSet('data.rate_limit', true)
-        ->assertSet('data.outage', false)
-        ->assertSet('data.clock_skew', false);
+        ->assertSet('data.rate_limit', value: true)
+        ->assertSet('data.outage', value: false)
+        ->assertSet('data.clock_skew', value: false);
 });

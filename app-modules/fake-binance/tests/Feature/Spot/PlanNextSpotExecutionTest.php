@@ -84,7 +84,7 @@ it('consumes the armed scenario when it plans', function (): void {
 });
 
 it('applies the fraction at the given scale, and never multiplies on the neutral plan', function (): void {
-    $partial = new SpotExecutionPlan('0.5', OrderStatus::Expired, null, null);
+    $partial = new SpotExecutionPlan('0.5', OrderStatus::Expired, refusal: null, rawStatusOverride: null);
 
     expect($partial->applyFraction('2.93000000', 8))->toBe('1.46500000')
         ->and(SpotExecutionPlan::neutral()->applyFraction('2.93000000', 8))->toBe('2.93000000');

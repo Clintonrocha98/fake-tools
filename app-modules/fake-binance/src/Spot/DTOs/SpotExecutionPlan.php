@@ -30,7 +30,7 @@ final readonly class SpotExecutionPlan
 
     public static function neutral(): self
     {
-        return new self('1', OrderStatus::Filled, null, null);
+        return new self('1', OrderStatus::Filled, refusal: null, rawStatusOverride: null);
     }
 
     public function refuses(): bool

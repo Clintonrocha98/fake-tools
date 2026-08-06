@@ -22,12 +22,12 @@ it('points every outcome back at its own leg', function (LegOutcomeContract $out
 it('declares which payload field each outcome uses', function (): void {
     expect(SpotConversionOutcome::FillPartialExpired->payloadFields())->toBe(['fraction'])
         ->and(SpotConversionOutcome::RefuseWithCode->payloadFields())->toBe(['errorCode'])
-        ->and(SpotConversionOutcome::RespondRejected->payloadFields())->toBe([])
+        ->and(SpotConversionOutcome::RespondRejected->payloadFields())->toBeEmpty()
         ->and(SpotConversionOutcome::EmitUnknownStatus->payloadFields())->toBe(['rawStatus']);
 });
 
 it('gives every outcome a label, a description and a color', function (LegOutcomeContract $outcome): void {
-    expect($outcome->getLabel())->not->toBe('')
-        ->and($outcome->getDescription())->not->toBe('')
+    expect($outcome->getLabel())->not->toBeEmpty()
+        ->and($outcome->getDescription())->not->toBeEmpty()
         ->and($outcome->getColor())->not->toBeEmpty();
 })->with(SpotConversionOutcome::cases());
