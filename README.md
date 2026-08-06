@@ -165,11 +165,28 @@ default in `.env.example`, grouped by the config file that reads it.
 | `FAKE_BINANCE_FIAT_DEPOSIT_ENABLED` | `false` makes every fiat deposit refuse with `100001`. |
 | `FAKE_BINANCE_FIAT_SUPPORTED_CURRENCY` / `..._PAYMENT_METHOD` | The only accepted pair; anything else refuses with `-16010`. |
 | `FAKE_BINANCE_FIAT_DEPOSIT_LIMIT` | Optional per-deposit ceiling; unset means no ceiling. |
+| `FAKE_BINANCE_FIAT_PIX_KEY` | PIX key embedded in field `26` of the static EMV BR Code served as `pixcode`. Must equal `FAKE_STARKBANK_FUNDING_PIX_KEY` — that is the whole cross-fake contract; the two fakes never call each other. |
+| `FAKE_BINANCE_FIAT_MERCHANT_NAME` / `..._MERCHANT_CITY` | Merchant name (≤ 25 chars) and city (≤ 15 chars) in fields `59` / `60` of the BR Code. Folded to ASCII and truncated. |
 | `FAKE_BINANCE_USDCBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDCBRL. See ADR-0002. |
 | `FAKE_BINANCE_USDTBRL_PRICE` / `..._SPREAD` | Fixed mid price and bid/ask spread for USDTBRL — the main flow's intermediate asset pair. |
 | `FAKE_BINANCE_SPOT_COMMISSION_RATE` | Taker fee applied to the received asset. |
 | `FAKE_BINANCE_TRAVEL_RULE_COUNTRY` | Travel rule questionnaire country. Unset/empty or `NIL` = no requirement (wallet delivery happy path); any country code makes the consumer refuse the delivery. |
 | `DB_HOST` / `DB_PORT` / `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` | The reused `brd-db` Postgres. Inside `dev-brd` it is `brd-db:5432`. |
+
+| Env (fake-starkbank) | Meaning |
+| --- | --- |
+| `FAKE_STARKBANK_CLIENT_ACCESS_ID` | The `Access-Id` the fake accepts — the monolith's `STARKBANK_ACCESS_ID` (`project/{id}`). |
+| `FAKE_STARKBANK_CLIENT_PUBLIC_KEY_PATH` / `FAKE_STARKBANK_CLIENT_PUBLIC_KEY` | PEM (file, preferred; or inline) of the secp256k1 **public** key matching the monolith's signing key. The fake really verifies `Access-Signature` over `accessId:accessTime:body`; with no readable key every request is refused with `invalidSignature`. |
+| `FAKE_STARKBANK_RECV_WINDOW_SECONDS` | Tolerance between `Access-Time` and the fake's clock. Outside it: `expiredAccessTime`. |
+| `FAKE_STARKBANK_WORKSPACE_*` | The single workspace `GET /v2/workspace` serves (`id`, `username`, `name`, `allowed_tax_ids`, `status`, `organization_id`, `picture_url`, `created`). Defaults mirror the consumer's recorded fixture. |
+| `FAKE_STARKBANK_WEBHOOK_URL` | Where the fake POSTs signed webhook deliveries — the consumer's `POST /webhooks/starkbank` route. Empty = no-op, logged but not sent. |
+| `FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY_PATH` / `FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY` | PEM (file, preferred; or inline) of the secp256k1 key the fake signs the `Digital-Signature` header with — the pair the consumer's `STARKBANK_WEBHOOK_PUBLIC_KEY_PATH` verifies against. |
+| `FAKE_STARKBANK_WEBHOOK_TIMEOUT_SECONDS` | Timeout for the post-response webhook delivery HTTP call. |
+| `FAKE_STARKBANK_INVOICE_ADVANCE_SECONDS` / `..._TRANSFER_ADVANCE_SECONDS` / `..._BRCODE_ADVANCE_SECONDS` | Lazy auto-advance cadence per subsystem, in seconds. |
+| `FAKE_STARKBANK_BRCODE_RECONCILIATION_ID` / `..._DESCRIPTION` | Fields echoed verbatim by `GET /v2/brcode-preview`. |
+| `FAKE_STARKBANK_DICT_REFERENCE_*` | The seeded reference DICT entry (`pix_key`, `type`, `name`, `tax_id`, `owner_type`), mirroring the consumer's recorded fixture. |
+| `FAKE_STARKBANK_DICT_BANK_NAME` / `..._ISPB` / `..._ACCOUNT_TYPE` / `..._STATUS` | The receiving institution attached to every seeded DICT entry. |
+| `FAKE_STARKBANK_FUNDING_PIX_KEY` / `..._TAX_ID` / `..._NAME` | The funding entry the venue's static BR Code resolves against. Cross-fake contract: `FAKE_STARKBANK_FUNDING_PIX_KEY` must equal `FAKE_BINANCE_FIAT_PIX_KEY`, and `..._TAX_ID` must equal the consumer's `TREASURY_CONVERSION_FUNDING_EXPECTED_TAX_ID` — otherwise `SendConversionFunding`'s destination guards refuse fail-closed. |
 
 Override the defaults via the compose `environment:` block or a shell-exported env
 before `docker compose up` (`FAKE_BINANCE_API_KEY=... docker compose up fake-binance`).
@@ -209,6 +226,56 @@ networks:
 # on the monolith side, in that same environment
 BINANCE_BASE_URL=http://fake-binance:8080
 ```
+
+### Pointing the monolith at it — fake-starkbank
+
+`brd-digital`'s Laravel app runs on the **host**, so `fake-starkbank`'s `8080`
+port mapping is reachable straight from the host. In `brd-digital`'s `.env`:
+
+```bash
+STARKBANK_BASE_URL=http://127.0.0.1:8080
+STARKBANK_ACCESS_ID=<same value as FAKE_STARKBANK_CLIENT_ACCESS_ID>
+STARKBANK_PRIVATE_KEY_PATH=<path to docker/dev-keys/client-dev.pem>
+STARKBANK_WEBHOOK_PUBLIC_KEY_PATH=<path to docker/dev-keys/webhook-dev.pub.pem>
+TREASURY_CONVERSION_FUNDING_EXPECTED_TAX_ID=<same value as FAKE_STARKBANK_FUNDING_TAX_ID>
+```
+
+The direction is reversed on the webhook leg: this fake dispatches deliveries
+OUT to the monolith's `webhooks/starkbank` route, so `fake-starkbank`'s
+`FAKE_STARKBANK_WEBHOOK_URL` must resolve to wherever the monolith actually
+listens — `http://host.docker.internal:8000/webhooks/starkbank` when the
+monolith runs on the dev's host (the compose service declares the
+`host.docker.internal` mapping so this resolves on Linux too), or the
+consumer's service name when both run inside the same deployed network — same
+posture as `BINANCE_BASE_URL` above, mirrored.
+
+The plumbing on the consumer side (wiring these envs into
+`config/integration-starkbank.php` and `config/treasury.php`) is tracked on
+`brd-digital`'s own tracker — this section only documents where to point it.
+
+### Smoke test — fake-starkbank
+
+`GET /v2/workspace` signed is the smoke test that confirms key, verification
+and request signing end to end before the consumer ever gets involved:
+
+```bash
+ACCESS_ID=project/6341320293482496
+TIMESTAMP=$(date +%s)
+MESSAGE="${ACCESS_ID}:${TIMESTAMP}:"
+SIGNATURE=$(php artisan tinker --execute '
+    $key = \phpseclib3\Crypt\EC::loadPrivateKey(file_get_contents("docker/dev-keys/client-dev.pem"))->withHash("sha256");
+    echo base64_encode($key->sign("'"$MESSAGE"'"));
+')
+
+curl -s http://127.0.0.1:8080/v2/workspace \
+    -H "Access-Id: ${ACCESS_ID}" \
+    -H "Access-Time: ${TIMESTAMP}" \
+    -H "Access-Signature: ${SIGNATURE}"
+```
+
+A `200` with the seeded workspace confirms the fake is ready for the
+consumer's `treasury:poll-extrato` (or the tracker's equivalent command) to
+talk to it.
 
 ### Published image
 

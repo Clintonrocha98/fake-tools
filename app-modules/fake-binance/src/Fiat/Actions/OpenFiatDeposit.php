@@ -7,6 +7,7 @@ namespace He4rt\FakeBinance\Fiat\Actions;
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Exceptions\FiatDepositRefusedException;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use Illuminate\Support\Facades\Log;
 
 /**
  * POST /sapi/v1/fiat/deposit — abre a ordem em {@see FiatOrderStatus::Processing}
@@ -16,6 +17,10 @@ use He4rt\FakeBinance\Fiat\Models\FiatOrder;
  */
 final readonly class OpenFiatDeposit
 {
+    public function __construct(
+        private BuildStaticBrcode $brcode = new BuildStaticBrcode,
+    ) {}
+
     /**
      * `$amount` chega cru da wire (body JSON) — validado como decimal por
      * {@see \He4rt\FakeBinance\Fiat\Http\Requests\CreateFiatDepositRequest}, mas
@@ -29,14 +34,23 @@ final readonly class OpenFiatDeposit
 
         $orderNo = $this->generateOrderNo();
 
-        return FiatOrder::query()->create([
+        $order = FiatOrder::query()->create([
             'order_no' => $orderNo,
             'currency' => mb_strtoupper($currency),
             'payment_method' => $paymentMethod,
             'amount' => $amount,
             'status' => FiatOrderStatus::Processing,
-            'brcode' => $this->generateBrcode($orderNo),
+            'brcode' => $this->brcode->handle($amount),
         ]);
+
+        Log::info('fake-binance.fiat: depósito aberto com BR Code EMV estático — o valor da ordem viaja no campo 54, então o preview do StarkBank devolve o mesmo montante que o consumidor pediu', [
+            'order_no' => $orderNo,
+            'currency' => $order->currency,
+            'amount' => $amount,
+            'pix_key' => config()->string('fake-binance-fiat.pix_key', 'funding@fake-binance.dev'),
+        ]);
+
+        return $order;
     }
 
     private function guardServiceEnabled(): void
@@ -80,10 +94,5 @@ final readonly class OpenFiatDeposit
         } while (FiatOrder::query()->where('order_no', $candidate)->exists());
 
         return $candidate;
-    }
-
-    private function generateBrcode(string $orderNo): string
-    {
-        return sprintf('000201BR.GOV.BCB.PIX-FAKE-%s-EMV', $orderNo);
     }
 }

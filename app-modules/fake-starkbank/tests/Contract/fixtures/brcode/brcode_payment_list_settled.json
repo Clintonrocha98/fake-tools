@@ -1,0 +1,15 @@
+{
+    "payments": [
+        {
+            "id": "5824000009469952",
+            "brcode": "00020126BR.GOV.BCB.PIX-EMV",
+            "taxId": "20.018.183/0001-80",
+            "amount": 25000,
+            "status": "success",
+            "tags": ["payout-brcode-123"],
+            "created": "2026-07-09T15:00:00.000000+00:00",
+            "updated": "2026-07-09T15:05:00.000000+00:00"
+        }
+    ],
+    "cursor": null
+}

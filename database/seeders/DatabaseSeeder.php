@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Database\Seeders;
 
 use He4rt\FakeBinance\Database\Seeders\LedgerAccountSeeder;
+use He4rt\FakeStarkbank\Database\Seeders\DictEntrySeeder;
 use He4rt\Identity\Permissions\Roles;
 use He4rt\Identity\Users\User;
 use Illuminate\Database\Seeder;
@@ -19,6 +20,7 @@ final class DatabaseSeeder extends Seeder
     {
         $this->syncPermissions();
         $this->call(LedgerAccountSeeder::class);
+        $this->call(DictEntrySeeder::class);
 
         if (app()->isLocal()) {
             $this->spawnAdminUser();

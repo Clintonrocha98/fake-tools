@@ -1,0 +1,16 @@
+{
+    "transfers": [
+        {
+            "id": "6820004890775552",
+            "amount": 5000,
+            "name": "Ada Lovelace",
+            "taxId": "012.345.678-90",
+            "bankCode": "20018183",
+            "accountType": "checking",
+            "status": "created",
+            "tags": ["payout-abc-123"],
+            "created": "2026-07-09T14:00:00.000000+00:00",
+            "updated": "2026-07-09T14:00:00.000000+00:00"
+        }
+    ]
+}

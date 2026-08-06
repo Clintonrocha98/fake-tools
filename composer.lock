@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "31857a2d555a860a98f82072952adf61",
+    "content-hash": "2f5950db8a32e9ded0da68352c07ab07",
     "packages": [
         {
             "name": "alizharb/filament-activity-log",
@@ -3162,6 +3162,42 @@
             "autoload-dev": {
                 "psr-4": {
                     "He4rt\\FakeBinance\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "he4rt/fake-starkbank",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/fake-starkbank",
+                "reference": "c9cadbb45fa9689dc6400f3a74c49f3d74a0e2c0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "He4rt\\FakeStarkbank\\FakeStarkbankServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "He4rt\\FakeStarkbank\\": "src/",
+                    "He4rt\\FakeStarkbank\\Database\\Factories\\": "database/factories/",
+                    "He4rt\\FakeStarkbank\\Database\\Seeders\\": "database/seeders/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "He4rt\\FakeStarkbank\\Tests\\": "tests/"
                 }
             },
             "license": [

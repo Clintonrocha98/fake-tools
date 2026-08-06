@@ -15,6 +15,7 @@
         "filament/spatie-laravel-media-library-plugin": "^5.7.3",
         "guava/filament-knowledge-base": "^3.3.2",
         "he4rt/fake-binance": "^1.0.0",
+        "he4rt/fake-starkbank": "^1.0.0",
         "he4rt/identity": "^1.0.0",
         "he4rt/panel-admin": "^1.0.0",
         "internachi/modular": "^3.0.2",
@@ -24,6 +25,7 @@
         "league/flysystem-sftp-v3": "^3.33.0",
         "monicahq/laravel-cloudflare": "^4.1.0",
         "owenvoke/blade-fontawesome": "^3.3.1",
+        "phpseclib/phpseclib": "^3.0.55",
         "saloonphp/saloon": "^4.0.0",
         "spatie/laravel-activitylog": "^5.0.0",
         "spatie/laravel-backup": "^10.3.0",
@@ -65,6 +67,7 @@
     "autoload-dev": {
         "psr-4": {
             "He4rt\\FakeBinance\\Tests\\": "app-modules/fake-binance/tests/",
+            "He4rt\\FakeStarkbank\\Tests\\": "app-modules/fake-starkbank/tests/",
             "He4rt\\Identity\\Tests\\": "app-modules/identity/tests/",
             "He4rt\\PanelAdmin\\Tests\\": "app-modules/panel-admin/tests/",
             "Tests\\": "tests/"

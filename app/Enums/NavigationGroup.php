@@ -10,6 +10,7 @@ enum NavigationGroup: string implements HasLabel
 {
     case UserManagement = 'user_management';
     case FakeBinance = 'fake-binance';
+    case FakeStarkbank = 'fake-starkbank';
     case System = 'system';
 
     /**
@@ -20,6 +21,7 @@ enum NavigationGroup: string implements HasLabel
         return [
             self::UserManagement,
             self::FakeBinance,
+            self::FakeStarkbank,
             self::System,
         ];
     }

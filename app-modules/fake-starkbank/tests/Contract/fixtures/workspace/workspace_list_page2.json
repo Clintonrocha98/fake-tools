@@ -1,0 +1,15 @@
+{
+    "workspaces": [
+        {
+            "id": "5716662276096000",
+            "username": "brd-reserve",
+            "name": "BRD Reserve",
+            "allowedTaxIds": ["20.018.183/0002-61"],
+            "status": "active",
+            "organizationId": "5716662276096000",
+            "pictureUrl": null,
+            "created": "2026-07-02T09:00:00.000000+00:00"
+        }
+    ],
+    "cursor": null
+}

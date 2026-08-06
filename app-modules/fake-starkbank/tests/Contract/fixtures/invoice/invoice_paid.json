@@ -1,0 +1,15 @@
+{
+    "invoice": {
+        "id": "5155165527080960",
+        "amount": 10000,
+        "name": "Ada Lovelace",
+        "taxId": "012.345.678-90",
+        "status": "paid",
+        "brcode": "00020101021226930014br.gov.bcb.pix2571brcode-h.starkbank.com/v2/5155165527080960520400005303986540510.005802BR5913Ada Lovelace6009Sao Paulo62070503***63041D3D",
+        "tags": ["deposit-abc-123"],
+        "created": "2026-07-09T12:00:00.000000+00:00",
+        "due": "2026-07-09T13:00:00.000000+00:00",
+        "expiration": 3600,
+        "updated": "2026-07-09T12:15:00.000000+00:00"
+    }
+}

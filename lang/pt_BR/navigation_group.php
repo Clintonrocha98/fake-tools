@@ -9,6 +9,9 @@ return [
     'fake-binance' => [
         'label' => 'Fake Binance',
     ],
+    'fake-starkbank' => [
+        'label' => 'Fake StarkBank',
+    ],
     'system' => [
         'label' => 'Sistema',
     ],

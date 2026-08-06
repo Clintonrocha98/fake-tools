@@ -1,0 +1,15 @@
+{
+    "workspaces": [
+        {
+            "id": "6341320293482496",
+            "username": "brd-treasury",
+            "name": "BRD Treasury",
+            "allowedTaxIds": ["20.018.183/0001-80"],
+            "status": "active",
+            "organizationId": "5716662276096000",
+            "pictureUrl": "https://s3.amazonaws.com/starkbank/workspaces/brd-treasury.png",
+            "created": "2026-07-01T09:00:00.000000+00:00"
+        }
+    ],
+    "cursor": "eyJwYWdlIjoyfQ=="
+}
