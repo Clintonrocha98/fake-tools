@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property bool $frozen
  * @property int|null $raw_status_override
  * @property Carbon $applied_at
+ * @property Carbon|null $completed_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  *
@@ -43,6 +44,7 @@ final class Withdrawal extends BaseModel
             'status' => WithdrawStatus::class,
             'frozen' => 'boolean',
             'applied_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 }

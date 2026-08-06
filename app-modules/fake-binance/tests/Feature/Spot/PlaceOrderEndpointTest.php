@@ -161,6 +161,53 @@ it('fills a BUY MARKET order on USDTBRL, debiting BRL and crediting USDT net of 
         ->and($usdt->free)->toBe('9.990000000000000000');
 });
 
+it('answers the POST with every field of the documented FULL response', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL',
+        'side' => 'BUY',
+        'quoteOrderQty' => '51.1',
+        'newClientOrderId' => 'forex-full-shape-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'orderListId' => -1,
+        'price' => '0.00000000',
+        'origQty' => '10',
+        'origQuoteOrderQty' => '51.1',
+        'timeInForce' => 'GTC',
+        'selfTradePreventionMode' => 'NONE',
+    ]);
+
+    $response->assertJsonStructure([
+        'symbol', 'orderId', 'orderListId', 'clientOrderId', 'transactTime', 'price',
+        'origQty', 'executedQty', 'origQuoteOrderQty', 'cummulativeQuoteQty', 'status',
+        'timeInForce', 'type', 'side', 'workingTime', 'selfTradePreventionMode',
+        'fills' => [['price', 'qty', 'commission', 'commissionAsset', 'tradeId']],
+    ]);
+
+    expect($response->json('transactTime'))->toBeInt()->toBeGreaterThan(0)
+        ->and($response->json('workingTime'))->toBe($response->json('transactTime'))
+        ->and($response->json('fills.0.tradeId'))->toBe($response->json('orderId'));
+});
+
+it('echoes origQty as the quantity informed when the order is denominated in the base', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '100000');
+
+    $response = $this->postJson($this->signedUri('/api/v3/order', [
+        'symbol' => 'USDCBRL',
+        'side' => 'BUY',
+        'quantity' => '10',
+        'newClientOrderId' => 'forex-full-shape-base-1',
+    ]), [], $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'origQty' => '10',
+        'origQuoteOrderQty' => '0',
+    ]);
+});
+
 it('refuses quantity and quoteOrderQty together with -1102', function (): void {
     (new CreditLedgerAccount)->handle('BRL', '100000');
 

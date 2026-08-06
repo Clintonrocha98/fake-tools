@@ -6,12 +6,19 @@ namespace He4rt\FakeBinance\Withdraw\Actions;
 
 use He4rt\FakeBinance\Withdraw\DTOs\WithdrawHistoryRow;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
+use Illuminate\Support\Facades\Date;
 
 /**
- * GET /sapi/v1/capital/withdraw/history: filtra por `coin` + `withdrawOrderId` (o
- * mesmo par que `treasury:reconcile-offramp-withdraws` usa para encontrar o
- * withdraw) e avança o status LAZY de cada linha lida antes de serializar
- * ({@see AdvanceWithdrawStatus}) — a leitura é o único gatilho do avanço.
+ * GET /sapi/v1/capital/withdraw/history: honra os filtros que o consumidor
+ * declara em `GetWithdrawHistoryRequest` (`coin`, `withdrawOrderId`, `status`,
+ * `startTime`, `endTime`, `limit`) mais o `offset` da doc, e avança o status
+ * LAZY de cada linha lida antes de serializar ({@see AdvanceWithdrawStatus}) —
+ * a leitura é o único gatilho do avanço.
+ *
+ * O filtro de `status` é aplicado DEPOIS do avanço lazy, sobre o status que a
+ * wire reporta (inclusive `raw_status_override`): um withdraw que amadureceu
+ * para Completed nesta leitura já responde a `status=6` — filtrar no SQL
+ * congelaria a linha no estado anterior ao avanço.
  */
 final readonly class GetWithdrawHistory
 {
@@ -22,8 +29,15 @@ final readonly class GetWithdrawHistory
     /**
      * @return list<WithdrawHistoryRow>
      */
-    public function handle(?string $coin, ?string $withdrawOrderId): array
-    {
+    public function handle(
+        ?string $coin,
+        ?string $withdrawOrderId,
+        ?int $status = null,
+        ?int $startTime = null,
+        ?int $endTime = null,
+        ?int $limit = null,
+        ?int $offset = null,
+    ): array {
         $query = Withdrawal::query();
 
         if ($coin !== null) {
@@ -34,10 +48,22 @@ final readonly class GetWithdrawHistory
             $query->where('withdraw_order_id', $withdrawOrderId);
         }
 
+        if ($startTime !== null) {
+            $query->where('applied_at', '>=', Date::createFromTimestampMs($startTime));
+        }
+
+        if ($endTime !== null) {
+            $query->where('applied_at', '<=', Date::createFromTimestampMs($endTime));
+        }
+
         $rows = $query->latest('applied_at')
             ->get()
             ->map(fn (Withdrawal $withdrawal): Withdrawal => $this->advance->handle($withdrawal))
             ->map(fn (Withdrawal $withdrawal): WithdrawHistoryRow => WithdrawHistoryRow::fromModel($withdrawal))
+            ->when($status !== null, fn ($rows) => $rows->filter(
+                fn (WithdrawHistoryRow $row): bool => $row->status === $status,
+            ))
+            ->slice($offset ?? 0, $limit)
             ->all();
 
         return array_values($rows);
