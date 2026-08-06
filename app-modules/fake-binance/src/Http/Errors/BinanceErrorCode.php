@@ -33,6 +33,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
     case ApiKeyInvalid = -2_015;
 
     case FiatServiceNotEnabled = 100_001;
+    case FiatInsufficientBalance = -16_006;
     case FiatDepositLimitExceeded = -16_007;
     case FiatKycRequired = -16_009;
     case FiatCurrencyOrMethodUnsupported = -16_010;
@@ -56,6 +57,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::ApiKeyMissing => 'API-key format invalid.',
             self::ApiKeyInvalid => 'Invalid API-key, IP, or permissions for action.',
             self::FiatServiceNotEnabled => 'fiat service not enabled',
+            self::FiatInsufficientBalance => 'insufficient balance',
             self::FiatDepositLimitExceeded => 'fiat deposit limit exceeded',
             self::FiatKycRequired => 'KYC verification required',
             self::FiatCurrencyOrMethodUnsupported => 'unsupported fiat currency or payment method',
@@ -74,7 +76,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::FilterFailure => 400,
             self::NewOrderRejected, self::NoSuchOrder => 400,
             self::ApiKeyMissing, self::ApiKeyInvalid => 401,
-            self::FiatServiceNotEnabled, self::FiatDepositLimitExceeded, self::FiatKycRequired,
+            self::FiatServiceNotEnabled, self::FiatInsufficientBalance, self::FiatDepositLimitExceeded, self::FiatKycRequired,
             self::FiatCurrencyOrMethodUnsupported, self::FiatOrderNotFound, self::FiatChannelUnavailable => 200,
         };
     }
@@ -96,6 +98,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::ApiKeyMissing => 'API key ausente',
             self::ApiKeyInvalid => 'API key inválida',
             self::FiatServiceNotEnabled => 'Serviço fiat desabilitado',
+            self::FiatInsufficientBalance => 'Saldo insuficiente',
             self::FiatDepositLimitExceeded => 'Limite de depósito excedido',
             self::FiatKycRequired => 'KYC pendente',
             self::FiatCurrencyOrMethodUnsupported => 'Moeda ou método não suportado',
@@ -120,6 +123,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::NoSuchOrder => 'warning',
             self::ApiKeyMissing, self::ApiKeyInvalid => 'danger',
             self::FiatServiceNotEnabled => 'danger',
+            self::FiatInsufficientBalance => 'danger',
             self::FiatDepositLimitExceeded => 'warning',
             self::FiatKycRequired => 'warning',
             self::FiatCurrencyOrMethodUnsupported => 'danger',
@@ -145,6 +149,7 @@ enum BinanceErrorCode: int implements HasColor, HasDescription, HasLabel
             self::ApiKeyMissing => 'Header X-MBX-APIKEY não enviado',
             self::ApiKeyInvalid => 'Header X-MBX-APIKEY não confere com a chave configurada',
             self::FiatServiceNotEnabled => 'Endpoint fiat desligado por config (fake-binance-fiat.deposit_enabled=false)',
+            self::FiatInsufficientBalance => 'Saldo BRL do ledger não cobre o `amount` do fiat withdraw — código da família fiat, recusa em HTTP 200 (ADR-0001)',
             self::FiatDepositLimitExceeded => '`amount` acima do teto configurado (fake-binance-fiat.deposit_limit)',
             self::FiatKycRequired => 'Conta exige verificação KYC antes do depósito fiat',
             self::FiatCurrencyOrMethodUnsupported => '`currency`/`apiPaymentMethod` fora do par configurado (fake-binance-fiat.supported_currency/supported_payment_method)',

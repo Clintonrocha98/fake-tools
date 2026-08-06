@@ -1,0 +1,9 @@
+{
+    "amount": "100",
+    "coin": "USDC",
+    "network": "SOL",
+    "address": "FakeBinanceSolDepositAddress1111111111111111",
+    "txId": "0xdeadbeef",
+    "status": 0,
+    "insertTime": 1700000000000
+}

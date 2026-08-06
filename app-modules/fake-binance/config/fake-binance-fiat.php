@@ -61,6 +61,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Withdraw payment method
+    |--------------------------------------------------------------------------
+    |
+    | O método aceito por POST /sapi/v2/fiat/withdraw — a doc só documenta
+    | `bank_transfer` para a saída (o `Pix` acima é o dialeto da ENTRADA, que o
+    | consumidor manda no /sapi/v1/fiat/deposit). Fora deste método (ou da
+    | supported_currency), recusa com -16010 em HTTP 200.
+    |
+    */
+
+    'withdraw_payment_method' => env('FAKE_BINANCE_FIAT_WITHDRAW_PAYMENT_METHOD', 'bank_transfer'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Deposit limit
     |--------------------------------------------------------------------------
     |
