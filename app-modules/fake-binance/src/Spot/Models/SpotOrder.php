@@ -57,7 +57,7 @@ final class SpotOrder extends BaseModel
      * uma relação e explode em `LogicException` no primeiro acesso a
      * `$order->fills`.
      *
-     * @return list<array{price: string, qty: string, commission: string, commissionAsset: string}>
+     * @return list<array{price: string, qty: string, commission: string, commissionAsset: string, tradeId: int}>
      */
     public function wireFills(): array
     {
@@ -65,11 +65,15 @@ final class SpotOrder extends BaseModel
             return [];
         }
 
+        // O fake preenche tudo num único fill, então o trade sintético herda o
+        // próprio order_id como tradeId — estável e único, e é o mesmo id que
+        // GET /api/v3/myTrades reporta para esta ordem.
         return [[
             'price' => LedgerAmount::wire((string) $this->fill_price),
             'qty' => LedgerAmount::wire((string) $this->executed_qty),
             'commission' => LedgerAmount::wire((string) $this->commission),
             'commissionAsset' => (string) $this->commission_asset,
+            'tradeId' => $this->order_id,
         ]];
     }
 
