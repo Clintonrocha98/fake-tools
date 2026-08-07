@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Transfer\Actions;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\Exceptions\TransferNotFoundException;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `GET /v2/transfer/{id}` — a releitura autoritativa ("webhook = trigger,
@@ -24,7 +24,7 @@ final readonly class GetTransfer
         $transfer = Transfer::query()->whereKey($id)->first();
 
         if (!$transfer instanceof Transfer) {
-            Log::warning('fake-starkbank.transfer: releitura de id que este fake nunca despachou — 404 em vez de transfer vazia, que o consumidor leria como resposta malformada', [
+            StarkbankLog::warning('fake-starkbank.transfer: releitura de id que este fake nunca despachou — 404 em vez de transfer vazia, que o consumidor leria como resposta malformada', [
                 'transfer_id' => $id,
             ]);
 

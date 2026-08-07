@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Transfer\Actions;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\DTOs\TransferView;
 use He4rt\FakeStarkbank\Transfer\Enums\TransferStatus;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Cenário: move a transfer para qualquer estado do vocabulário IGNORANDO o
@@ -41,7 +41,7 @@ final readonly class ForceTransferStatus
         ]);
         $transfer->refresh();
 
-        Log::info('fake-starkbank.transfer: status forçado por cenário — o relógio é ignorado de propósito, para exercitar o ramo de devolução que o consumidor trata mas raramente vê', [
+        StarkbankLog::info('fake-starkbank.transfer: status forçado por cenário — o relógio é ignorado de propósito, para exercitar o ramo de devolução que o consumidor trata mas raramente vê', [
             'transfer_id' => $transfer->id,
             'from' => $from->value,
             'to' => $status->value,

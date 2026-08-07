@@ -8,11 +8,11 @@ use Carbon\CarbonImmutable;
 use He4rt\FakeStarkbank\Brcode\DTOs\BrcodePaymentView;
 use He4rt\FakeStarkbank\Brcode\Enums\BrcodePaymentStatus;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Avanço automático LAZY do ciclo de vida do pagamento de BR Code: só roda
@@ -74,7 +74,7 @@ final readonly class AdvanceBrcodePaymentStatus
             return $payment;
         }
 
-        Log::info('fake-starkbank.brcode: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
+        StarkbankLog::info('fake-starkbank.brcode: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
             'payment_id' => $advanced->id,
             'from' => $payment->status->value,
             'to' => $advanced->status->value,

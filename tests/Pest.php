@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Support\Facades\Log;
+use Monolog\Handler\TestHandler;
+use Monolog\Logger as Monolog;
+use Monolog\LogRecord;
 use Tests\TestCase;
 
 /*
@@ -61,4 +65,22 @@ expect()->extend('toBeOne', fn () => $this->toBe(1));
 function something(): void
 {
     // ..
+}
+
+/**
+ * Registros capturados de um canal de log fake (`binance`/`starkbank`) — o
+ * TestCase base troca esses canais por um TestHandler em memória, então isto
+ * é o assert de log da suíte: nada vai para storage/logs/ durante os testes.
+ *
+ * @return array<int, LogRecord>
+ */
+function fakeLogRecords(string $channel): array
+{
+    $monolog = Log::channel($channel)->getLogger();
+    assert($monolog instanceof Monolog);
+
+    $handler = $monolog->getHandlers()[0];
+    assert($handler instanceof TestHandler);
+
+    return $handler->getRecords();
 }

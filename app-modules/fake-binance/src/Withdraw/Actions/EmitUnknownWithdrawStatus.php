@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Withdraw\Actions;
 
+use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 
 /**
@@ -20,6 +21,14 @@ final readonly class EmitUnknownWithdrawStatus
     {
         $withdrawal->update(['raw_status_override' => $rawStatus]);
 
-        return $withdrawal->refresh();
+        $withdrawal->refresh();
+
+        BinanceLog::warning('fake-binance.withdraw: código de status desconhecido emitido por cenário — fora do vocabulário de WithdrawStatus, para provar o fail-closed do consumidor', [
+            'withdrawal_id' => $withdrawal->id,
+            'withdraw_order_id' => $withdrawal->withdraw_order_id,
+            'raw_status_override' => $rawStatus,
+        ]);
+
+        return $withdrawal;
     }
 }

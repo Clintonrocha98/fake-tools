@@ -7,7 +7,7 @@ namespace He4rt\FakeBinance\Fiat\Actions;
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Exceptions\FiatDepositRefusedException;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
  * POST /sapi/v1/fiat/deposit — abre a ordem em {@see FiatOrderStatus::Processing}
@@ -43,7 +43,7 @@ final readonly class OpenFiatDeposit
             'brcode' => $this->brcode->handle($amount),
         ]);
 
-        Log::info('fake-binance.fiat: depósito aberto com BR Code EMV estático — o valor da ordem viaja no campo 54, então o preview do StarkBank devolve o mesmo montante que o consumidor pediu', [
+        BinanceLog::info('fake-binance.fiat: depósito aberto com BR Code EMV estático — o valor da ordem viaja no campo 54, então o preview do StarkBank devolve o mesmo montante que o consumidor pediu', [
             'order_no' => $orderNo,
             'currency' => $order->currency,
             'amount' => $amount,

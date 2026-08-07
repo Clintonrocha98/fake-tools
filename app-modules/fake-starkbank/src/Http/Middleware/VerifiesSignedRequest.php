@@ -10,8 +10,8 @@ use He4rt\FakeStarkbank\Http\Auth\EcdsaSignatureVerifier;
 use He4rt\FakeStarkbank\Http\Auth\SignedRequestMessage;
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -40,7 +40,7 @@ final readonly class VerifiesSignedRequest
         $signature = (string) $request->header('Access-Signature');
 
         if ($accessId === '' || $accessTime === '' || $signature === '') {
-            Log::warning('fake-starkbank.auth: request recusado — falta ao menos um dos três headers de assinatura, e mensagem incompleta nunca é verificada', [
+            StarkbankLog::warning('fake-starkbank.auth: request recusado — falta ao menos um dos três headers de assinatura, e mensagem incompleta nunca é verificada', [
                 'path' => $request->path(),
                 'has_access_id' => $accessId !== '',
                 'has_access_time' => $accessTime !== '',
@@ -54,7 +54,7 @@ final readonly class VerifiesSignedRequest
         }
 
         if (!hash_equals((string) config('fake-starkbank.client.access_id', ''), $accessId)) {
-            Log::warning('fake-starkbank.auth: request recusado — Access-Id não é o cliente configurado, então nem faz sentido verificar a assinatura', [
+            StarkbankLog::warning('fake-starkbank.auth: request recusado — Access-Id não é o cliente configurado, então nem faz sentido verificar a assinatura', [
                 'path' => $request->path(),
                 'access_id' => $accessId,
             ]);
@@ -63,7 +63,7 @@ final readonly class VerifiesSignedRequest
         }
 
         if (!$this->withinRecvWindow($accessTime)) {
-            Log::warning('fake-starkbank.auth: request recusado — Access-Time fora da janela configurada, request velho ou relógio dessincronizado', [
+            StarkbankLog::warning('fake-starkbank.auth: request recusado — Access-Time fora da janela configurada, request velho ou relógio dessincronizado', [
                 'path' => $request->path(),
                 'access_time' => $accessTime,
                 'recv_window_seconds' => $this->recvWindowSeconds(),
@@ -75,7 +75,7 @@ final readonly class VerifiesSignedRequest
         $message = SignedRequestMessage::compose($accessId, $accessTime, $request->getContent());
 
         if (!new EcdsaSignatureVerifier($this->publicKey->pem())->verify($message, $signature)) {
-            Log::warning('fake-starkbank.auth: request recusado — assinatura ECDSA não confere com a chave pública do cliente (chave rotacionada, mensagem divergente ou base64 corrompido)', [
+            StarkbankLog::warning('fake-starkbank.auth: request recusado — assinatura ECDSA não confere com a chave pública do cliente (chave rotacionada, mensagem divergente ou base64 corrompido)', [
                 'path' => $request->path(),
                 'access_id' => $accessId,
                 'body_bytes' => mb_strlen($request->getContent(), '8bit'),
@@ -84,7 +84,7 @@ final readonly class VerifiesSignedRequest
             return $this->errors->make(StarkbankErrorCode::InvalidSignature);
         }
 
-        Log::debug('fake-starkbank.auth: request autenticado — assinatura confere sobre accessId:accessTime:body', [
+        StarkbankLog::debug('fake-starkbank.auth: request autenticado — assinatura confere sobre accessId:accessTime:body', [
             'path' => $request->path(),
             'access_id' => $accessId,
         ]);

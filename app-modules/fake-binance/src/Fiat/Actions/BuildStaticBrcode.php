@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Fiat\Actions;
 
 use He4rt\FakeBinance\Fiat\Support\Crc16;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Str;
 
 /**
@@ -72,7 +72,7 @@ final readonly class BuildStaticBrcode
     private function wireAmount(string $amount): string
     {
         if (!is_numeric($amount)) {
-            Log::warning('fake-binance.fiat: amount ilegível no BR Code — campo 54 emitido como 0.00 para o guard de valor do consumidor recusar alto, em vez de o encoder derrubar o depósito', [
+            BinanceLog::warning('fake-binance.fiat: amount ilegível no BR Code — campo 54 emitido como 0.00 para o guard de valor do consumidor recusar alto, em vez de o encoder derrubar o depósito', [
                 'amount' => $amount,
             ]);
 

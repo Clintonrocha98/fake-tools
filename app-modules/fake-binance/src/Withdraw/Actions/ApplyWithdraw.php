@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Withdraw\Actions;
 
 use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
+use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\DTOs\ApplyWithdrawData;
 use He4rt\FakeBinance\Withdraw\Enums\WithdrawStatus;
 use He4rt\FakeBinance\Withdraw\Exceptions\MisconfiguredWithdrawFeeException;
@@ -12,7 +13,6 @@ use He4rt\FakeBinance\Withdraw\Exceptions\UnsupportedWithdrawNetworkException;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * POST /sapi/v1/capital/withdraw/apply: debita exatamente `amount` do ledger —
@@ -38,7 +38,7 @@ final readonly class ApplyWithdraw
             $existing = Withdrawal::query()->where('withdraw_order_id', $data->withdrawOrderId)->first();
 
             if ($existing instanceof Withdrawal) {
-                Log::info('fake-binance.withdraw: apply idempotente — withdrawOrderId repetido, devolvendo o withdrawal existente sem debitar', [
+                BinanceLog::info('fake-binance.withdraw: apply idempotente — withdrawOrderId repetido, devolvendo o withdrawal existente sem debitar', [
                     'withdraw_order_id' => $data->withdrawOrderId,
                     'withdrawal_id' => $existing->id,
                     'status' => $existing->status->value,
@@ -55,7 +55,7 @@ final readonly class ApplyWithdraw
         return DB::transaction(function () use ($data, $coin, $network, $fee): Withdrawal {
             $this->debit->handle($coin, $data->amount);
 
-            Log::info('fake-binance.withdraw: apply aceito — amount debitado do ledger (fee sai de dentro, destino recebe amount − fee)', [
+            BinanceLog::info('fake-binance.withdraw: apply aceito — amount debitado do ledger (fee sai de dentro, destino recebe amount − fee)', [
                 'coin' => $coin,
                 'network' => $network,
                 'amount' => $data->amount,

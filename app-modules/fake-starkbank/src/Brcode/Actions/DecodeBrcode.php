@@ -7,7 +7,7 @@ namespace He4rt\FakeStarkbank\Brcode\Actions;
 use He4rt\FakeStarkbank\Brcode\DTOs\DecodedBrcode;
 use He4rt\FakeStarkbank\Brcode\Exceptions\MalformedBrcodeException;
 use He4rt\FakeStarkbank\Brcode\Support\Crc16;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * Decodifica o BR Code EMV de verdade — TLV byte a byte, CRC16 conferido, chave
@@ -216,7 +216,7 @@ final readonly class DecodeBrcode
 
     private function refuse(MalformedBrcodeException $recusa, string $brcode): never
     {
-        Log::warning('fake-starkbank.brcode: BR Code recusado na decodificação — o preview serve o que o código carrega, e aceitar um payload que não fecha faria o guard de destino do consumidor conferir um dado inventado', [
+        StarkbankLog::warning('fake-starkbank.brcode: BR Code recusado na decodificação — o preview serve o que o código carrega, e aceitar um payload que não fecha faria o guard de destino do consumidor conferir um dado inventado', [
             'motivo' => $recusa->getMessage(),
             // O código inteiro, e não um trecho: é ele o insumo para reproduzir
             // a recusa fora do fluxo.

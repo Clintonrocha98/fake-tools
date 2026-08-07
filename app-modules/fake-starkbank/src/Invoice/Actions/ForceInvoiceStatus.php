@@ -8,9 +8,9 @@ use Carbon\CarbonImmutable;
 use He4rt\FakeStarkbank\Invoice\DTOs\InvoiceView;
 use He4rt\FakeStarkbank\Invoice\Enums\InvoiceStatus;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Cenário: move a invoice para qualquer estado do vocabulário IGNORANDO os dois
@@ -33,7 +33,7 @@ final readonly class ForceInvoiceStatus
         $invoice->update($this->transitionAttributes($status));
         $invoice->refresh();
 
-        Log::info('fake-starkbank.invoice: status forçado por cenário — o relógio é ignorado de propósito, para exercitar um ramo que o consumidor trata mas raramente vê', [
+        StarkbankLog::info('fake-starkbank.invoice: status forçado por cenário — o relógio é ignorado de propósito, para exercitar um ramo que o consumidor trata mas raramente vê', [
             'invoice_id' => $invoice->id,
             'from' => $from->value,
             'to' => $status->value,

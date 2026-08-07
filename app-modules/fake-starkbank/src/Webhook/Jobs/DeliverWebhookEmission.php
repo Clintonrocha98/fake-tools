@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Webhook\Jobs;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Actions\DeliverEmission;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Carrega a entrega para DEPOIS da resposta
@@ -23,7 +23,7 @@ final readonly class DeliverWebhookEmission
         $emission = WebhookEmission::query()->find($this->emissionId);
 
         if (!$emission instanceof WebhookEmission) {
-            Log::warning('fake-starkbank.webhook: emissão sumiu antes da entrega pós-resposta — nada foi POSTado', [
+            StarkbankLog::warning('fake-starkbank.webhook: emissão sumiu antes da entrega pós-resposta — nada foi POSTado', [
                 'emission_id' => $this->emissionId,
             ]);
 

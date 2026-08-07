@@ -6,11 +6,11 @@ namespace He4rt\FakeStarkbank\Transfer\Http\Controllers;
 
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\Actions\ListTransfers;
 use He4rt\FakeStarkbank\Transfer\Enums\TransferStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `GET /v2/transfer?status=success&after={cursor}` — o extrato de cash-out.
@@ -35,7 +35,7 @@ final readonly class ListTransfersController
             $status = TransferStatus::tryFrom($requested);
 
             if (!$status instanceof TransferStatus) {
-                Log::warning('fake-starkbank.transfer: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
+                StarkbankLog::warning('fake-starkbank.transfer: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
                     'status' => $requested,
                 ]);
 

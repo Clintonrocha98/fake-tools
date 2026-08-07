@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Withdraw\Actions;
 
+use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\DTOs\WithdrawHistoryRow;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use Illuminate\Support\Facades\Date;
@@ -65,6 +66,13 @@ final readonly class GetWithdrawHistory
             ))
             ->slice($offset ?? 0, $limit)
             ->all();
+
+        BinanceLog::info('fake-binance.withdraw: histórico servido com o avanço lazy aplicado antes do filtro — é o que faz um withdraw concluído nesta leitura já aparecer no status pedido', [
+            'coin' => $coin,
+            'withdraw_order_id' => $withdrawOrderId,
+            'status' => $status,
+            'servidas' => count($rows),
+        ]);
 
         return array_values($rows);
     }

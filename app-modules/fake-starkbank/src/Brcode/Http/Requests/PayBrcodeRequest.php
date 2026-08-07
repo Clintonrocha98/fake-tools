@@ -6,10 +6,10 @@ namespace He4rt\FakeStarkbank\Brcode\Http\Requests;
 
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Log;
 
 /**
  * O body de `POST /v2/brcode-payment`: o envelope plural `{"payments": [...]}`,
@@ -57,7 +57,7 @@ final class PayBrcodeRequest extends FormRequest
     {
         $motivo = (string) collect($validator->errors()->all())->first();
 
-        Log::warning('fake-starkbank.brcode: pagamento recusado na validação — o StarkBank real também recusa antes de mover dinheiro, e aceitar aqui esconderia do consumidor um payload que o provedor rejeitaria', [
+        StarkbankLog::warning('fake-starkbank.brcode: pagamento recusado na validação — o StarkBank real também recusa antes de mover dinheiro, e aceitar aqui esconderia do consumidor um payload que o provedor rejeitaria', [
             'motivo' => $motivo,
             'campos' => array_keys($validator->errors()->messages()),
         ]);

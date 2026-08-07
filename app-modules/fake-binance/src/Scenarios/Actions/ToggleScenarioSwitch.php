@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Scenarios\Actions;
 
 use He4rt\FakeBinance\Scenarios\Enums\ScenarioSwitch;
 use He4rt\FakeBinance\Scenarios\Models\ScenarioSwitchboard;
+use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
  * Liga/desliga um switch global no singleton — persistido em banco, então o
@@ -20,6 +21,11 @@ final readonly class ToggleScenarioSwitch
         $switchboard = $this->get->handle();
 
         $switchboard->update([$switch->column() => $enabled]);
+
+        BinanceLog::info('fake-binance.scenarios: switch global alterado — vale para toda rota deste fake e para nenhuma do fake-starkbank, que tem switchboard próprio', [
+            'switch' => $switch->value,
+            'enabled' => $enabled,
+        ]);
 
         return $switchboard->refresh();
     }

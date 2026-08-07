@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Console;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Actions\DeliverEmission;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 /**
  * A recuperação de uma janela em que a entrega não saiu (rede fora, consumidor
@@ -35,7 +35,7 @@ final class FlushWebhooksCommand extends Command
             return self::SUCCESS;
         }
 
-        Log::info('fake-starkbank.webhook: flush disparado — reenviando só as emissões sem sent_at, com os bytes originais', [
+        StarkbankLog::info('fake-starkbank.webhook: flush disparado — reenviando só as emissões sem sent_at, com os bytes originais', [
             'pendentes' => count($pendentes),
         ]);
 

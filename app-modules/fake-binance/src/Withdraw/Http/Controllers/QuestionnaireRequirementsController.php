@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Withdraw\Http\Controllers;
 
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
 
 /**
  * GET /sapi/v1/localentity/questionnaire-requirements — assinado
@@ -23,7 +23,7 @@ final readonly class QuestionnaireRequirementsController
 
         $country = is_string($configured) && mb_trim($configured) !== '' ? mb_trim($configured) : null;
 
-        Log::info('fake-binance.withdraw: travel rule consultado — o consumidor recusa a entrega em carteira para qualquer valor fora de null/NIL', [
+        BinanceLog::info('fake-binance.withdraw: travel rule consultado — o consumidor recusa a entrega em carteira para qualquer valor fora de null/NIL', [
             'questionnaire_country_code' => $country,
         ]);
 

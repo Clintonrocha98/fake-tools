@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Fiat\Actions;
 
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
  * Cenário do painel: força `forced_status` — a máscara de leitura que vence o
@@ -18,11 +19,21 @@ final readonly class ForceFiatOrderStatus
 {
     public function handle(FiatOrder $order, FiatOrderStatus $status): FiatOrder
     {
+        $previousForced = $order->forced_status;
+
         $order->update([
             'forced_status' => $status,
             'forced_wire_status' => null,
         ]);
 
-        return $order->refresh();
+        $order->refresh();
+
+        BinanceLog::info('fake-binance.fiat: status forçado por cenário — a máscara de leitura vence o avanço lazy sem gravar em `status`, para exercitar um ramo que o consumidor trata mas raramente vê', [
+            'order_no' => $order->order_no,
+            'from' => $previousForced?->value,
+            'to' => $status->value,
+        ]);
+
+        return $order;
     }
 }

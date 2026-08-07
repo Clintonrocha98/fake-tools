@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Http\Auth;
 
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * Resolve o PEM da chave pública do cliente a partir da config: o inline
@@ -31,7 +31,7 @@ final readonly class ClientPublicKey
         $path = mb_trim((string) config('fake-starkbank.client.public_key_path', ''));
 
         if ($path === '') {
-            Log::warning('fake-starkbank.auth: nenhuma chave pública de cliente configurada — toda assinatura será recusada até FAKE_STARKBANK_CLIENT_PUBLIC_KEY(_PATH) apontar para o par do consumidor');
+            StarkbankLog::warning('fake-starkbank.auth: nenhuma chave pública de cliente configurada — toda assinatura será recusada até FAKE_STARKBANK_CLIENT_PUBLIC_KEY(_PATH) apontar para o par do consumidor');
 
             return '';
         }
@@ -39,7 +39,7 @@ final readonly class ClientPublicKey
         $resolved = str_starts_with($path, '/') ? $path : base_path($path);
 
         if (!is_readable($resolved)) {
-            Log::warning('fake-starkbank.auth: PEM da chave pública do cliente ilegível — toda assinatura será recusada', [
+            StarkbankLog::warning('fake-starkbank.auth: PEM da chave pública do cliente ilegível — toda assinatura será recusada', [
                 'path' => $resolved,
             ]);
 
@@ -49,7 +49,7 @@ final readonly class ClientPublicKey
         $pem = file_get_contents($resolved);
 
         if ($pem === false) {
-            Log::warning('fake-starkbank.auth: falha ao ler o PEM da chave pública do cliente — toda assinatura será recusada', [
+            StarkbankLog::warning('fake-starkbank.auth: falha ao ler o PEM da chave pública do cliente — toda assinatura será recusada', [
                 'path' => $resolved,
             ]);
 

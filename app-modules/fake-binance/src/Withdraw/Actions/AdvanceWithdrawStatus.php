@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeBinance\Withdraw\Actions;
 
+use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\Enums\WithdrawStatus;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use He4rt\FakeBinance\Withdraw\Support\SyntheticTxId;
@@ -25,7 +26,17 @@ final readonly class AdvanceWithdrawStatus
 {
     public function handle(Withdrawal $withdrawal): Withdrawal
     {
-        if ($withdrawal->frozen || !$withdrawal->status->advancesAutomatically()) {
+        if (!$withdrawal->status->advancesAutomatically()) {
+            return $withdrawal;
+        }
+
+        if ($withdrawal->frozen) {
+            BinanceLog::debug('fake-binance.withdraw: avanço lazy pulado — congelado por cenário, o estado fica exatamente onde o operador o deixou', [
+                'withdrawal_id' => $withdrawal->id,
+                'withdraw_order_id' => $withdrawal->withdraw_order_id,
+                'status' => $withdrawal->status->value,
+            ]);
+
             return $withdrawal;
         }
 
@@ -38,10 +49,20 @@ final readonly class AdvanceWithdrawStatus
         $elapsedSeconds = $withdrawal->applied_at->diffInSeconds(Date::now());
 
         if ($elapsedSeconds >= $advanceSeconds * 2) {
+            $from = $withdrawal->status;
+
             $withdrawal->update([
                 'status' => WithdrawStatus::Completed,
                 'tx_id' => SyntheticTxId::generate(),
                 'completed_at' => Date::now(),
+            ]);
+
+            BinanceLog::info('fake-binance.withdraw: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
+                'withdrawal_id' => $withdrawal->id,
+                'withdraw_order_id' => $withdrawal->withdraw_order_id,
+                'coin' => $withdrawal->coin,
+                'from' => $from->value,
+                'to' => WithdrawStatus::Completed->value,
             ]);
 
             return $withdrawal;
@@ -49,6 +70,14 @@ final readonly class AdvanceWithdrawStatus
 
         if ($elapsedSeconds >= $advanceSeconds && $withdrawal->status === WithdrawStatus::AwaitingApproval) {
             $withdrawal->update(['status' => WithdrawStatus::Processing]);
+
+            BinanceLog::info('fake-binance.withdraw: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
+                'withdrawal_id' => $withdrawal->id,
+                'withdraw_order_id' => $withdrawal->withdraw_order_id,
+                'coin' => $withdrawal->coin,
+                'from' => WithdrawStatus::AwaitingApproval->value,
+                'to' => WithdrawStatus::Processing->value,
+            ]);
         }
 
         return $withdrawal;

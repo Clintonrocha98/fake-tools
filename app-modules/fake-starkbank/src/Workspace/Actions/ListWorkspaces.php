@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Workspace\Actions;
 
 use Carbon\CarbonImmutable;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Workspace\DTOs\WorkspaceView;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -34,7 +34,7 @@ final readonly class ListWorkspaces
             created: $this->created(),
         );
 
-        Log::info('fake-starkbank.workspace: servindo o workspace de config em página única — o consumidor pagina até cursor null, então uma página que já encerra basta', [
+        StarkbankLog::info('fake-starkbank.workspace: servindo o workspace de config em página única — o consumidor pagina até cursor null, então uma página que já encerra basta', [
             'workspace_id' => $workspace->id,
             'username' => $workspace->username,
             'status' => $workspace->status,
@@ -88,7 +88,7 @@ final readonly class ListWorkspaces
         try {
             $created = $configured === '' ? CarbonImmutable::now() : CarbonImmutable::parse($configured);
         } catch (Throwable) {
-            Log::warning('fake-starkbank.workspace: `created` configurado não é uma data parseável — servindo o instante atual para não derrubar a listagem', [
+            StarkbankLog::warning('fake-starkbank.workspace: `created` configurado não é uma data parseável — servindo o instante atual para não derrubar a listagem', [
                 'configured' => $configured,
             ]);
 

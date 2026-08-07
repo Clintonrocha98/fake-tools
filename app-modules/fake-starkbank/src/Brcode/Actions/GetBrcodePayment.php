@@ -6,7 +6,7 @@ namespace He4rt\FakeStarkbank\Brcode\Actions;
 
 use He4rt\FakeStarkbank\Brcode\Exceptions\BrcodePaymentNotFoundException;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * `GET /v2/brcode-payment/{id}` — a releitura autoritativa ("webhook = trigger,
@@ -24,7 +24,7 @@ final readonly class GetBrcodePayment
         $payment = BrcodePayment::query()->whereKey($id)->first();
 
         if (!$payment instanceof BrcodePayment) {
-            Log::warning('fake-starkbank.brcode: releitura de id que este fake nunca criou — 404 em vez de payment vazio, que o consumidor leria como resposta malformada', [
+            StarkbankLog::warning('fake-starkbank.brcode: releitura de id que este fake nunca criou — 404 em vez de payment vazio, que o consumidor leria como resposta malformada', [
                 'payment_id' => $id,
             ]);
 

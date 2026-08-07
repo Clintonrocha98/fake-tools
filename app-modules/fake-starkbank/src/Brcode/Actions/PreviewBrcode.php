@@ -9,7 +9,7 @@ use He4rt\FakeStarkbank\Brcode\DTOs\DecodedBrcode;
 use He4rt\FakeStarkbank\Dict\Actions\ResolveDictKey;
 use He4rt\FakeStarkbank\Dict\Exceptions\DictKeyNotFoundException;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * `GET /v2/brcode-preview?brcodes={brcode}` — o insumo que o consumidor confere
@@ -64,7 +64,7 @@ final readonly class PreviewBrcode
             description: $this->constant('fake-starkbank-brcode.preview.description', 'Invoice 2026-07'),
         );
 
-        Log::info('fake-starkbank.brcode: preview servido a partir dos bytes do EMV — o valor sai do campo 54 e o recebedor do registro DICT, nunca de config, senão os dois guards do consumidor passariam sempre', [
+        StarkbankLog::info('fake-starkbank.brcode: preview servido a partir dos bytes do EMV — o valor sai do campo 54 e o recebedor do registro DICT, nunca de config, senão os dois guards do consumidor passariam sempre', [
             'pix_key' => $decoded->pixKey,
             'amount' => $preview->amount,
             'allow_change' => $preview->allowChange,
@@ -79,7 +79,7 @@ final readonly class PreviewBrcode
         try {
             return $this->resolveDictKey->handle($decoded->pixKey);
         } catch (DictKeyNotFoundException) {
-            Log::warning('fake-starkbank.brcode: chave do BR Code fora do registro DICT — preview servido com taxId vazio de propósito, que é o sinal de "destino não verificável" que faz o consumidor recusar sozinho antes de pagar', [
+            StarkbankLog::warning('fake-starkbank.brcode: chave do BR Code fora do registro DICT — preview servido com taxId vazio de propósito, que é o sinal de "destino não verificável" que faz o consumidor recusar sozinho antes de pagar', [
                 'pix_key' => $decoded->pixKey,
             ]);
 

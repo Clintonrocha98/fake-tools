@@ -10,9 +10,9 @@ use He4rt\FakeStarkbank\Invoice\Enums\InvoiceStatus;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Invoice\Support\SyntheticBrcode;
 use He4rt\FakeStarkbank\Support\NumericId;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `POST /v2/invoice` — emite uma cobrança em {@see InvoiceStatus::Created} com
@@ -53,7 +53,7 @@ final readonly class IssueInvoice
         ]);
 
         if (!$plan->isNeutral()) {
-            Log::info('fake-starkbank.invoice: cobrança nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
+            StarkbankLog::info('fake-starkbank.invoice: cobrança nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
                 'invoice_id' => $invoice->id,
                 'destined_status' => $plan->destinedStatus?->value,
                 'frozen' => $plan->freeze,
@@ -61,7 +61,7 @@ final readonly class IssueInvoice
             ]);
         }
 
-        Log::info('fake-starkbank.invoice: cobrança emitida com brcode imediato — é o pagamento humano do QR que fecha o cash-in, então a invoice já nasce pagável', [
+        StarkbankLog::info('fake-starkbank.invoice: cobrança emitida com brcode imediato — é o pagamento humano do QR que fecha o cash-in, então a invoice já nasce pagável', [
             'invoice_id' => $invoice->id,
             'amount' => $invoice->amount,
             'correlation_id' => $invoice->tags->correlationId(),

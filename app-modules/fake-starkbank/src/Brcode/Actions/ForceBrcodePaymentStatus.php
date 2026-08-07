@@ -7,10 +7,10 @@ namespace He4rt\FakeStarkbank\Brcode\Actions;
 use He4rt\FakeStarkbank\Brcode\DTOs\BrcodePaymentView;
 use He4rt\FakeStarkbank\Brcode\Enums\BrcodePaymentStatus;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Cenário: move o pagamento para qualquer estado do vocabulário IGNORANDO o
@@ -41,7 +41,7 @@ final readonly class ForceBrcodePaymentStatus
         ]);
         $payment->refresh();
 
-        Log::info('fake-starkbank.brcode: status forçado por cenário — o relógio é ignorado de propósito, para exercitar a recusa de funding que o consumidor trata mas o relógio nunca produz', [
+        StarkbankLog::info('fake-starkbank.brcode: status forçado por cenário — o relógio é ignorado de propósito, para exercitar a recusa de funding que o consumidor trata mas o relógio nunca produz', [
             'payment_id' => $payment->id,
             'from' => $from->value,
             'to' => $status->value,

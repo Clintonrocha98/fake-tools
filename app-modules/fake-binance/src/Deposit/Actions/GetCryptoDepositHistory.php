@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Deposit\Actions;
 
 use He4rt\FakeBinance\Deposit\DTOs\DepositHistoryRow;
 use He4rt\FakeBinance\Deposit\Models\CryptoDeposit;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\Date;
 
 /**
@@ -70,6 +71,13 @@ final readonly class GetCryptoDepositHistory
             ))
             ->slice($offset ?? 0, $limit)
             ->all();
+
+        BinanceLog::info('fake-binance.deposit: hisrec servido com o avanço lazy aplicado antes do filtro — é o que faz um depósito creditado nesta leitura já aparecer no status pedido', [
+            'coin' => $coin,
+            'network' => $network,
+            'status' => $status,
+            'servidas' => count($rows),
+        ]);
 
         return array_values($rows);
     }

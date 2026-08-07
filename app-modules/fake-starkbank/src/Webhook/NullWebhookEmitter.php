@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Webhook;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
-use Illuminate\Support\Facades\Log;
 
 /**
  * O opt-out explícito da emissão: nenhum POST sai, nada é gravado. Não é mais o
@@ -22,7 +22,7 @@ final class NullWebhookEmitter implements EmitsWebhookEvents
      */
     public function emit(string $subscription, string $logType, array $entityPayload, ?string $reason = null): void
     {
-        Log::debug('fake-starkbank.webhook: emissão suprimida — emissor nulo vinculado no lugar do real, nenhum POST sai para o consumidor', [
+        StarkbankLog::debug('fake-starkbank.webhook: emissão suprimida — emissor nulo vinculado no lugar do real, nenhum POST sai para o consumidor', [
             'subscription' => $subscription,
             'log_type' => $logType,
             'entity_id' => $entityPayload['id'] ?? null,

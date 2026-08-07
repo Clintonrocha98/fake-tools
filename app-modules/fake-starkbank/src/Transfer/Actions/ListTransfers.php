@@ -6,13 +6,13 @@ namespace He4rt\FakeStarkbank\Transfer\Actions;
 
 use Carbon\CarbonImmutable;
 use He4rt\FakeStarkbank\Support\PageCursor;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\DTOs\TransferListPage;
 use He4rt\FakeStarkbank\Transfer\DTOs\TransferView;
 use He4rt\FakeStarkbank\Transfer\Enums\TransferStatus;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -73,7 +73,7 @@ final readonly class ListTransfers
 
         $cursor = $this->nextCursor($page->last(), $hasMore);
 
-        Log::info('fake-starkbank.transfer: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz uma transfer liquidada nesta leitura já aparecer em status=success', [
+        StarkbankLog::info('fake-starkbank.transfer: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz uma transfer liquidada nesta leitura já aparecer em status=success', [
             'status' => $status?->value,
             'window' => $page->count(),
             'servidas' => count($transfers),
@@ -126,7 +126,7 @@ final readonly class ListTransfers
             return;
         }
 
-        Log::warning('fake-starkbank.transfer: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
+        StarkbankLog::warning('fake-starkbank.transfer: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
             'after' => $after,
         ]);
     }

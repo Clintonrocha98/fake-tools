@@ -7,8 +7,8 @@ namespace He4rt\FakeStarkbank\Scenarios\Actions;
 use He4rt\FakeStarkbank\Scenarios\Contracts\PixLegOutcomeContract;
 use He4rt\FakeStarkbank\Scenarios\DTOs\PixScenarioPayload;
 use He4rt\FakeStarkbank\Scenarios\Models\ArmedScenario;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Arma o desfecho do próximo pedido da perna, substituindo o que já estivesse
@@ -35,7 +35,7 @@ final readonly class ArmScenario
             ],
         );
 
-        Log::info('fake-starkbank.scenarios: perna armada sob comando — o desvio nasce no próximo pedido dela e some em seguida, para o happy path voltar sozinho', [
+        StarkbankLog::info('fake-starkbank.scenarios: perna armada sob comando — o desvio nasce no próximo pedido dela e some em seguida, para o happy path voltar sozinho', [
             'leg' => $outcome->leg()->value,
             'outcome' => $outcome->value,
             'reason' => $payload->reason,

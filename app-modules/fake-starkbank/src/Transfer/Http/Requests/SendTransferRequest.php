@@ -6,10 +6,10 @@ namespace He4rt\FakeStarkbank\Transfer\Http\Requests;
 
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Log;
 
 /**
  * O body de `POST /v2/transfer`: o envelope plural `{"transfers": [...]}`, no
@@ -58,7 +58,7 @@ final class SendTransferRequest extends FormRequest
     {
         $motivo = (string) collect($validator->errors()->all())->first();
 
-        Log::warning('fake-starkbank.transfer: cash-out recusado na validação — o StarkBank real também recusa antes de mover dinheiro, e aceitar aqui esconderia do consumidor um payload que o provedor rejeitaria', [
+        StarkbankLog::warning('fake-starkbank.transfer: cash-out recusado na validação — o StarkBank real também recusa antes de mover dinheiro, e aceitar aqui esconderia do consumidor um payload que o provedor rejeitaria', [
             'motivo' => $motivo,
             'campos' => array_keys($validator->errors()->messages()),
         ]);

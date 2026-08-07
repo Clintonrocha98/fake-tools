@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Invoice\Actions;
 
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * Cenário: congela/descongela uma invoice. Enquanto congelada, o avanço lazy
@@ -20,7 +20,7 @@ final readonly class SetInvoiceFrozen
     {
         $invoice->update(['frozen' => $frozen]);
 
-        Log::info('fake-starkbank.invoice: congelamento de cenário alterado — enquanto congelada, nenhuma leitura move o status', [
+        StarkbankLog::info('fake-starkbank.invoice: congelamento de cenário alterado — enquanto congelada, nenhuma leitura move o status', [
             'invoice_id' => $invoice->id,
             'frozen' => $frozen,
             'status' => $invoice->status->value,

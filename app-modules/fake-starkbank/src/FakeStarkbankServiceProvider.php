@@ -7,6 +7,7 @@ namespace He4rt\FakeStarkbank;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
 use He4rt\FakeStarkbank\Console\FlushWebhooksCommand;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
+use He4rt\FakeStarkbank\Http\Middleware\LogsRequestLifecycle;
 use He4rt\FakeStarkbank\Http\Middleware\VerifiesSignedRequest;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Scenarios\Http\Middleware\ApplyPixScenarioSwitches;
@@ -35,6 +36,7 @@ class FakeStarkbankServiceProvider extends ServiceProvider
 
     public function boot(Router $router): void
     {
+        $router->aliasMiddleware('fake-starkbank.request-log', LogsRequestLifecycle::class);
         $router->aliasMiddleware('fake-starkbank.signed', VerifiesSignedRequest::class);
         $router->aliasMiddleware('fake-starkbank.scenario-switches', ApplyPixScenarioSwitches::class);
 

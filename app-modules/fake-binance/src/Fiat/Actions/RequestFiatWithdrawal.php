@@ -10,9 +10,9 @@ use He4rt\FakeBinance\Fiat\Exceptions\FiatWithdrawRefusedException;
 use He4rt\FakeBinance\Fiat\Models\FiatWithdrawal;
 use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -37,7 +37,7 @@ final readonly class RequestFiatWithdrawal
         $existing = FiatWithdrawal::query()->where('client_order_id', $data->clientOrderId)->first();
 
         if ($existing instanceof FiatWithdrawal) {
-            Log::info('fake-binance.fiat: withdraw idempotente — clientOrderId repetido, devolvendo o saque existente sem debitar', [
+            BinanceLog::info('fake-binance.fiat: withdraw idempotente — clientOrderId repetido, devolvendo o saque existente sem debitar', [
                 'client_order_id' => $data->clientOrderId,
                 'order_id' => $existing->order_id,
             ]);
@@ -75,7 +75,7 @@ final readonly class RequestFiatWithdrawal
                 'requested_at' => Date::now(),
             ]);
 
-            Log::info('fake-binance.fiat: withdraw aceito — BRL debitado do ledger no aceite', [
+            BinanceLog::info('fake-binance.fiat: withdraw aceito — BRL debitado do ledger no aceite', [
                 'order_id' => $withdrawal->order_id,
                 'client_order_id' => $data->clientOrderId,
                 'currency' => $currency,

@@ -9,6 +9,7 @@ use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Spot\Enums\OrderStatus;
 use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -27,7 +28,9 @@ final readonly class RejectSpotOrder
 
     public function handle(SpotOrder $order): SpotOrder
     {
-        return DB::transaction(function () use ($order): SpotOrder {
+        $executedQtyBefore = (string) $order->executed_qty;
+
+        $order = DB::transaction(function () use ($order): SpotOrder {
             if (bccomp((string) $order->executed_qty, '0', 18) > 0) {
                 $symbolConfig = SpotSymbol::from($order->symbol)->config();
 
@@ -53,5 +56,15 @@ final readonly class RejectSpotOrder
 
             return $order->refresh();
         });
+
+        BinanceLog::info('fake-binance.spot: ordem forçada para REJECTED por cenário do painel — qualquer fill já creditado é revertido no ledger antes de zerar a ordem, para GET /api/v3/account não continuar refletindo uma troca que GET /api/v3/order agora nega', [
+            'order_id' => $order->order_id,
+            'symbol' => $order->symbol,
+            'side' => $order->side->value,
+            'executed_qty_revertido' => $executedQtyBefore,
+            'client_order_id' => $order->client_order_id,
+        ]);
+
+        return $order;
     }
 }

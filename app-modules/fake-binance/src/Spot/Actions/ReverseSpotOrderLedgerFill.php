@@ -7,6 +7,7 @@ namespace He4rt\FakeBinance\Spot\Actions;
 use He4rt\FakeBinance\Ledger\Actions\CreditLedgerAccount;
 use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Spot\Enums\OrderSide;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -47,6 +48,14 @@ final readonly class ReverseSpotOrderLedgerFill
 
             $this->credit->handle($spentAsset, $spentAmount);
             $this->debit->handle($receivedAsset, $receivedNetAmount);
+
+            BinanceLog::info('fake-binance.spot: fill revertido no ledger — credita de volta o gasto e debita o recebido líquido da comissão, para GET /api/v3/order e GET /api/v3/account voltarem a contar a mesma história', [
+                'side' => $side->value,
+                'credited_asset' => $spentAsset,
+                'credited_amount' => $spentAmount,
+                'debited_asset' => $receivedAsset,
+                'debited_amount' => $receivedNetAmount,
+            ]);
         });
     }
 }

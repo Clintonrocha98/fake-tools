@@ -8,9 +8,9 @@ use He4rt\FakeStarkbank\Brcode\Actions\ListBrcodePayments;
 use He4rt\FakeStarkbank\Brcode\Enums\BrcodePaymentStatus;
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `GET /v2/brcode-payment?status=success&after={cursor}` — o extrato de
@@ -36,7 +36,7 @@ final readonly class ListBrcodePaymentsController
             $status = BrcodePaymentStatus::tryFrom($requested);
 
             if (!$status instanceof BrcodePaymentStatus) {
-                Log::warning('fake-starkbank.brcode: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
+                StarkbankLog::warning('fake-starkbank.brcode: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
                     'status' => $requested,
                 ]);
 

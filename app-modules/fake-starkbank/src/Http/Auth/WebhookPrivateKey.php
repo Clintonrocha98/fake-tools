@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Http\Auth;
 
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * Resolve o PEM da chave privada com que o fake assina o header
@@ -34,7 +34,7 @@ final readonly class WebhookPrivateKey
         $path = mb_trim((string) config('fake-starkbank.webhook.private_key_path', ''));
 
         if ($path === '') {
-            Log::warning('fake-starkbank.webhook: nenhuma chave privada de webhook configurada — nenhuma emissão será assinada até FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY(_PATH) apontar para o par de dev');
+            StarkbankLog::warning('fake-starkbank.webhook: nenhuma chave privada de webhook configurada — nenhuma emissão será assinada até FAKE_STARKBANK_WEBHOOK_PRIVATE_KEY(_PATH) apontar para o par de dev');
 
             return '';
         }
@@ -42,7 +42,7 @@ final readonly class WebhookPrivateKey
         $resolved = str_starts_with($path, '/') ? $path : base_path($path);
 
         if (!is_readable($resolved)) {
-            Log::warning('fake-starkbank.webhook: PEM da chave privada de webhook ilegível — nenhuma emissão será assinada', [
+            StarkbankLog::warning('fake-starkbank.webhook: PEM da chave privada de webhook ilegível — nenhuma emissão será assinada', [
                 'path' => $resolved,
             ]);
 
@@ -52,7 +52,7 @@ final readonly class WebhookPrivateKey
         $pem = file_get_contents($resolved);
 
         if ($pem === false) {
-            Log::warning('fake-starkbank.webhook: falha ao ler o PEM da chave privada de webhook — nenhuma emissão será assinada', [
+            StarkbankLog::warning('fake-starkbank.webhook: falha ao ler o PEM da chave privada de webhook — nenhuma emissão será assinada', [
                 'path' => $resolved,
             ]);
 

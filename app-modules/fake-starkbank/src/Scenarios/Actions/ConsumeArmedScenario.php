@@ -6,8 +6,8 @@ namespace He4rt\FakeStarkbank\Scenarios\Actions;
 
 use He4rt\FakeStarkbank\Scenarios\Enums\PixLeg;
 use He4rt\FakeStarkbank\Scenarios\Models\ArmedScenario;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Consome o cenário armado da perna: devolve o que estava armado e apaga a
@@ -33,7 +33,7 @@ final readonly class ConsumeArmedScenario
         });
 
         if ($armed instanceof ArmedScenario) {
-            Log::info('fake-starkbank.scenarios: cenário consumido — o desvio vale para este pedido e some, porque um cenário que ficasse de pé viraria o novo comportamento padrão do fake', [
+            StarkbankLog::info('fake-starkbank.scenarios: cenário consumido — o desvio vale para este pedido e some, porque um cenário que ficasse de pé viraria o novo comportamento padrão do fake', [
                 'leg' => $leg->value,
                 'outcome' => $armed->outcome,
             ]);

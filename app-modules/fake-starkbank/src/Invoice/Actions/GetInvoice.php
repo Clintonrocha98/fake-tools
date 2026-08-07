@@ -6,7 +6,7 @@ namespace He4rt\FakeStarkbank\Invoice\Actions;
 
 use He4rt\FakeStarkbank\Invoice\Exceptions\InvoiceNotFoundException;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * `GET /v2/invoice/{id}` — a releitura autoritativa ("webhook = trigger,
@@ -23,7 +23,7 @@ final readonly class GetInvoice
         $invoice = Invoice::query()->whereKey($id)->first();
 
         if (!$invoice instanceof Invoice) {
-            Log::warning('fake-starkbank.invoice: releitura de id que este fake nunca emitiu — 404 em vez de invoice vazia, que o consumidor leria como brcode em branco', [
+            StarkbankLog::warning('fake-starkbank.invoice: releitura de id que este fake nunca emitiu — 404 em vez de invoice vazia, que o consumidor leria como brcode em branco', [
                 'invoice_id' => $id,
             ]);
 

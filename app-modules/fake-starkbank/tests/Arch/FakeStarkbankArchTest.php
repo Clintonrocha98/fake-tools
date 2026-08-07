@@ -12,9 +12,11 @@ use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Scenarios\Casts\AsPixScenarioPayload;
 use He4rt\FakeStarkbank\Scenarios\Models\ArmedScenario;
 use He4rt\FakeStarkbank\Support\Casts\AsWireTags;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use He4rt\FakeStarkbank\Webhook\Casts\AsWebhookPayload;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Finder\Finder;
 
 /*
@@ -166,3 +168,11 @@ test('toda coluna jsonb do módulo é lida por um cast tipado', function (string
     'payload da emissão' => [WebhookEmission::class, 'payload', AsWebhookPayload::class],
     'payload do cenário armado' => [ArmedScenario::class, 'payload', AsPixScenarioPayload::class],
 ]);
+
+// O namespace do módulo mapeia só para src/; os seeders têm PSR-4 próprio e
+// precisam entrar por nome, senão ficam fora do scan — foi por aí que um
+// seeder logando no facade escapou para o emergency logger.
+arch('logs saem pelo canal dedicado via StarkbankLog, nunca pelo facade Log')
+    ->expect(['He4rt\FakeStarkbank', 'He4rt\FakeStarkbank\Database\Seeders'])
+    ->not->toUse(Log::class)
+    ->ignoring(StarkbankLog::class);

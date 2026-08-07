@@ -11,14 +11,14 @@ use He4rt\FakeBinance\Spot\Http\Controllers\PlaceOrderController;
 use He4rt\FakeBinance\Spot\Http\Controllers\TickerPriceController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['fake-binance.scenario-switches', 'api'])->group(function (): void {
+Route::middleware(['fake-binance.request-log', 'fake-binance.scenario-switches', 'api'])->group(function (): void {
     Route::get('/api/v3/ticker/bookTicker', BookTickerController::class);
     Route::get('/api/v3/ticker/price', TickerPriceController::class);
     Route::get('/api/v3/depth', OrderBookDepthController::class);
     Route::get('/api/v3/exchangeInfo', ExchangeInfoController::class);
 });
 
-Route::middleware(['fake-binance.scenario-switches', 'api', 'fake-binance.signed'])->group(function (): void {
+Route::middleware(['fake-binance.request-log', 'fake-binance.scenario-switches', 'api', 'fake-binance.signed'])->group(function (): void {
     Route::post('/api/v3/order', PlaceOrderController::class);
     Route::get('/api/v3/order', GetOrderController::class);
     Route::get('/api/v3/myTrades', MyTradesController::class);

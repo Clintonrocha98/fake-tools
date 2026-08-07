@@ -6,10 +6,10 @@ namespace He4rt\FakeStarkbank\Webhook\Actions;
 
 use He4rt\FakeStarkbank\Http\Auth\EcdsaSignatureSigner;
 use He4rt\FakeStarkbank\Http\Auth\WebhookPrivateKey;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Throwable;
 
@@ -47,7 +47,7 @@ final readonly class DeliverEmission
         $url = $this->resolveUrl($emission);
 
         if ($url === '') {
-            Log::info('fake-starkbank.webhook: entrega ignorada — emissão sem destino, e nenhuma URL configurada agora para adotar; fica gravada para inspeção no painel', [
+            StarkbankLog::info('fake-starkbank.webhook: entrega ignorada — emissão sem destino, e nenhuma URL configurada agora para adotar; fica gravada para inspeção no painel', [
                 'event_id' => $emission->event_id,
                 'subscription' => $emission->subscription->value,
                 'event_type' => $emission->event_type->value,
@@ -73,7 +73,7 @@ final readonly class DeliverEmission
                 'failed_reason' => Str::limit($throwable->getMessage(), self::FAILED_REASON_LIMIT),
             ])->save();
 
-            Log::warning('fake-starkbank.webhook: entrega falhou na rede — sem retry automático, a emissão fica pendente para o flush', [
+            StarkbankLog::warning('fake-starkbank.webhook: entrega falhou na rede — sem retry automático, a emissão fica pendente para o flush', [
                 'event_id' => $emission->event_id,
                 'url' => $url,
                 'reason' => $throwable->getMessage(),
@@ -88,7 +88,7 @@ final readonly class DeliverEmission
                 'failed_reason' => Str::limit('HTTP '.$response->status().': '.$response->body(), self::FAILED_REASON_LIMIT),
             ])->save();
 
-            Log::warning('fake-starkbank.webhook: consumidor recusou a entrega — 401 aqui costuma ser assinatura que não bate com o PEM público do lado de lá', [
+            StarkbankLog::warning('fake-starkbank.webhook: consumidor recusou a entrega — 401 aqui costuma ser assinatura que não bate com o PEM público do lado de lá', [
                 'event_id' => $emission->event_id,
                 'url' => $url,
                 'response_code' => $response->status(),
@@ -103,7 +103,7 @@ final readonly class DeliverEmission
             'failed_reason' => null,
         ])->save();
 
-        Log::info('fake-starkbank.webhook: entrega confirmada pelo consumidor — a partir daqui o GET de releitura é a verdade, o webhook só disparou', [
+        StarkbankLog::info('fake-starkbank.webhook: entrega confirmada pelo consumidor — a partir daqui o GET de releitura é a verdade, o webhook só disparou', [
             'event_id' => $emission->event_id,
             'subscription' => $emission->subscription->value,
             'event_type' => $emission->event_type->value,
@@ -135,7 +135,7 @@ final readonly class DeliverEmission
 
         $emission->forceFill(['url' => $configurado])->save();
 
-        Log::info('fake-starkbank.webhook: destino adotado na entrega — a emissão nasceu sem FAKE_STARKBANK_WEBHOOK_URL e é este flush a janela de recuperação da janela perdida', [
+        StarkbankLog::info('fake-starkbank.webhook: destino adotado na entrega — a emissão nasceu sem FAKE_STARKBANK_WEBHOOK_URL e é este flush a janela de recuperação da janela perdida', [
             'event_id' => $emission->event_id,
             'url' => $configurado,
         ]);
@@ -162,7 +162,7 @@ final readonly class DeliverEmission
                 'failed_reason' => Str::limit(WebhookEmission::UNSIGNED_REASON, self::FAILED_REASON_LIMIT),
             ])->save();
 
-            Log::warning('fake-starkbank.webhook: entrega ignorada — emissão sem assinatura e nenhuma chave privada legível para assiná-la agora; um webhook não assinado só viraria 401 do lado de lá', [
+            StarkbankLog::warning('fake-starkbank.webhook: entrega ignorada — emissão sem assinatura e nenhuma chave privada legível para assiná-la agora; um webhook não assinado só viraria 401 do lado de lá', [
                 'event_id' => $emission->event_id,
                 'subscription' => $emission->subscription->value,
                 'event_type' => $emission->event_type->value,
@@ -173,7 +173,7 @@ final readonly class DeliverEmission
 
         $emission->forceFill(['signature' => $signature, 'failed_reason' => null])->save();
 
-        Log::info('fake-starkbank.webhook: emissão assinada na entrega — ela nasceu sem PEM legível, e assinar os bytes já gravados é o que torna o replay possível depois de configurar a chave', [
+        StarkbankLog::info('fake-starkbank.webhook: emissão assinada na entrega — ela nasceu sem PEM legível, e assinar os bytes já gravados é o que torna o replay possível depois de configurar a chave', [
             'event_id' => $emission->event_id,
         ]);
 

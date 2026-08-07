@@ -20,7 +20,11 @@ return [
     |
     */
 
-    'default' => env('LOG_CHANNEL', 'stack'),
+    // `LOG_CHANNEL=null` num .env vira PHP null (cast do env()), e um default
+    // nulo não seleciona o canal 'null' — derruba o LogManager no emergency
+    // logger, que escreve incondicionalmente em laravel.log. O `?:` fecha essa
+    // armadilha apontando para o canal 'null' de verdade (NullHandler).
+    'default' => env('LOG_CHANNEL', 'stack') ?: 'null',
 
     /*
     |--------------------------------------------------------------------------
@@ -70,6 +74,24 @@ return [
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        // Um arquivo por integração dublada: o ruído de cada fake fica fora do
+        // laravel.log e cada malha é inspecionável isolada no log-viewer.
+        'binance' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/binance.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => env('LOG_DAILY_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
+        'starkbank' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/starkbank.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,

@@ -12,7 +12,7 @@ use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
 use He4rt\FakeStarkbank\Dict\Actions\ResolveDictKey;
 use He4rt\FakeStarkbank\Dict\Exceptions\DictKeyNotFoundException;
 use He4rt\FakeStarkbank\Support\NumericId;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * `POST /v2/brcode-payment` — paga o BR Code de terceiro que fecha o funding da
@@ -39,7 +39,7 @@ final readonly class PayBrcode
     public function handle(PayBrcodeData $data): BrcodePayment
     {
         if ($data->hasExternalId) {
-            Log::warning('fake-starkbank.brcode: pagamento recusado por trazer externalId — o provedor real recusa este parâmetro nesta perna, e aceitá-lo aqui deixaria o consumidor confiar numa chave de idempotência que não existe do outro lado', [
+            StarkbankLog::warning('fake-starkbank.brcode: pagamento recusado por trazer externalId — o provedor real recusa este parâmetro nesta perna, e aceitá-lo aqui deixaria o consumidor confiar numa chave de idempotência que não existe do outro lado', [
                 'tags' => $data->tags,
             ]);
 
@@ -70,7 +70,7 @@ final readonly class PayBrcode
             'held' => $plan->held,
         ]);
 
-        Log::info('fake-starkbank.brcode: funding despachado — o taxId e o valor do corpo foram conferidos contra os bytes do próprio código, que é o que o provedor faz antes de mover dinheiro', [
+        StarkbankLog::info('fake-starkbank.brcode: funding despachado — o taxId e o valor do corpo foram conferidos contra os bytes do próprio código, que é o que o provedor faz antes de mover dinheiro', [
             'payment_id' => $payment->id,
             'amount' => $payment->amount,
             'pix_key' => $decoded->pixKey,
@@ -78,7 +78,7 @@ final readonly class PayBrcode
         ]);
 
         if (!$plan->isNeutral()) {
-            Log::info('fake-starkbank.brcode: pagamento nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
+            StarkbankLog::info('fake-starkbank.brcode: pagamento nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
                 'payment_id' => $payment->id,
                 'destined_status' => $plan->destinedStatus?->value,
                 'held' => $plan->held,
@@ -100,7 +100,7 @@ final readonly class PayBrcode
             return;
         }
 
-        Log::warning('fake-starkbank.brcode: pagamento de BR Code dinâmico recusado sem description — é a recusa que o consumidor já apanhou do provedor, e reproduzi-la é o que mantém o campo obrigatório do lado de lá', [
+        StarkbankLog::warning('fake-starkbank.brcode: pagamento de BR Code dinâmico recusado sem description — é a recusa que o consumidor já apanhou do provedor, e reproduzi-la é o que mantém o campo obrigatório do lado de lá', [
             'pix_key' => $decoded->pixKey,
         ]);
 
@@ -121,7 +121,7 @@ final readonly class PayBrcode
         try {
             $entry = $this->resolveDictKey->handle($decoded->pixKey);
         } catch (DictKeyNotFoundException) {
-            Log::warning('fake-starkbank.brcode: recebedor não conferido — a chave do código não está no registro DICT, e o fake não tem contra o que comparar o taxId do corpo; o fail-closed desse caminho é do consumidor, no preview', [
+            StarkbankLog::warning('fake-starkbank.brcode: recebedor não conferido — a chave do código não está no registro DICT, e o fake não tem contra o que comparar o taxId do corpo; o fail-closed desse caminho é do consumidor, no preview', [
                 'pix_key' => $decoded->pixKey,
                 'tax_id' => $data->taxId,
             ]);
@@ -133,7 +133,7 @@ final readonly class PayBrcode
             return;
         }
 
-        Log::warning('fake-starkbank.brcode: pagamento recusado por recebedor divergente — o taxId do corpo não é o titular da chave embutida no código, e pagar assim mandaria dinheiro para quem ninguém verificou', [
+        StarkbankLog::warning('fake-starkbank.brcode: pagamento recusado por recebedor divergente — o taxId do corpo não é o titular da chave embutida no código, e pagar assim mandaria dinheiro para quem ninguém verificou', [
             'pix_key' => $decoded->pixKey,
             'tax_id_do_corpo' => $data->taxId,
             'tax_id_do_registro' => $entry->tax_id,
@@ -153,7 +153,7 @@ final readonly class PayBrcode
             return;
         }
 
-        Log::warning('fake-starkbank.brcode: pagamento recusado por valor divergente do código — o campo 54 é o valor que o recebedor cobrou, e pagar outro produziria um funding que a conciliação do consumidor nunca casaria', [
+        StarkbankLog::warning('fake-starkbank.brcode: pagamento recusado por valor divergente do código — o campo 54 é o valor que o recebedor cobrou, e pagar outro produziria um funding que a conciliação do consumidor nunca casaria', [
             'amount_do_corpo' => $data->amount,
             'amount_do_brcode' => $decoded->amountCentavos,
         ]);

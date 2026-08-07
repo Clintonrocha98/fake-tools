@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Webhook\Actions;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Reenvia uma emissão já gravada: MESMOS bytes, MESMA assinatura, mesmo
@@ -26,7 +26,7 @@ final readonly class ReplayEmission
 
     public function __invoke(WebhookEmission $emission): WebhookEmission
     {
-        Log::info('fake-starkbank.webhook: replay sob comando — reenviando os bytes gravados sem remontar o envelope, para o consumidor ver o mesmo event.id de novo', [
+        StarkbankLog::info('fake-starkbank.webhook: replay sob comando — reenviando os bytes gravados sem remontar o envelope, para o consumidor ver o mesmo event.id de novo', [
             'event_id' => $emission->event_id,
             'subscription' => $emission->subscription->value,
             'event_type' => $emission->event_type->value,

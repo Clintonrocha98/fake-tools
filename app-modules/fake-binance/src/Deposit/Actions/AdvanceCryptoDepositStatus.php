@@ -7,9 +7,9 @@ namespace He4rt\FakeBinance\Deposit\Actions;
 use He4rt\FakeBinance\Deposit\Enums\DepositStatus;
 use He4rt\FakeBinance\Deposit\Models\CryptoDeposit;
 use He4rt\FakeBinance\Ledger\Actions\CreditLedgerAccount;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Avanço automático LAZY do ciclo de vida (0 Pending → 6 Credited → 1 Success):
@@ -58,13 +58,15 @@ final readonly class AdvanceCryptoDepositStatus
                 return $locked;
             }
 
+            $from = $locked->status;
+
             $updates = ['status' => $target];
 
             if ($locked->credited_at === null) {
                 $this->credit->handle($locked->coin, $locked->amount);
                 $updates['credited_at'] = Date::now();
 
-                Log::info('fake-binance.deposit: ledger creditado pelo avanço lazy — o saldo já pode ser convertido', [
+                BinanceLog::info('fake-binance.deposit: ledger creditado pelo avanço lazy — o saldo já pode ser convertido', [
                     'deposit_id' => $locked->id,
                     'coin' => $locked->coin,
                     'amount' => $locked->amount,
@@ -73,6 +75,13 @@ final readonly class AdvanceCryptoDepositStatus
             }
 
             $locked->update($updates);
+
+            BinanceLog::info('fake-binance.deposit: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
+                'deposit_id' => $locked->id,
+                'coin' => $locked->coin,
+                'from' => $from->value,
+                'to' => $target->value,
+            ]);
 
             return $locked->refresh();
         });

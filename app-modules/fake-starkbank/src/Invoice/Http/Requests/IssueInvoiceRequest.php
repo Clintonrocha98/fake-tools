@@ -6,10 +6,10 @@ namespace He4rt\FakeStarkbank\Invoice\Http\Requests;
 
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Support\Facades\Log;
 
 /**
  * O body de `POST /v2/invoice`: o envelope plural `{"invoices": [...]}`, no
@@ -52,7 +52,7 @@ final class IssueInvoiceRequest extends FormRequest
     {
         $motivo = (string) collect($validator->errors()->all())->first();
 
-        Log::warning('fake-starkbank.invoice: emissão recusada na validação — o StarkBank real também recusa antes de gerar brcode, e emitir uma cobrança inconsistente esconderia o defeito do lado do consumidor', [
+        StarkbankLog::warning('fake-starkbank.invoice: emissão recusada na validação — o StarkBank real também recusa antes de gerar brcode, e emitir uma cobrança inconsistente esconderia o defeito do lado do consumidor', [
             'motivo' => $motivo,
             'campos' => array_keys($validator->errors()->messages()),
         ]);

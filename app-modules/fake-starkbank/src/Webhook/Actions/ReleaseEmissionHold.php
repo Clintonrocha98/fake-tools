@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Webhook\Actions;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Webhook\Models\WebhookEmission;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Libera uma emissão represada pelo desfecho `HoldNext` e a entrega na hora,
@@ -26,7 +26,7 @@ final readonly class ReleaseEmissionHold
     public function __invoke(WebhookEmission $emission): WebhookEmission
     {
         if (!$emission->isHeld()) {
-            Log::info('fake-starkbank.webhook: liberação ignorada — a emissão não estava represada, e reentregá-la aqui seria um replay disfarçado', [
+            StarkbankLog::info('fake-starkbank.webhook: liberação ignorada — a emissão não estava represada, e reentregá-la aqui seria um replay disfarçado', [
                 'event_id' => $emission->event_id,
             ]);
 
@@ -35,7 +35,7 @@ final readonly class ReleaseEmissionHold
 
         $emission->forceFill(['held_at' => null])->save();
 
-        Log::info('fake-starkbank.webhook: emissão liberada sob comando — os bytes represados saem como estavam, com o event.id do instante do evento', [
+        StarkbankLog::info('fake-starkbank.webhook: emissão liberada sob comando — os bytes represados saem como estavam, com o event.id do instante do evento', [
             'event_id' => $emission->event_id,
             'subscription' => $emission->subscription->value,
             'event_type' => $emission->event_type->value,

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace He4rt\FakeStarkbank\Workspace\Http\Controllers;
 
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Workspace\Actions\ListWorkspaces;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `GET /v2/workspace` — a assinatura é verificada pelo middleware
@@ -24,7 +24,7 @@ final readonly class ListWorkspacesController
     public function __invoke(Request $request): JsonResponse
     {
         if ($request->query('cursor') !== null) {
-            Log::debug('fake-starkbank.workspace: cursor recebido e ignorado — a listagem é página única e sempre encerra em cursor null', [
+            StarkbankLog::debug('fake-starkbank.workspace: cursor recebido e ignorado — a listagem é página única e sempre encerra em cursor null', [
                 'cursor' => $request->query('cursor'),
             ]);
         }

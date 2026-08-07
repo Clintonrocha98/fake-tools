@@ -10,9 +10,9 @@ use He4rt\FakeStarkbank\Invoice\DTOs\InvoiceView;
 use He4rt\FakeStarkbank\Invoice\Enums\InvoiceStatus;
 use He4rt\FakeStarkbank\Invoice\Models\Invoice;
 use He4rt\FakeStarkbank\Support\PageCursor;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -73,7 +73,7 @@ final readonly class ListInvoices
 
         $cursor = $this->nextCursor($page->last(), $hasMore);
 
-        Log::info('fake-starkbank.invoice: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz uma invoice madurada nesta leitura já aparecer em status=paid', [
+        StarkbankLog::info('fake-starkbank.invoice: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz uma invoice madurada nesta leitura já aparecer em status=paid', [
             'status' => $status?->value,
             'window' => $page->count(),
             'servidas' => count($invoices),
@@ -126,7 +126,7 @@ final readonly class ListInvoices
             return;
         }
 
-        Log::warning('fake-starkbank.invoice: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
+        StarkbankLog::warning('fake-starkbank.invoice: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
             'after' => $after,
         ]);
     }

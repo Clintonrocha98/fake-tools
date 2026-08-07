@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Ledger\Actions;
 
 use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -23,7 +24,7 @@ final readonly class SetLedgerBalance
     {
         $asset = mb_strtoupper($asset);
 
-        return DB::transaction(function () use ($asset, $free, $locked): LedgerAccount {
+        $account = DB::transaction(function () use ($asset, $free, $locked): LedgerAccount {
             $account = LedgerAccount::query()->where('asset', $asset)->lockForUpdate()->first();
 
             if (!$account instanceof LedgerAccount) {
@@ -34,5 +35,13 @@ final readonly class SetLedgerBalance
 
             return $account->refresh();
         });
+
+        BinanceLog::info('fake-binance.ledger: saldo fixado por comando do operador — sobrescreve free/locked no valor exato, ao contrário do crédito/débito relativo do fluxo normal', [
+            'asset' => $asset,
+            'free' => $free,
+            'locked' => $locked,
+        ]);
+
+        return $account;
     }
 }

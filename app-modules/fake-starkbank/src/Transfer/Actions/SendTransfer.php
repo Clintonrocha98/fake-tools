@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Transfer\Actions;
 
 use He4rt\FakeStarkbank\Support\NumericId;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\DTOs\SendTransferData;
 use He4rt\FakeStarkbank\Transfer\Enums\TransferStatus;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
 use Illuminate\Database\UniqueConstraintViolationException;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `POST /v2/transfer` — despacha o PIX de saída em
@@ -41,7 +41,7 @@ final readonly class SendTransfer
         $existing = $this->findByExternalId($data->externalId);
 
         if ($existing instanceof Transfer) {
-            Log::info('fake-starkbank.transfer: POST repetido com o mesmo externalId — devolvendo a transfer existente, porque duplicar aqui seria pagar o mesmo Payout duas vezes', [
+            StarkbankLog::info('fake-starkbank.transfer: POST repetido com o mesmo externalId — devolvendo a transfer existente, porque duplicar aqui seria pagar o mesmo Payout duas vezes', [
                 'transfer_id' => $existing->id,
                 'external_id' => $data->externalId,
                 'status' => $existing->status->value,
@@ -79,7 +79,7 @@ final readonly class SendTransfer
 
             throw_unless($raced instanceof Transfer, $uniqueConstraintViolationException);
 
-            Log::warning('fake-starkbank.transfer: corrida de idempotência resolvida pelo índice único — dois POST com o mesmo externalId chegaram juntos e só um virou transfer', [
+            StarkbankLog::warning('fake-starkbank.transfer: corrida de idempotência resolvida pelo índice único — dois POST com o mesmo externalId chegaram juntos e só um virou transfer', [
                 'transfer_id' => $raced->id,
                 'external_id' => $data->externalId,
             ]);
@@ -87,7 +87,7 @@ final readonly class SendTransfer
             return $this->advance->handle($raced);
         }
 
-        Log::info('fake-starkbank.transfer: cash-out despachado — os blobs de agência e conta entram como chegaram, porque são opacos por contrato e quem os emitiu foi o DICT', [
+        StarkbankLog::info('fake-starkbank.transfer: cash-out despachado — os blobs de agência e conta entram como chegaram, porque são opacos por contrato e quem os emitiu foi o DICT', [
             'transfer_id' => $transfer->id,
             'amount' => $transfer->amount,
             'bank_code' => $transfer->bank_code,
@@ -96,7 +96,7 @@ final readonly class SendTransfer
         ]);
 
         if (!$plan->isNeutral()) {
-            Log::info('fake-starkbank.transfer: transfer nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
+            StarkbankLog::info('fake-starkbank.transfer: transfer nasceu com destino de cenário — a perna é assíncrona, então o desvio é gravado na criação e as leituras seguintes só o executam', [
                 'transfer_id' => $transfer->id,
                 'destined_status' => $plan->destinedStatus?->value,
                 'held' => $plan->held,

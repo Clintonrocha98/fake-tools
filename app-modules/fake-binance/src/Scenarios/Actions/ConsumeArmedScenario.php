@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Scenarios\Actions;
 
 use He4rt\FakeBinance\Scenarios\Enums\VenueLeg;
 use He4rt\FakeBinance\Scenarios\Models\ArmedScenario;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -20,7 +21,7 @@ final readonly class ConsumeArmedScenario
 {
     public function handle(VenueLeg $leg): ?ArmedScenario
     {
-        return DB::transaction(function () use ($leg): ?ArmedScenario {
+        $armed = DB::transaction(function () use ($leg): ?ArmedScenario {
             $armed = ArmedScenario::query()
                 ->where('leg', $leg)
                 ->lockForUpdate()
@@ -30,5 +31,14 @@ final readonly class ConsumeArmedScenario
 
             return $armed;
         });
+
+        if ($armed instanceof ArmedScenario) {
+            BinanceLog::info('fake-binance.scenarios: cenário consumido — o desvio vale para este pedido e some, porque um cenário que ficasse de pé viraria o novo comportamento padrão do fake', [
+                'leg' => $leg->value,
+                'outcome' => $armed->outcome,
+            ]);
+        }
+
+        return $armed;
     }
 }

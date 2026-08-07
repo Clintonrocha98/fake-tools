@@ -10,9 +10,9 @@ use He4rt\FakeStarkbank\Brcode\DTOs\BrcodePaymentView;
 use He4rt\FakeStarkbank\Brcode\Enums\BrcodePaymentStatus;
 use He4rt\FakeStarkbank\Brcode\Models\BrcodePayment;
 use He4rt\FakeStarkbank\Support\PageCursor;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -73,7 +73,7 @@ final readonly class ListBrcodePayments
 
         $cursor = $this->nextCursor($page->last(), $hasMore);
 
-        Log::info('fake-starkbank.brcode: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz um funding liquidado nesta leitura já aparecer em status=success', [
+        StarkbankLog::info('fake-starkbank.brcode: extrato servido com o avanço lazy aplicado antes do filtro — é o que faz um funding liquidado nesta leitura já aparecer em status=success', [
             'status' => $status?->value,
             'window' => $page->count(),
             'servidos' => count($payments),
@@ -126,7 +126,7 @@ final readonly class ListBrcodePayments
             return;
         }
 
-        Log::warning('fake-starkbank.brcode: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
+        StarkbankLog::warning('fake-starkbank.brcode: `after` ignorado — não é um cursor desta listagem nem uma data ISO-8601, e servir zero linhas passaria por extrato vazio', [
             'after' => $after,
         ]);
     }

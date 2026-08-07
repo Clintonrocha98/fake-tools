@@ -8,8 +8,8 @@ use He4rt\FakeStarkbank\Dict\Enums\DictKeyType;
 use He4rt\FakeStarkbank\Dict\Enums\DictOwnerType;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Dict\Support\OpaqueAccountBlob;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Log;
 
 /**
  * As duas chaves que o DICT do fake nasce conhecendo: o beneficiário de
@@ -65,7 +65,7 @@ final class DictEntrySeeder extends Seeder
             ],
         );
 
-        Log::info('fake-starkbank.dict: chave semeada — sem ela o cash-out não tem beneficiário e o funding cross-fake não tem taxId para o consumidor conferir', [
+        StarkbankLog::info('fake-starkbank.dict: chave semeada — sem ela o cash-out não tem beneficiário e o funding cross-fake não tem taxId para o consumidor conferir', [
             'pix_key' => $pixKey,
             'owner_type' => $ownerType->value,
             'tax_id' => $taxId,

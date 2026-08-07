@@ -14,8 +14,8 @@ use He4rt\FakeBinance\Spot\DTOs\SpotExecutionPlan;
 use He4rt\FakeBinance\Spot\Enums\OrderSide;
 use He4rt\FakeBinance\Spot\Exceptions\DuplicateClientOrderIdException;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -63,6 +63,13 @@ final readonly class PlaceMarketOrder
         $plan = $this->planNextExecution->handle();
 
         if ($plan->refusal instanceof BinanceErrorCode) {
+            BinanceLog::warning('fake-binance.spot: ordem MARKET recusada por cenário armado — a ordem nunca chega a existir, porque o operador escolheu um código de erro para esta perna', [
+                'symbol' => $data->symbol->value,
+                'side' => $data->side->value,
+                'client_order_id' => $data->newClientOrderId,
+                'error_code' => $plan->refusal->value,
+            ]);
+
             throw ScenarioRefusedRequestException::withCode($plan->refusal);
         }
 
@@ -117,7 +124,7 @@ final readonly class PlaceMarketOrder
             ]);
         });
 
-        Log::info('fake-binance.spot: ordem MARKET registrada', [
+        BinanceLog::info('fake-binance.spot: ordem MARKET executada ao preço do book — o fill e o status registrados seguem o plano neutro ou o desvio que o cenário armado da perna determinou', [
             'symbol' => $order->symbol,
             'side' => $order->side->value,
             'denomination' => $data->quantity !== null ? 'base (quantity)' : 'quote (quoteOrderQty)',

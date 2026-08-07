@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Fiat\Actions;
 
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
  * Cenário do painel: atrasa o brcode por `$reads` releituras de
@@ -20,6 +21,11 @@ final readonly class DelayFiatBrcode
         $order->update([
             'brcode_delay_reads' => $reads,
             'brcode_reads_count' => 0,
+        ]);
+
+        BinanceLog::info('fake-binance.fiat: atraso de brcode configurado por cenário — a contagem de releituras zera agora, então o atraso conta a partir deste comando', [
+            'order_no' => $order->order_no,
+            'brcode_delay_reads' => $reads,
         ]);
 
         return $order->refresh();

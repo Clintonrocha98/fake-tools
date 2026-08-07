@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeBinance\Fiat\Actions;
 
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
  * Cenário do painel: emite um vocabulário de wire ARBITRÁRIO (string livre,
@@ -20,6 +21,11 @@ final readonly class EmitUnknownFiatWireStatus
         $order->update([
             'forced_wire_status' => $wireStatus,
             'forced_status' => null,
+        ]);
+
+        BinanceLog::warning('fake-binance.fiat: vocabulário de wire arbitrário emitido por cenário — fora de FiatOrderStatus, para provar o fail-closed do consumidor (cai em Pending)', [
+            'order_no' => $order->order_no,
+            'forced_wire_status' => $wireStatus,
         ]);
 
         return $order->refresh();

@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Ledger\Actions;
 
 use He4rt\FakeBinance\Ledger\DTOs\LedgerFill;
 use He4rt\FakeBinance\Ledger\Enums\Side;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,6 +36,15 @@ final readonly class SwapLedgerAssets
 
             $this->debit->handle($from, $spent);
             $this->credit->handle($to, $received);
+
+            BinanceLog::info('fake-binance.ledger: troca aplicada — debita o total gasto de um lado e credita o líquido da comissão do outro numa única transação, para nunca expor um estado intermediário inconsistente', [
+                'side' => $side->name,
+                'from' => $from,
+                'to' => $to,
+                'spent' => $spent,
+                'received' => $received,
+                'fills' => count($fills),
+            ]);
         });
     }
 

@@ -7,7 +7,7 @@ namespace He4rt\FakeStarkbank\Dict\Actions;
 use He4rt\FakeStarkbank\Dict\DTOs\RegisterDictKeyData;
 use He4rt\FakeStarkbank\Dict\Models\DictEntry;
 use He4rt\FakeStarkbank\Dict\Support\OpaqueAccountBlob;
-use Illuminate\Support\Facades\Log;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 
 /**
  * Registra (ou reescreve) uma chave no DICT deste fake — o insumo sem o qual um
@@ -41,7 +41,7 @@ final readonly class RegisterDictKey
             ],
         );
 
-        Log::info('fake-starkbank.dict: chave registrada sob comando — o registro é declarativo, então registrar a mesma chave de novo corrige o titular em vez de criar um segundo dono', [
+        StarkbankLog::info('fake-starkbank.dict: chave registrada sob comando — o registro é declarativo, então registrar a mesma chave de novo corrige o titular em vez de criar um segundo dono', [
             'pix_key' => $entry->pix_key,
             'tax_id' => $entry->tax_id,
             'owner_type' => $entry->owner_type->value,

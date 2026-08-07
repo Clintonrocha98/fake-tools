@@ -6,6 +6,7 @@ namespace He4rt\FakeBinance\Spot\Actions;
 
 use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 use He4rt\FakeBinance\Spot\Exceptions\SpotFilterViolationException;
+use He4rt\FakeBinance\Support\BinanceLog;
 use RuntimeException;
 
 /**
@@ -31,6 +32,12 @@ final readonly class AssertSpotSymbolFilters
         $minNotional = $this->numeric($symbol, $filters, 'min_notional');
 
         if ($quantity !== null && bccomp($quantity, $minQty, 18) < 0) {
+            BinanceLog::warning('fake-binance.spot: ordem MARKET recusada por LOT_SIZE — quantity está abaixo do minQty que o próprio exchangeInfo anuncia para o symbol', [
+                'symbol' => $symbol->value,
+                'quantity' => $quantity,
+                'min_qty' => $minQty,
+            ]);
+
             throw SpotFilterViolationException::forFilter(
                 'LOT_SIZE',
                 sprintf('Filter failure: LOT_SIZE. quantity %s is below minQty %s.', $quantity, $minQty),
@@ -38,6 +45,12 @@ final readonly class AssertSpotSymbolFilters
         }
 
         if ($quoteOrderQty !== null && bccomp($quoteOrderQty, $minNotional, 18) < 0) {
+            BinanceLog::warning('fake-binance.spot: ordem MARKET recusada por NOTIONAL — quoteOrderQty está abaixo do minNotional que o próprio exchangeInfo anuncia para o symbol', [
+                'symbol' => $symbol->value,
+                'quote_order_qty' => $quoteOrderQty,
+                'min_notional' => $minNotional,
+            ]);
+
             throw SpotFilterViolationException::forFilter(
                 'NOTIONAL',
                 sprintf('Filter failure: NOTIONAL. quoteOrderQty %s is below minNotional %s.', $quoteOrderQty, $minNotional),

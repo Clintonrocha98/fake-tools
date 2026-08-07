@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace He4rt\FakeStarkbank\Transfer\Actions;
 
 use Carbon\CarbonImmutable;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use He4rt\FakeStarkbank\Transfer\DTOs\TransferView;
 use He4rt\FakeStarkbank\Transfer\Enums\TransferStatus;
 use He4rt\FakeStarkbank\Transfer\Models\Transfer;
@@ -12,7 +13,6 @@ use He4rt\FakeStarkbank\Webhook\Contracts\EmitsWebhookEvents;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankEventType;
 use He4rt\FakeStarkbank\Webhook\Enums\StarkbankSubscription;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Avanço automático LAZY do ciclo de vida da transfer: só roda quando a
@@ -74,7 +74,7 @@ final readonly class AdvanceTransferStatus
             return $transfer;
         }
 
-        Log::info('fake-starkbank.transfer: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
+        StarkbankLog::info('fake-starkbank.transfer: status avançado na leitura — o fake não tem scheduler, então é o próprio GET do consumidor que faz o tempo passar', [
             'transfer_id' => $advanced->id,
             'from' => $transfer->status->value,
             'to' => $advanced->status->value,

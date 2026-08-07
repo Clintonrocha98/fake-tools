@@ -8,13 +8,14 @@ use Closure;
 use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
 use He4rt\FakeStarkbank\Scenarios\Actions\GetScenarioSwitchboard;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Primeiro middleware de toda rota do módulo — antes até de
- * `fake-starkbank.signed`, para que os switches globais recusem o request sem
+ * Roda antes de `fake-starkbank.signed` em toda rota do módulo — atrás apenas
+ * do `fake-starkbank.request-log`, que registra até o request que este
+ * middleware derruba —, para que os switches globais recusem o request sem
  * sequer validar assinatura: é exatamente essa indisponibilidade "antes de
  * qualquer lógica" que o tratamento de erro do consumidor precisa exercitar.
  * Quando os dois switches estão ligados ao mesmo tempo, outage vence rate
@@ -35,7 +36,7 @@ final readonly class ApplyPixScenarioSwitches
         $switches = $this->switchboard->handle();
 
         if ($switches->outage_mode) {
-            Log::warning('fake-starkbank.scenarios: request derrubado pelo modo outage — a recusa vem antes da assinatura de propósito, para o consumidor ver a indisponibilidade e não um 401', [
+            StarkbankLog::warning('fake-starkbank.scenarios: request derrubado pelo modo outage — a recusa vem antes da assinatura de propósito, para o consumidor ver a indisponibilidade e não um 401', [
                 'path' => $request->path(),
                 'method' => $request->method(),
             ]);
@@ -44,7 +45,7 @@ final readonly class ApplyPixScenarioSwitches
         }
 
         if ($switches->rate_limit_mode) {
-            Log::warning('fake-starkbank.scenarios: request derrubado pelo modo rate limit — o Retry-After sai do próprio switchboard, para o consumidor exercitar o backoff que ele implementa', [
+            StarkbankLog::warning('fake-starkbank.scenarios: request derrubado pelo modo rate limit — o Retry-After sai do próprio switchboard, para o consumidor exercitar o backoff que ele implementa', [
                 'path' => $request->path(),
                 'retry_after' => $switches->rate_limit_retry_after_seconds,
             ]);

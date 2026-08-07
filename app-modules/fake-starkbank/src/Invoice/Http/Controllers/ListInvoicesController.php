@@ -8,9 +8,9 @@ use He4rt\FakeStarkbank\Http\Errors\ErrorResponseFactory;
 use He4rt\FakeStarkbank\Http\Errors\StarkbankErrorCode;
 use He4rt\FakeStarkbank\Invoice\Actions\ListInvoices;
 use He4rt\FakeStarkbank\Invoice\Enums\InvoiceStatus;
+use He4rt\FakeStarkbank\Support\StarkbankLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 /**
  * `GET /v2/invoice?status=paid&after={cursor}` — o extrato de cash-in.
@@ -35,7 +35,7 @@ final readonly class ListInvoicesController
             $status = InvoiceStatus::tryFrom($requested);
 
             if (!$status instanceof InvoiceStatus) {
-                Log::warning('fake-starkbank.invoice: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
+                StarkbankLog::warning('fake-starkbank.invoice: filtro de status fora do vocabulário — recusado em vez de servir lista vazia, que passaria por extrato sem movimento', [
                     'status' => $requested,
                 ]);
 

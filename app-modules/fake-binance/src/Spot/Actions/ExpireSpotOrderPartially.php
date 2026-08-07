@@ -9,6 +9,7 @@ use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Spot\Enums\OrderStatus;
 use He4rt\FakeBinance\Spot\Enums\SpotSymbol;
 use He4rt\FakeBinance\Spot\Models\SpotOrder;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -29,7 +30,9 @@ final readonly class ExpireSpotOrderPartially
 
     public function handle(SpotOrder $order): SpotOrder
     {
-        return DB::transaction(function () use ($order): SpotOrder {
+        $executedQtyBefore = (string) $order->executed_qty;
+
+        $order = DB::transaction(function () use ($order): SpotOrder {
             $halfExecutedQty = bcdiv((string) $order->executed_qty, '2', 18);
             $halfQuoteQty = bcdiv((string) $order->cummulative_quote_qty, '2', 18);
             $halfCommission = bcdiv((string) $order->commission, '2', 18);
@@ -61,5 +64,15 @@ final readonly class ExpireSpotOrderPartially
 
             return $order->refresh();
         });
+
+        BinanceLog::info('fake-binance.spot: ordem reduzida à metade e movida para EXPIRED por cenário do painel — simula uma MARKET que não casou o total e não foi reenviada; a metade removida do fill é revertida no ledger', [
+            'order_id' => $order->order_id,
+            'symbol' => $order->symbol,
+            'executed_qty_antes' => $executedQtyBefore,
+            'executed_qty_depois' => (string) $order->executed_qty,
+            'client_order_id' => $order->client_order_id,
+        ]);
+
+        return $order;
     }
 }

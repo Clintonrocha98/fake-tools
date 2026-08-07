@@ -9,6 +9,7 @@ use He4rt\FakeBinance\Http\Auth\HmacQuerySigner;
 use He4rt\FakeBinance\Http\Errors\BinanceErrorCode;
 use He4rt\FakeBinance\Http\Errors\ErrorFamily;
 use He4rt\FakeBinance\Http\Errors\ErrorResponseFactory;
+use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -33,10 +34,18 @@ final readonly class VerifiesSignedRequest
         $apiKey = $request->header('X-MBX-APIKEY');
 
         if ($apiKey === null || $apiKey === '') {
+            BinanceLog::warning('fake-binance.auth: request recusado — X-MBX-APIKEY ausente, e sem API key não há contra o que verificar o HMAC', [
+                'path' => $request->path(),
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::ApiKeyMissing);
         }
 
         if (!hash_equals(config()->string('fake-binance.api_key'), $apiKey)) {
+            BinanceLog::warning('fake-binance.auth: request recusado — X-MBX-APIKEY não é a chave configurada em FAKE_BINANCE_API_KEY, então nem faz sentido verificar o HMAC', [
+                'path' => $request->path(),
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::ApiKeyInvalid);
         }
 
@@ -50,6 +59,12 @@ final readonly class VerifiesSignedRequest
         // BinanceErrorBoundary do consumidor para "indisponibilidade retryable",
         // enquanto -1102 é fatal.
         if (!is_numeric($timestamp) || !is_string($signature) || $signature === '') {
+            BinanceLog::warning('fake-binance.auth: request recusado com -1102 — timestamp ou signature ausente/malformado na query, que a Binance real trata como parâmetro mandatório faltando (fatal), nunca como -1021/-1022 (retryable)', [
+                'path' => $request->path(),
+                'has_timestamp' => is_numeric($timestamp),
+                'has_signature' => is_string($signature) && $signature !== '',
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
         }
 
@@ -57,14 +72,28 @@ final readonly class VerifiesSignedRequest
         // Binance real: um request com timestamp velho E assinatura errada responde
         // -1022, nunca -1021.
         if (!hash_equals($this->expectedSignature($query), $signature)) {
+            BinanceLog::warning('fake-binance.auth: request recusado com -1022 — HMAC da query não confere (FAKE_BINANCE_API_SECRET divergente do monolito, ou query remontada em ordem diferente da assinada)', [
+                'path' => $request->path(),
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::InvalidSignature);
         }
 
         $recvWindow = $this->resolveRecvWindow($query);
 
         if ($recvWindow === null || !$this->withinRecvWindow((int) $timestamp, $recvWindow)) {
+            BinanceLog::warning('fake-binance.auth: request recusado com -1021 — timestamp fora da recvWindow ou recvWindow inválido (request velho, relógio dessincronizado ou janela acima do teto de 60000ms)', [
+                'path' => $request->path(),
+                'timestamp' => (int) $timestamp,
+                'recv_window' => $recvWindow,
+            ]);
+
             return $this->errors->make($family, BinanceErrorCode::TimestampOutOfWindow);
         }
+
+        BinanceLog::debug('fake-binance.auth: request autenticado — HMAC confere sobre a query sem o parâmetro signature, dentro da recvWindow', [
+            'path' => $request->path(),
+        ]);
 
         return $next($request);
     }

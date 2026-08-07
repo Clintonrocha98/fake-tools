@@ -8,6 +8,7 @@ use He4rt\FakeBinance\Console\AnnounceCryptoDepositCommand;
 use He4rt\FakeBinance\Deposit\Models\CryptoDeposit;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
 use He4rt\FakeBinance\Fiat\Models\FiatWithdrawal;
+use He4rt\FakeBinance\Http\Middleware\LogsRequestLifecycle;
 use He4rt\FakeBinance\Http\Middleware\VerifiesSignedRequest;
 use He4rt\FakeBinance\Ledger\Models\LedgerAccount;
 use He4rt\FakeBinance\Scenarios\Http\Middleware\ApplyScenarioSwitches;
@@ -33,6 +34,7 @@ class FakeBinanceServiceProvider extends ServiceProvider
 
     public function boot(Router $router): void
     {
+        $router->aliasMiddleware('fake-binance.request-log', LogsRequestLifecycle::class);
         $router->aliasMiddleware('fake-binance.signed', VerifiesSignedRequest::class);
         $router->aliasMiddleware('fake-binance.scenario-switches', ApplyScenarioSwitches::class);
 

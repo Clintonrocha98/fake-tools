@@ -6,9 +6,9 @@ namespace He4rt\FakeBinance\Deposit\Actions;
 
 use He4rt\FakeBinance\Deposit\Enums\DepositStatus;
 use He4rt\FakeBinance\Deposit\Models\CryptoDeposit;
+use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\Support\SyntheticTxId;
 use Illuminate\Support\Facades\Date;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Semeia uma chegada de stablecoin — o único movimento do fake que NÃO nasce
@@ -43,7 +43,7 @@ final readonly class AnnounceCryptoDeposit
             'announced_at' => Date::now(),
         ]);
 
-        Log::info('fake-binance.deposit: chegada de cripto anunciada — nasce Pending, o ledger só credita quando o avanço lazy chegar a Credited', [
+        BinanceLog::info('fake-binance.deposit: chegada de cripto anunciada — nasce Pending, o ledger só credita quando o avanço lazy chegar a Credited', [
             'deposit_id' => $deposit->id,
             'coin' => $coin,
             'network' => $network,
