@@ -12,6 +12,23 @@ export default defineConfig({
     ],
     server: {
         cors: true,
+        watch: {
+            // O inotify tem um teto de watchers POR USUÁRIO (fs.inotify.max_user_watches),
+            // compartilhado com todo o resto que estiver aberto, e cada DIRETÓRIO observado
+            // consome um. Nenhuma das pastas abaixo é fonte de HMR, e as duas primeiras
+            // sozinhas passam de 17 mil diretórios — o bastante para o dev server morrer com
+            // "ENOSPC: System limit for number of file watchers reached".
+            //
+            // O Vite MESCLA esta lista com os ignores dele (.git, node_modules, cacheDir),
+            // então isto acrescenta, não substitui.
+            ignored: [
+                '**/.cache/**', // resultado do PHPStan — ~10k diretórios
+                '**/vendor/**', // dependências do Composer — ~7k diretórios
+                '**/storage/framework/**',
+                '**/public/build/**',
+                '**/.phpunit.cache/**',
+            ],
+        },
     },
     build: {
         minify: 'terser',
