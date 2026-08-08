@@ -85,7 +85,7 @@ it('returns the documented history array filtered by coin and withdrawOrderId', 
     ]), $this->apiKeyHeader());
 
     $response->assertOk()->assertExactJson([[
-        'id' => Withdrawal::query()->where('withdraw_order_id', 'payout-history-1')->firstOrFail()->id,
+        'id' => str_replace('-', '', Withdrawal::query()->where('withdraw_order_id', 'payout-history-1')->firstOrFail()->id),
         'withdrawOrderId' => 'payout-history-1',
         'coin' => 'USDC',
         'network' => 'SOL',

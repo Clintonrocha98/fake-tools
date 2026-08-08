@@ -87,6 +87,50 @@ it('refuses an unsupported payment method with -16010, HTTP 200', function (): v
     $response->assertOk()->assertJson(['code' => '-16010']);
 });
 
+it('accepts a payment method that differs only in casing while the strict switch is off — the default', function (): void {
+    config(['fake-binance-fiat.supported_payment_method' => 'pix']);
+
+    $response = $this->postJson(
+        $this->signedUri('/sapi/v1/fiat/deposit'),
+        ['currency' => 'BRL', 'apiPaymentMethod' => 'Pix', 'amount' => '100'],
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk()->assertJson(['code' => '000000']);
+});
+
+it('refuses a payment method that differs only in casing with -16010 once the strict switch is on', function (): void {
+    config([
+        'fake-binance-fiat.supported_payment_method' => 'pix',
+        'fake-binance-fiat.strict_payment_method_casing' => true,
+    ]);
+
+    $response = $this->postJson(
+        $this->signedUri('/sapi/v1/fiat/deposit'),
+        ['currency' => 'BRL', 'apiPaymentMethod' => 'Pix', 'amount' => '100'],
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk()->assertJson(['code' => '-16010']);
+
+    expect(FiatOrder::query()->count())->toBe(0);
+});
+
+it('keeps accepting the exact configured casing while the strict switch is on', function (): void {
+    config([
+        'fake-binance-fiat.supported_payment_method' => 'pix',
+        'fake-binance-fiat.strict_payment_method_casing' => true,
+    ]);
+
+    $response = $this->postJson(
+        $this->signedUri('/sapi/v1/fiat/deposit'),
+        ['currency' => 'BRL', 'apiPaymentMethod' => 'pix', 'amount' => '100'],
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk()->assertJson(['code' => '000000']);
+});
+
 it('refuses an amount above the configured deposit limit with -16007, HTTP 200', function (): void {
     config(['fake-binance-fiat.deposit_limit' => '1000']);
 

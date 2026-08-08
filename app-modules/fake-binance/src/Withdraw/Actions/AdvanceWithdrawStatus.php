@@ -53,7 +53,7 @@ final readonly class AdvanceWithdrawStatus
 
             $withdrawal->update([
                 'status' => WithdrawStatus::Completed,
-                'tx_id' => SyntheticTxId::generate(),
+                'tx_id' => SyntheticTxId::forNetwork($withdrawal->network),
                 'completed_at' => Date::now(),
             ]);
 

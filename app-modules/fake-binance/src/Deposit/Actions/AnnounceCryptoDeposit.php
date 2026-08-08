@@ -38,7 +38,7 @@ final readonly class AnnounceCryptoDeposit
             'network' => $network,
             'address' => $address['address'],
             'amount' => $amount,
-            'tx_id' => $txId ?? SyntheticTxId::generate(),
+            'tx_id' => $txId ?? SyntheticTxId::forNetwork($network),
             'status' => DepositStatus::Pending,
             'announced_at' => Date::now(),
         ]);

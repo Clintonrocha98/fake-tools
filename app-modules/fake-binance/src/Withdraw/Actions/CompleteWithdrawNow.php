@@ -23,7 +23,7 @@ final readonly class CompleteWithdrawNow
 
         $withdrawal->update([
             'status' => WithdrawStatus::Completed,
-            'tx_id' => SyntheticTxId::generate(),
+            'tx_id' => SyntheticTxId::forNetwork($withdrawal->network),
             'completed_at' => Date::now(),
             'raw_status_override' => null,
         ]);

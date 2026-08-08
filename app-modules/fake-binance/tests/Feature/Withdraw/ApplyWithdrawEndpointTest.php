@@ -33,8 +33,28 @@ it('applies a withdraw and returns only the id, debiting exactly amount from the
 
     $withdrawal = Withdrawal::query()->where('withdraw_order_id', 'payout-endpoint-1')->firstOrFail();
 
-    $response->assertExactJson(['id' => $withdrawal->id]);
+    $response->assertExactJson(['id' => str_replace('-', '', $withdrawal->id)]);
     expect($withdrawal->status)->toBe(WithdrawStatus::AwaitingApproval);
+});
+
+it('answers the apply id in the venue format: 32 hex chars, never a hyphenated UUID', function (): void {
+    (new CreditLedgerAccount)->handle('USDC', '100');
+
+    $response = $this->postJson(
+        $this->signedUri('/sapi/v1/capital/withdraw/apply', [
+            'coin' => 'USDC',
+            'address' => 'SomeSolanaAddress',
+            'amount' => '8.91',
+            'network' => 'SOL',
+            'withdrawOrderId' => 'payout-endpoint-id-format',
+        ]),
+        [],
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk();
+
+    expect($response->json('id'))->toMatch('/^[0-9a-f]{32}$/');
 });
 
 it('refuses with -2010 and creates no withdrawal when the ledger balance is insufficient', function (): void {
@@ -92,6 +112,28 @@ it('refuses a mandatory-parameter-missing apply with -1102', function (): void {
     );
 
     $response->assertStatus(400)->assertJson(['code' => -1_102]);
+});
+
+it('accepts an apply without network, withdrawing on the coin default and reporting it in the history', function (): void {
+    (new CreditLedgerAccount)->handle('USDC', '100');
+
+    $response = $this->postJson(
+        $this->signedUri('/sapi/v1/capital/withdraw/apply', [
+            'coin' => 'USDC',
+            'address' => 'SomeSolanaAddress',
+            'amount' => '8.91',
+            'withdrawOrderId' => 'payout-endpoint-no-network',
+        ]),
+        [],
+        $this->apiKeyHeader(),
+    );
+
+    $response->assertOk();
+
+    $this->getJson(
+        $this->signedUri('/sapi/v1/capital/withdraw/history', ['withdrawOrderId' => 'payout-endpoint-no-network']),
+        $this->apiKeyHeader(),
+    )->assertOk()->assertJson([['network' => 'SOL']]);
 });
 
 it('refuses an unsigned apply request with the spot/wallet error envelope', function (): void {

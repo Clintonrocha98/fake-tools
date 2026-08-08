@@ -190,6 +190,48 @@ it('extracts the brcode via the same key-normalization walk BinanceVenueFundingG
         ->and(str_starts_with((string) $response->json('data.pixcode'), '000201'))->toBeTrue();
 });
 
+it('hides the brcode inside ext so only the RECURSIVE arm of extractBrcode() finds it — the branch the fake never exercised', function (): void {
+    // `BinanceVenueFundingGateway::firstString()` desce em cada valor que é
+    // array antes de desistir. Este cenário é o único que faz esse ramo rodar:
+    // a rede rasa não acha nada na raiz, e o brcode só aparece um nível abaixo,
+    // exatamente onde o `ext` (OBJECT) da doc o colocaria.
+    config(['fake-binance-fiat.brcode_placement' => 'ext']);
+
+    $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $data = (array) $response->json('data');
+
+    // Reprodução do `firstString` do consumidor: varredura recursiva por
+    // qualquer string com o preâmbulo EMV, sem olhar o nome da key.
+    $findBrcode = function (array $payload) use (&$findBrcode): ?string {
+        foreach ($payload as $value) {
+            if (is_array($value)) {
+                $nested = $findBrcode($value);
+
+                if ($nested !== null) {
+                    return $nested;
+                }
+
+                continue;
+            }
+
+            if (is_string($value) && str_starts_with($value, '000201')) {
+                return $value;
+            }
+        }
+
+        return null;
+    };
+
+    // A rede rasa (só a raiz) volta de mãos vazias; a recursiva encontra.
+    $rootOnly = array_filter($data, static fn (mixed $value): bool => !is_array($value));
+
+    expect($findBrcode($rootOnly))->toBeNull()
+        ->and($findBrcode($data))->toBe($order->brcode);
+});
+
 it('serves a pixcode the fake-starkbank preview can decode — the cross-fake contract travels in the payload, never over the wire', function (): void {
     // Os dois fakes nunca se consultam: o preview do fake-starkbank recebe este
     // mesmo texto e resolve a chave PIX do campo 26 no seu registro DICT. Se o

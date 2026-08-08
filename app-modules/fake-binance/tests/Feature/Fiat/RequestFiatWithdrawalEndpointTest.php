@@ -59,6 +59,16 @@ it('accepts the withdraw, debits the whole amount from the BRL ledger and answer
     expect($brl->free)->toBe('900.000000000000000000');
 });
 
+it('answers a purely numeric orderId, the format the venue serves — never a hyphenated UUID', function (): void {
+    (new CreditLedgerAccount)->handle('BRL', '1000');
+
+    $response = $this->postJson($this->signedUri('/sapi/v2/fiat/withdraw', []), fiatWithdrawBody(), $this->apiKeyHeader());
+
+    $response->assertOk();
+
+    expect($response->json('data.orderId'))->toMatch('/^\d{16}$/');
+});
+
 it('is idempotent by clientOrderId: repeating returns the same orderId without debiting again', function (): void {
     (new CreditLedgerAccount)->handle('BRL', '1000');
 
