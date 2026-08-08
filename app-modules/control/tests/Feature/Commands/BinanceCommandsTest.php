@@ -73,9 +73,19 @@ it('congela a fiat order e atrasa o brcode', function (): void {
 it('emite um status de wire arbitrário na fiat order', function (): void {
     $ordem = FiatOrder::factory()->create();
 
-    $this->postJson('/control/binance/fiat-orders/'.$ordem->order_no.'/emit-unknown-status', ['wireStatus' => 'Quarantined', 'rawStatus' => 'Quarantined'])
+    $this->postJson('/control/binance/fiat-orders/'.$ordem->order_no.'/emit-unknown-status', ['rawStatus' => 'Quarantined'])
         ->assertOk()
         ->assertJsonPath('fiatOrder.forcedWireStatus', 'Quarantined');
+});
+
+it('recusa o status de wire arbitrário sob outro nome de campo', function (): void {
+    // O gesto tem um campo só, `rawStatus`, nos três recursos que o oferecem —
+    // aceitar um sinônimo faria o consumidor descobrir o dialeto por tentativa.
+    $ordem = FiatOrder::factory()->create();
+
+    $this->postJson('/control/binance/fiat-orders/'.$ordem->order_no.'/emit-unknown-status', ['wireStatus' => 'Quarantined'])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors(['rawStatus']);
 });
 
 it('rejeita e expira parcialmente uma spot order', function (): void {
