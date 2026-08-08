@@ -7,6 +7,8 @@ namespace He4rt\FakeBinance\Fiat\Actions;
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Exceptions\FiatDepositRefusedException;
 use He4rt\FakeBinance\Fiat\Models\FiatOrder;
+use He4rt\FakeBinance\Fiat\Support\FiatOrderNumber;
+use He4rt\FakeBinance\Fiat\Support\PaymentMethodMatcher;
 use He4rt\FakeBinance\Support\BinanceLog;
 
 /**
@@ -32,7 +34,9 @@ final readonly class OpenFiatDeposit
         $this->guardSupportedCurrencyAndMethod($currency, $paymentMethod);
         $this->guardDepositLimit($amount);
 
-        $orderNo = $this->generateOrderNo();
+        $orderNo = FiatOrderNumber::generate(
+            static fn (string $candidate): bool => FiatOrder::query()->where('order_no', $candidate)->exists(),
+        );
 
         $order = FiatOrder::query()->create([
             'order_no' => $orderNo,
@@ -66,7 +70,7 @@ final readonly class OpenFiatDeposit
         $supportedMethod = config()->string('fake-binance-fiat.supported_payment_method', 'Pix');
 
         if (mb_strtoupper($currency) !== mb_strtoupper($supportedCurrency)
-            || mb_strtolower($paymentMethod) !== mb_strtolower($supportedMethod)) {
+            || !PaymentMethodMatcher::matches($paymentMethod, $supportedMethod)) {
             throw FiatDepositRefusedException::unsupportedCurrencyOrMethod($currency, $paymentMethod);
         }
     }
@@ -85,14 +89,5 @@ final readonly class OpenFiatDeposit
         if (bccomp($amount, $limit, 18) > 0) {
             throw FiatDepositRefusedException::depositLimitExceeded($amount, $limit);
         }
-    }
-
-    private function generateOrderNo(): string
-    {
-        do {
-            $candidate = sprintf('%013d%03d', now()->getTimestampMs() % 10_000_000_000_000, random_int(0, 999));
-        } while (FiatOrder::query()->where('order_no', $candidate)->exists());
-
-        return $candidate;
     }
 }

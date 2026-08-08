@@ -20,7 +20,11 @@ A fiat order (`POST /sapi/v1/fiat/deposit`) is created by the consuming applicat
 ## Actions
 
 - **Creditar agora** — skips the clock: credits the ledger immediately (idempotent — a re-click never credits twice).
-- **Falhar com status** — forces one of `ORDER_FAILED`, `ORDER_EXPIRED`, `ORDER_CANCELLED`, `ORDER_NEED_ADDITIONAL_ACTION`.
+- **Falhar com status** — forces one of `ORDER_FAILED`, `ORDER_EXPIRED`, `ORDER_CANCELLED`, `ORDER_NEED_ADDITIONAL_ACTION`. A forced failure also fills `errorCode`/`errorMessage` on the wire, the way the venue reports the reason.
 - **Emitir vocabulário desconhecido** — sets an arbitrary wire status string, proving the consumer's fail-closed handling.
 - **Atrasar brcode** — sets how many reads must happen before the brcode is returned; leave empty to remove the delay.
+
+## Where the brcode travels
+
+By default `get-order-detail` answers the brcode at `data.pixcode`. Setting `FAKE_BINANCE_FIAT_BRCODE_PLACEMENT=ext` moves it to `data.ext.pixCode` and drops it from the root — the shape that only the consumer's recursive lookup can resolve, and the one the real venue most likely serves.
 - **Congelar/Descongelar** — pauses or resumes the lazy advance.

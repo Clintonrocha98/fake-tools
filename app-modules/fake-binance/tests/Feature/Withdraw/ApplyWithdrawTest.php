@@ -75,6 +75,38 @@ it('throws without creating a withdrawal when the ledger balance is insufficient
     expect(Withdrawal::query()->count())->toBe(0);
 });
 
+it('falls back to the first network in the fee map when the apply omits network — the venue default for the coin', function (): void {
+    config(['fake-binance-withdraw.fees' => ['TRX' => '1', 'SOL' => '0.004']]);
+
+    (new CreditLedgerAccount)->handle('USDC', '100');
+
+    $withdrawal = (new ApplyWithdraw)->handle(new ApplyWithdrawData(
+        coin: 'USDC',
+        address: 'SomeTronAddress',
+        amount: '8.91',
+        withdrawOrderId: 'payout-no-network',
+    ));
+
+    expect($withdrawal->network)->toBe('TRX')
+        ->and($withdrawal->transaction_fee)->toBe('1.000000000000000000');
+});
+
+it('still rejects a network informed but absent from the fee map — the default is never a plan B', function (): void {
+    config(['fake-binance-withdraw.fees' => ['SOL' => '0.004']]);
+
+    (new CreditLedgerAccount)->handle('USDC', '100');
+
+    expect(fn () => (new ApplyWithdraw)->handle(new ApplyWithdrawData(
+        coin: 'USDC',
+        address: 'SomeBscAddress',
+        amount: '8.91',
+        network: 'BSC',
+        withdrawOrderId: 'payout-unmapped-with-default',
+    )))->toThrow(UnsupportedWithdrawNetworkException::class);
+
+    expect(Withdrawal::query()->count())->toBe(0);
+});
+
 it('rejects a network absent from fake-binance-withdraw.fees without creating a withdrawal or debiting', function (): void {
     (new CreditLedgerAccount)->handle('USDC', '100');
 

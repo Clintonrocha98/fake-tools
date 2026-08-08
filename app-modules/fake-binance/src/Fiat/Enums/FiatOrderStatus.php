@@ -82,6 +82,51 @@ enum FiatOrderStatus: string implements HasColor, HasDescription, HasLabel
         };
     }
 
+    /**
+     * Nem pendente nem creditado: a ordem morreu sem virar saldo. É o mesmo
+     * corte que decide se o brcode ainda sai na wire — um estado que não é
+     * falha nunca esconde o brcode, e um que é nunca preenche `errorCode`.
+     */
+    public function isFailure(): bool
+    {
+        return !$this->isPending() && !$this->isCredited();
+    }
+
+    /**
+     * O par (`errorCode`, `errorMessage`) que a doc lista no `data` de
+     * get-order-detail e nunca define: `null` enquanto a ordem pode ainda ser
+     * paga ou já foi. Os valores são vocabulário do fake — o consumidor não
+     * decide por eles, decide por `status`; o que a venue real garante, e o fake
+     * agora também, é que os dois campos EXISTEM na resposta.
+     */
+    public function errorCode(): ?string
+    {
+        return match ($this) {
+            self::Processing, self::NeedAdditionalAction, self::Success, self::Completed => null,
+            self::Failed => 'PAYMENT_FAILED',
+            self::Expired => 'ORDER_EXPIRED',
+            self::Cancelled => 'ORDER_CANCELLED',
+            self::Refunding => 'REFUND_IN_PROGRESS',
+            self::Refunded => 'PAYMENT_REFUNDED',
+            self::RefundFailed => 'REFUND_FAILED',
+            self::PartialCreditStopped => 'PARTIAL_CREDIT_STOPPED',
+        };
+    }
+
+    public function errorMessage(): ?string
+    {
+        return match ($this) {
+            self::Processing, self::NeedAdditionalAction, self::Success, self::Completed => null,
+            self::Failed => 'the fiat payment failed and the order was closed',
+            self::Expired => 'the order expired before the payment arrived',
+            self::Cancelled => 'the order was cancelled before being credited',
+            self::Refunding => 'the payment is being refunded to the sender',
+            self::Refunded => 'the payment was refunded to the sender',
+            self::RefundFailed => 'the refund attempt failed and the funds are held for review',
+            self::PartialCreditStopped => 'only part of the payment arrived and crediting was stopped',
+        };
+    }
+
     public function getLabel(): string
     {
         return match ($this) {

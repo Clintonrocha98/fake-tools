@@ -11,13 +11,14 @@ use He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException;
 use He4rt\FakeBinance\Support\BinanceLog;
 use He4rt\FakeBinance\Withdraw\Actions\ApplyWithdraw;
 use He4rt\FakeBinance\Withdraw\DTOs\ApplyWithdrawData;
+use He4rt\FakeBinance\Withdraw\Support\WithdrawWireId;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * POST /sapi/v1/capital/withdraw/apply — tudo assinado na query (`fake-binance.signed`).
  * Devolve só `{"id": ...}`, o único campo que `BinanceVenueWithdrawGateway::withdraw()`
- * lê da resposta real.
+ * lê da resposta real, no formato hex-32 da venue ({@see WithdrawWireId}).
  */
 final readonly class ApplyWithdrawController
 {
@@ -33,9 +34,10 @@ final readonly class ApplyWithdrawController
         $coin = $this->stringOrNull($request, 'coin');
         $address = $this->stringOrNull($request, 'address');
         $amount = $this->stringOrNull($request, 'amount');
-        $network = $this->stringOrNull($request, 'network');
 
-        if ($coin === null || $address === null || $amount === null || $network === null || !is_numeric($amount)) {
+        // `network` fica fora deste guard de propósito: a doc do apply o marca
+        // como opcional e, omitido, a venue saca pela rede default da coin.
+        if ($coin === null || $address === null || $amount === null || !is_numeric($amount)) {
             return $this->errors->make($family, BinanceErrorCode::MandatoryParameterMissing);
         }
 
@@ -43,7 +45,7 @@ final readonly class ApplyWithdrawController
             coin: $coin,
             address: $address,
             amount: $amount,
-            network: $network,
+            network: $this->stringOrNull($request, 'network'),
             withdrawOrderId: $this->stringOrNull($request, 'withdrawOrderId'),
             addressTag: $this->stringOrNull($request, 'addressTag'),
         );
@@ -53,7 +55,7 @@ final readonly class ApplyWithdrawController
         } catch (InsufficientLedgerBalanceException $insufficientLedgerBalanceException) {
             BinanceLog::warning('fake-binance.withdraw: apply recusado com -2010 — saldo insuficiente no ledger', [
                 'coin' => $coin,
-                'network' => $network,
+                'network' => $data->network,
                 'amount' => $amount,
                 'withdraw_order_id' => $data->withdrawOrderId,
                 'reason' => $insufficientLedgerBalanceException->getMessage(),
@@ -62,7 +64,7 @@ final readonly class ApplyWithdrawController
             return $this->errors->make($family, BinanceErrorCode::NewOrderRejected);
         }
 
-        return response()->json(['id' => $withdrawal->id]);
+        return response()->json(['id' => WithdrawWireId::for($withdrawal->id)]);
     }
 
     private function stringOrNull(Request $request, string $key): ?string

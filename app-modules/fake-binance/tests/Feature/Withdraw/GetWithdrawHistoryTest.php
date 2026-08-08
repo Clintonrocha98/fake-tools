@@ -34,7 +34,8 @@ it('returns the documented wire shape for a matching withdrawal', function (): v
     $row = $rows[0]->jsonSerialize();
 
     expect($row)->toBe([
-        'id' => $withdrawal->id,
+        // A venue entrega o id sem hífen; a PK continua sendo o UUID do banco.
+        'id' => str_replace('-', '', $withdrawal->id),
         'withdrawOrderId' => 'payout-1',
         'coin' => 'USDC',
         'network' => 'SOL',

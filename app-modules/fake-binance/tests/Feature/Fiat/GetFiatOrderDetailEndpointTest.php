@@ -56,6 +56,85 @@ it('answers the documented order data shape, fiat scale kept at two decimals', f
         ->and($response->json('data.pixcode'))->toBe($order->brcode);
 });
 
+it('serves the documented field names alongside the observed ones — orderId, fee and the error pair', function (): void {
+    $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson([
+        'data' => [
+            'orderNo' => $order->order_no,
+            'orderId' => $order->order_no,
+            'fee' => '0.00',
+            'totalFee' => '0.00',
+        ],
+    ]);
+
+    // Um happy path nunca carrega motivo de falha, mas as keys existem sempre:
+    // a doc as lista, e um consumidor que faça `array_key_exists` não pode
+    // descobrir na venue real que o fake as omitia.
+    expect($response->json('data'))->toHaveKeys(['errorCode', 'errorMessage'])
+        ->and($response->json('data.errorCode'))->toBeNull()
+        ->and($response->json('data.errorMessage'))->toBeNull();
+});
+
+it('carries the failure reason in errorCode/errorMessage once a forced status kills the order', function (FiatOrderStatus $status, string $errorCode): void {
+    $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing, 'forced_status' => $status]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $response->assertOk()->assertJson(['data' => ['errorCode' => $errorCode]]);
+
+    expect($response->json('data.errorMessage'))->toBeString()->not->toBeEmpty();
+})->with([
+    'failed' => [FiatOrderStatus::Failed, 'PAYMENT_FAILED'],
+    'expired' => [FiatOrderStatus::Expired, 'ORDER_EXPIRED'],
+    'cancelled' => [FiatOrderStatus::Cancelled, 'ORDER_CANCELLED'],
+    'refunding' => [FiatOrderStatus::Refunding, 'REFUND_IN_PROGRESS'],
+    'refunded' => [FiatOrderStatus::Refunded, 'PAYMENT_REFUNDED'],
+    'refund failed' => [FiatOrderStatus::RefundFailed, 'REFUND_FAILED'],
+    'partial credit stopped' => [FiatOrderStatus::PartialCreditStopped, 'PARTIAL_CREDIT_STOPPED'],
+]);
+
+it('leaves the error pair null for an unmodeled wire status — the fake never invents a reason it does not know', function (): void {
+    $order = FiatOrder::factory()->create([
+        'status' => FiatOrderStatus::Processing,
+        'forced_wire_status' => 'Some Future Status',
+    ]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $response->assertOk();
+
+    expect($response->json('data.errorCode'))->toBeNull()
+        ->and($response->json('data.errorMessage'))->toBeNull();
+});
+
+it('serves the ext object with the brcode on the root by default', function (): void {
+    $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $response->assertOk();
+
+    expect($response->json('data.ext'))->toBeArray()
+        ->and($response->json('data.ext'))->not->toHaveKey('pixCode')
+        ->and($response->json('data.pixcode'))->toBe($order->brcode);
+});
+
+it('nests the brcode inside ext and drops it from the root when the placement scenario is armed', function (): void {
+    config(['fake-binance-fiat.brcode_placement' => 'ext']);
+
+    $order = FiatOrder::factory()->create(['status' => FiatOrderStatus::Processing]);
+
+    $response = $this->getJson($this->signedUri('/sapi/v1/fiat/get-order-detail', ['orderNo' => $order->order_no]), $this->apiKeyHeader());
+
+    $response->assertOk();
+
+    expect($response->json('data'))->not->toHaveKey('pixcode')
+        ->and($response->json('data.ext.pixCode'))->toBe($order->brcode);
+});
+
 it('drops the pixcode once a forced order dies in a terminal failure state', function (): void {
     $order = FiatOrder::factory()->create([
         'status' => FiatOrderStatus::Processing,

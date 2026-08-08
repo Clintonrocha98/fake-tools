@@ -61,6 +61,35 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Strict payment method casing
+    |--------------------------------------------------------------------------
+    |
+    | Ligado, a comparação de `apiPaymentMethod` contra o método configurado
+    | vira literal (case-sensitive) e um `Pix` contra um `pix` recusa com
+    | -16010. Desligado (default), a comparação segue case-insensitive. A doc
+    | escreve `pix`, o consumidor manda `Pix` e ninguém sabe qual dos dois a
+    | venue aceita — este switch responde a pergunta na bancada em vez de em
+    | produção. Ver He4rt\FakeBinance\Fiat\Support\PaymentMethodMatcher.
+    |
+    */
+
+    'strict_payment_method_casing' => env('FAKE_BINANCE_FIAT_STRICT_PAYMENT_METHOD_CASING', default: false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | BR Code placement
+    |--------------------------------------------------------------------------
+    |
+    | Onde o BR Code viaja no `data` de GET /sapi/v1/fiat/get-order-detail:
+    | `root` (default, `data.pixcode`) ou `ext` (`data.ext.pixCode`, sem
+    | `pixcode` na raiz). Ver He4rt\FakeBinance\Fiat\Enums\BrcodePlacement.
+    |
+    */
+
+    'brcode_placement' => env('FAKE_BINANCE_FIAT_BRCODE_PLACEMENT', 'root'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Withdraw payment method
     |--------------------------------------------------------------------------
     |

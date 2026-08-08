@@ -7,13 +7,15 @@ namespace He4rt\FakeBinance\Withdraw\DTOs;
 use He4rt\FakeBinance\Ledger\Support\LedgerAmount;
 use He4rt\FakeBinance\Withdraw\Enums\WithdrawStatus;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
+use He4rt\FakeBinance\Withdraw\Support\WithdrawWireId;
 use JsonSerializable;
 
 /**
  * O shape EXATO de um item de GET /sapi/v1/capital/withdraw/history — `applyTime`
  * e `completeTime` são sempre UTC (a Binance real nunca converte para o timezone
  * do chamador; quem lê é `treasury:reconcile-offramp-withdraws`, uma máquina, não
- * uma tela). `status` ecoa `raw_status_override` quando setado — vocabulário fora
+ * uma tela). `id` sai no formato hex-32 da venue ({@see WithdrawWireId}), o mesmo
+ * que o apply devolveu. `status` ecoa `raw_status_override` quando setado — vocabulário fora
  * de `WithdrawStatus` (0-6), cenário do painel para provar o fail-closed do
  * monolito consumidor. Onde o fake não tem o conceito, o valor constante da doc:
  * `transferType` 0 (externo), `walletType` 0 (spot), `confirmNo` 1, `txKey` vazio.
@@ -49,7 +51,7 @@ final readonly class WithdrawHistoryRow implements JsonSerializable
             ?? ($withdrawal->status === WithdrawStatus::Completed ? $withdrawal->updated_at : null);
 
         return new self(
-            id: $withdrawal->id,
+            id: WithdrawWireId::for($withdrawal->id),
             withdrawOrderId: $withdrawal->withdraw_order_id,
             coin: $withdrawal->coin,
             network: $withdrawal->network,

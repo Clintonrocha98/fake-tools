@@ -16,7 +16,7 @@ A withdrawal (`POST /sapi/v1/capital/withdraw/apply`) advances lazily by age: 2 
 
 ## Actions
 
-- **Completar agora** — skips the clock: moves straight to Completed (6) with a synthetic tx id.
+- **Completar agora** — skips the clock: moves straight to Completed (6) with a synthetic tx id in the format of the withdrawal's own network (base58 on Solana, `0x` + 64 hex on Ethereum, bare hex elsewhere), so the hash can be pasted into that chain's explorer.
 - **Falhar com status** — forces one of Cancelled (1), Rejected (3), Failure (5), with a required `info` reason.
 - **Emitir vocabulário desconhecido** — sets an arbitrary status code outside 0-6, proving the consumer's fail-closed handling (it throws on an unmapped code).
 - **Congelar/Descongelar** — pauses or resumes the lazy advance.

@@ -8,12 +8,13 @@ use He4rt\FakeBinance\Fiat\DTOs\FiatWithdrawalData;
 use He4rt\FakeBinance\Fiat\Enums\FiatOrderStatus;
 use He4rt\FakeBinance\Fiat\Exceptions\FiatWithdrawRefusedException;
 use He4rt\FakeBinance\Fiat\Models\FiatWithdrawal;
+use He4rt\FakeBinance\Fiat\Support\FiatOrderNumber;
+use He4rt\FakeBinance\Fiat\Support\PaymentMethodMatcher;
 use He4rt\FakeBinance\Ledger\Actions\DebitLedgerAccount;
 use He4rt\FakeBinance\Ledger\Exceptions\InsufficientLedgerBalanceException;
 use He4rt\FakeBinance\Support\BinanceLog;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use RuntimeException;
 
 /**
@@ -62,7 +63,9 @@ final readonly class RequestFiatWithdrawal
             }
 
             $withdrawal = FiatWithdrawal::query()->create([
-                'order_id' => (string) Str::uuid(),
+                'order_id' => FiatOrderNumber::generate(
+                    static fn (string $candidate): bool => FiatWithdrawal::query()->where('order_id', $candidate)->exists(),
+                ),
                 'currency' => $currency,
                 'payment_method' => $data->paymentMethod,
                 'amount' => $data->amount,
@@ -93,7 +96,7 @@ final readonly class RequestFiatWithdrawal
         $supportedMethod = config()->string('fake-binance-fiat.withdraw_payment_method', 'bank_transfer');
 
         if (mb_strtoupper($currency) !== mb_strtoupper($supportedCurrency)
-            || mb_strtolower($paymentMethod) !== mb_strtolower($supportedMethod)) {
+            || !PaymentMethodMatcher::matches($paymentMethod, $supportedMethod)) {
             throw FiatWithdrawRefusedException::unsupportedCurrencyOrMethod($currency, $paymentMethod);
         }
     }

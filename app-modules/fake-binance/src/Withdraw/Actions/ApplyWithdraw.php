@@ -13,6 +13,7 @@ use He4rt\FakeBinance\Withdraw\Exceptions\UnsupportedWithdrawNetworkException;
 use He4rt\FakeBinance\Withdraw\Models\Withdrawal;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use RuntimeException;
 
 /**
  * POST /sapi/v1/capital/withdraw/apply: debita exatamente `amount` do ledger —
@@ -49,7 +50,7 @@ final readonly class ApplyWithdraw
         }
 
         $coin = mb_strtoupper($data->coin);
-        $network = mb_strtoupper($data->network);
+        $network = $this->resolveNetwork($data->network);
         $fee = $this->feeFor($network);
 
         return DB::transaction(function () use ($data, $coin, $network, $fee): Withdrawal {
@@ -75,6 +76,27 @@ final readonly class ApplyWithdraw
                 'applied_at' => Date::now(),
             ]);
         });
+    }
+
+    /**
+     * `network` é opcional na doc do apply: omitido, a venue usa a rede default
+     * da coin. Aqui essa default é a PRIMEIRA rede de
+     * `fake-binance-withdraw.fees`, a mesma disciplina que
+     * {@see \He4rt\FakeBinance\Deposit\Actions\GetDepositAddress} já aplica ao
+     * endereço. Uma rede informada mas fora do mapa continua recusando — a
+     * default nunca é usada como plano B para uma chain não mapeada.
+     */
+    private function resolveNetwork(?string $network): string
+    {
+        if ($network !== null) {
+            return mb_strtoupper($network);
+        }
+
+        $default = array_key_first(config()->array('fake-binance-withdraw.fees'));
+
+        throw_unless(is_string($default) && $default !== '', RuntimeException::class, 'fake-binance-withdraw.fees must have at least one network.');
+
+        return mb_strtoupper($default);
     }
 
     /**

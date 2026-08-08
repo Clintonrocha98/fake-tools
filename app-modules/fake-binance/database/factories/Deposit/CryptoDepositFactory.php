@@ -28,7 +28,7 @@ final class CryptoDepositFactory extends Factory
             'address' => 'FakeBinanceSolDepositAddress1111111111111111',
             'address_tag' => null,
             'amount' => fake()->randomFloat(2, 1, 1_000),
-            'tx_id' => SyntheticTxId::generate(),
+            'tx_id' => SyntheticTxId::forNetwork('SOL'),
             'status' => DepositStatus::Pending,
             'announced_at' => Date::now(),
             'credited_at' => null,
