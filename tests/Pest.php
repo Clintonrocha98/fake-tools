@@ -72,6 +72,10 @@ function something(): void
  * TestCase base troca esses canais por um TestHandler em memória, então isto
  * é o assert de log da suíte: nada vai para storage/logs/ durante os testes.
  *
+ * O TestHandler é procurado por tipo, nunca por posição: o tap do plano de
+ * controle empurra o produtor do feed para o topo da pilha, e um índice fixo
+ * devolveria o handler errado.
+ *
  * @return array<int, LogRecord>
  */
 function fakeLogRecords(string $channel): array
@@ -79,8 +83,11 @@ function fakeLogRecords(string $channel): array
     $monolog = Log::channel($channel)->getLogger();
     assert($monolog instanceof Monolog);
 
-    $handler = $monolog->getHandlers()[0];
-    assert($handler instanceof TestHandler);
+    foreach ($monolog->getHandlers() as $handler) {
+        if ($handler instanceof TestHandler) {
+            return $handler->getRecords();
+        }
+    }
 
-    return $handler->getRecords();
+    throw new RuntimeException(sprintf('O canal %s não tem TestHandler — o TestCase base não o substituiu.', $channel));
 }

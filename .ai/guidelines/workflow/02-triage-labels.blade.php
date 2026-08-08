@@ -39,6 +39,7 @@ Every issue must be tagged with the module(s) it affects. Labels follow the patt
 
 | Label              | Module directory | Description                    |
 | ------------------ | ---------------- | ------------------------------ |
+| `mod:control`      | `control`        | HTTP control plane — `/control` feed, snapshot and commands for the consumer in dev |
 | `mod:fake-binance` | `fake-binance`   | Fake Binance API — ledger, `/api` and `/sapi` endpoints |
 | `mod:fake-starkbank` | `fake-starkbank` | Fake StarkBank API — invoice, transfer, dict-key, webhook |
 | `mod:identity`     | `identity`       | Auth, users, teams, RBAC & external identities |

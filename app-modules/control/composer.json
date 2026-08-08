@@ -1,0 +1,27 @@
+{
+    "name": "he4rt/control",
+    "description": "",
+    "type": "library",
+    "version": "1.0.0",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "He4rt\\Control\\": "src/",
+            "He4rt\\Control\\Database\\Factories\\": "database/factories/",
+            "He4rt\\Control\\Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "He4rt\\Control\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "stable",
+    "extra": {
+        "laravel": {
+            "providers": [
+                "He4rt\\Control\\ControlServiceProvider"
+            ]
+        }
+    }
+}

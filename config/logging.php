@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use He4rt\Control\Feed\PersistsToControlFeed;
 use Monolog\Handler\NullHandler;
 use Monolog\Handler\StreamHandler;
 use Monolog\Handler\SyslogUdpHandler;
@@ -81,12 +82,17 @@ return [
 
         // Um arquivo por integração dublada: o ruído de cada fake fica fora do
         // laravel.log e cada malha é inspecionável isolada no log-viewer.
+        //
+        // O `tap` acrescenta o produtor do feed do plano de controle ao mesmo
+        // canal ({@see \He4rt\Control\Feed\PersistsToControlFeed}): o arquivo
+        // diário continua idêntico e quem loga não sabe que ele existe.
         'binance' => [
             'driver' => 'daily',
             'path' => storage_path('logs/binance.log'),
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'tap' => [PersistsToControlFeed::class.':binance'],
         ],
 
         'starkbank' => [
@@ -95,6 +101,7 @@ return [
             'level' => env('LOG_LEVEL', 'debug'),
             'days' => env('LOG_DAILY_DAYS', 14),
             'replace_placeholders' => true,
+            'tap' => [PersistsToControlFeed::class.':starkbank'],
         ],
 
         'slack' => [
