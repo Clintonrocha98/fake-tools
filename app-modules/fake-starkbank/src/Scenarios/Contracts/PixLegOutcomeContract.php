@@ -28,6 +28,13 @@ interface PixLegOutcomeContract extends BackedEnum, HasColor, HasDescription, Ha
     public function getLabel(): string;
 
     /**
+     * Mesmo estreitamento covariante, agora sobre
+     * {@see HasDescription::getDescription()}: todo desfecho descreve o desvio
+     * que arma, e nenhum devolve `Htmlable` nem `null`.
+     */
+    public function getDescription(): string;
+
+    /**
      * Os campos de {@see \He4rt\FakeStarkbank\Scenarios\DTOs\PixScenarioPayload}
      * que este desfecho usa — a UI só mostra estes, e armar com qualquer outro
      * é ruído descartado.

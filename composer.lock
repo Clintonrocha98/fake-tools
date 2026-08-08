@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8a4fc833fa4c3492ed42c0a84c1a3120",
+    "content-hash": "141ff784e7ff99957b5da56c2ae45352",
     "packages": [
         {
             "name": "alizharb/filament-activity-log",
@@ -3135,6 +3135,42 @@
                 }
             ],
             "time": "2026-07-17T13:53:03+00:00"
+        },
+        {
+            "name": "he4rt/control",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "app-modules/control",
+                "reference": "8136e8c5e4e27cbbed13c67ba8125465681a3f80"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "He4rt\\Control\\ControlServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "He4rt\\Control\\": "src/",
+                    "He4rt\\Control\\Database\\Factories\\": "database/factories/",
+                    "He4rt\\Control\\Database\\Seeders\\": "database/seeders/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "He4rt\\Control\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "he4rt/fake-binance",

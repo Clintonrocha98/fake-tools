@@ -28,6 +28,13 @@ interface LegOutcomeContract extends BackedEnum, HasColor, HasDescription, HasLa
     public function getLabel(): string;
 
     /**
+     * Mesmo estreitamento covariante, agora sobre
+     * {@see HasDescription::getDescription()}: todo desfecho descreve o desvio
+     * que arma, e nenhum devolve `Htmlable` nem `null`.
+     */
+    public function getDescription(): string;
+
+    /**
      * Os campos de {@see \He4rt\FakeBinance\Scenarios\DTOs\ArmedScenarioPayload}
      * que este desfecho usa — a UI só mostra estes, e armar com qualquer outro
      * é ruído descartado.

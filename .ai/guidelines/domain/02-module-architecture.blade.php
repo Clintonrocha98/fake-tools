@@ -16,7 +16,7 @@ The namespace is the PascalCase of the slug: `identity` → `He4rt\Identity`, `p
 | **Integration**   | `integration-*`                        | External APIs: Transport, OAuth, ETL, Console |
 | **Presentation**  | `panel-*`                              | UI: Filament Resources, Livewire, Blade, CSS  |
 
-Modules that exist today: `fake-binance` (domain), `identity` (domain) and `panel-admin` (presentation). Add rows as new modules are scaffolded.
+Modules that exist today: `fake-binance` (domain), `fake-starkbank` (domain), `identity` (domain), `panel-admin` (presentation) and `control` (presentation — the HTTP control plane the consumer drives the fakes with; it imports Actions from both fakes and neither imports it). Add rows as new modules are scaffolded.
 
 Presentation modules own UI concerns only. Domain logic belongs in domain modules — see `presentation/core` guideline.
 

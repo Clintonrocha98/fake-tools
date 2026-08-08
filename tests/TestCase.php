@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests;
 
 use Database\Seeders\PermissionsSeeder;
+use He4rt\Control\Feed\PersistsToControlFeed;
 use Illuminate\Database\Seeder;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Monolog\Handler\TestHandler;
@@ -30,15 +31,26 @@ abstract class TestCase extends BaseTestCase
      * nomeados passam por fora dele, então cada um vira aqui um TestHandler em
      * memória: nada toca o disco e todo teste pode assertar o que foi logado
      * via fakeLogRecords() (tests/Pest.php).
+     *
+     * O `tap` do plano de controle acompanha a troca — o produtor do feed é o
+     * mesmo caminho em teste e em dev, e `fakeLogRecords()` continua lendo o
+     * TestHandler porque ele segue sendo o handler de índice 0.
+     *
+     * A conexão do feed aponta para a default aqui: uma segunda conexão não
+     * enxergaria a transação do teste, e o rollback do teste não desfaria o que
+     * ela escreveu.
      */
     protected function setUp(): void
     {
         parent::setUp();
 
+        config()->set('control.connection', config('database.default'));
+
         foreach (['binance', 'starkbank'] as $channel) {
             config()->set('logging.channels.'.$channel, [
                 'driver' => 'monolog',
                 'handler' => TestHandler::class,
+                'tap' => [PersistsToControlFeed::class.':'.$channel],
             ]);
         }
     }

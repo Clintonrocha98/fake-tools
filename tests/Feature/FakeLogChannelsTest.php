@@ -2,7 +2,10 @@
 
 declare(strict_types=1);
 
+use He4rt\Control\Feed\ControlEventHandler;
 use Illuminate\Support\Facades\Log;
+use Monolog\Handler\HandlerInterface;
+use Monolog\Handler\StreamHandler;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
 
@@ -35,7 +38,21 @@ test('durante a suíte os canais dos fakes são capturados em memória, nunca em
         $monolog = Log::channel($channel)->getLogger();
         assert($monolog instanceof Logger);
 
-        expect($monolog->getHandlers())->toHaveCount(1)
-            ->and($monolog->getHandlers()[0])->toBeInstanceOf(TestHandler::class);
+        $handlers = $monolog->getHandlers();
+
+        // Além do TestHandler, o tap do plano de controle empurra o produtor do
+        // feed para o mesmo canal — ele grava em `control_events`, também fora
+        // do disco. O que este teste guarda é a ausência de handler de ARQUIVO.
+        $inesperados = array_filter(
+            $handlers,
+            static fn (HandlerInterface $handler): bool => !$handler instanceof TestHandler
+                && !$handler instanceof ControlEventHandler,
+        );
+
+        expect($inesperados)->toBeEmpty()
+            ->and(array_filter($handlers, static fn (HandlerInterface $handler): bool => $handler instanceof TestHandler))
+            ->toHaveCount(1)
+            ->and(array_filter($handlers, static fn (HandlerInterface $handler): bool => $handler instanceof StreamHandler))
+            ->toBeEmpty();
     }
 });

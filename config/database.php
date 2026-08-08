@@ -63,6 +63,34 @@ return [
             ],
         ],
 
+        /*
+         * Mesmo banco, conexão própria: o produtor do feed
+         * ({@see \He4rt\Control\Feed\ControlEventHandler}) escreve em
+         * autocommit, fora da transação da Action que logou. Sem isso, todo
+         * caminho que dá rollback sumiria do feed — os erros que o dev está
+         * depurando — e o cursor furaria quando um job pós-response commitasse
+         * antes da request que o despachou.
+         *
+         * Em teste `control.connection` aponta para a conexão default: uma
+         * segunda conexão não enxergaria a transação do teste, e o rollback do
+         * teste não desfaria o que ela escreveu.
+         */
+        'control' => [
+            'driver' => 'pgsql',
+            'url' => env('DB_URL'),
+            'host' => env('DB_HOST', '127.0.0.1'),
+            'port' => env('DB_PORT', '5432'),
+            'database' => env('DB_DATABASE', 'laravel'),
+            'username' => env('DB_USERNAME', 'root'),
+            'password' => env('DB_PASSWORD', ''),
+            'charset' => env('DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'prefer',
+            'application_name' => Str::slug((string) env('APP_NAME')).'-control',
+        ],
+
     ],
 
     /*
