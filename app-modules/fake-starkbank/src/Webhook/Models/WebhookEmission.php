@@ -65,6 +65,35 @@ final class WebhookEmission extends BaseModel
     }
 
     /**
+     * A entity do evento, tirada dos BYTES GRAVADOS e nunca de uma releitura do
+     * recurso: quem reemite precisa descrever o MESMO evento que já saiu, e um
+     * GET agora poderia devolver um estado que avançou desde então.
+     *
+     * A assimetria da chave é do wire ({@see StarkbankSubscription::logKey()}):
+     * a subscription é `brcode-payment`, mas a entity viaja em `payment`.
+     *
+     * @return array<string, mixed>
+     */
+    public function entity(): array
+    {
+        $event = $this->payload->decoded()['event'] ?? [];
+        $log = is_array($event) ? ($event['log'] ?? []) : [];
+
+        if (!is_array($log)) {
+            return [];
+        }
+
+        $entity = $log[$this->subscription->logKey()] ?? [];
+
+        if (!is_array($entity)) {
+            return [];
+        }
+
+        /** @var array<string, mixed> $entity */
+        return $entity;
+    }
+
+    /**
      * Represada por cenário: o envelope está montado e assinado, mas o POST não
      * foi agendado e não será até um operador liberar
      * ({@see \He4rt\FakeStarkbank\Webhook\Actions\ReleaseEmissionHold}).

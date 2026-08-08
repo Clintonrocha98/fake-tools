@@ -114,36 +114,9 @@ class StarkbankWebhookEmissionsTable
             ->requiresConfirmation()
             ->modalDescription(__('panel-admin::fake-starkbank.webhook_emissions.actions.emit_corrupted_description'))
             ->action(function (WebhookEmission $record): void {
-                resolve(EmitCorrupted::class)($record->subscription, $record->event_type, self::entityOf($record));
+                resolve(EmitCorrupted::class)($record->subscription, $record->event_type, $record->entity());
 
                 Notification::make()->title(__('panel-admin::fake-starkbank.webhook_emissions.actions.emit_corrupted_notification'))->success()->send();
             });
-    }
-
-    /**
-     * A entity sai dos bytes gravados, não de uma releitura do recurso: a
-     * emissão corrompida precisa descrever o MESMO evento que já saiu, e um GET
-     * agora poderia devolver um estado que avançou desde então.
-     *
-     * @return array<string, mixed>
-     */
-    private static function entityOf(WebhookEmission $emission): array
-    {
-        $decoded = $emission->payload->decoded();
-        $event = $decoded['event'] ?? [];
-        $log = is_array($event) ? ($event['log'] ?? []) : [];
-
-        if (!is_array($log)) {
-            return [];
-        }
-
-        $entity = $log[$emission->subscription->logKey()] ?? [];
-
-        if (!is_array($entity)) {
-            return [];
-        }
-
-        /** @var array<string, mixed> $entity */
-        return $entity;
     }
 }
