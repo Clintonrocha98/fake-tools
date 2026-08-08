@@ -93,6 +93,17 @@ services:
       FAKE_STARKBANK_FUNDING_PIX_KEY: ${FAKE_STARKBANK_FUNDING_PIX_KEY:-funding@fake-binance.dev}
       FAKE_STARKBANK_FUNDING_TAX_ID: ${FAKE_STARKBANK_FUNDING_TAX_ID:-20.018.183/0001-80}
       FAKE_STARKBANK_FUNDING_NAME: ${FAKE_STARKBANK_FUNDING_NAME:-Fake Binance}
+      # Plano de controle: o grupo /control que o monolito consumidor usa em dev
+      # para observar (feed e snapshot) e dirigir os dois fakes por HTTP.
+      # Desligado, as rotas nem registram — o `control:reset-baseline` continua.
+      FAKE_TOOLS_CONTROL_ENABLED: ${FAKE_TOOLS_CONTROL_ENABLED:-true}
+      FAKE_TOOLS_CONTROL_FEED_DEFAULT_LIMIT: ${FAKE_TOOLS_CONTROL_FEED_DEFAULT_LIMIT:-100}
+      FAKE_TOOLS_CONTROL_FEED_MAX_LIMIT: ${FAKE_TOOLS_CONTROL_FEED_MAX_LIMIT:-500}
+      FAKE_TOOLS_CONTROL_FEED_RETENTION_HOURS: ${FAKE_TOOLS_CONTROL_FEED_RETENTION_HOURS:-24}
+      FAKE_TOOLS_CONTROL_STATE_RECENT_LIMIT: ${FAKE_TOOLS_CONTROL_STATE_RECENT_LIMIT:-10}
+      # Conexão dedicada do produtor do feed: mesmo banco, autocommit fora da
+      # transação da Action que logou.
+      FAKE_TOOLS_CONTROL_CONNECTION: ${FAKE_TOOLS_CONTROL_CONNECTION:-control}
     ports:
       - '8080:8080'
     volumes:
