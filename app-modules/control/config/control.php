@@ -28,10 +28,13 @@ return [
     |
     */
 
+    // O cast é obrigatório, não cosmético: uma env definida no docker-compose
+    // chega SEMPRE como string, e os consumidores leem com `Config::integer()`,
+    // que recusa string e derruba a rota com 500.
     'feed' => [
-        'default_limit' => env('FAKE_TOOLS_CONTROL_FEED_DEFAULT_LIMIT', 100),
-        'max_limit' => env('FAKE_TOOLS_CONTROL_FEED_MAX_LIMIT', 500),
-        'retention_hours' => env('FAKE_TOOLS_CONTROL_FEED_RETENTION_HOURS', 24),
+        'default_limit' => (int) env('FAKE_TOOLS_CONTROL_FEED_DEFAULT_LIMIT', 100),
+        'max_limit' => (int) env('FAKE_TOOLS_CONTROL_FEED_MAX_LIMIT', 500),
+        'retention_hours' => (int) env('FAKE_TOOLS_CONTROL_FEED_RETENTION_HOURS', 24),
     ],
 
     /*
@@ -46,7 +49,7 @@ return [
     */
 
     'state' => [
-        'recent_limit' => env('FAKE_TOOLS_CONTROL_STATE_RECENT_LIMIT', 10),
+        'recent_limit' => (int) env('FAKE_TOOLS_CONTROL_STATE_RECENT_LIMIT', 10),
     ],
 
     /*
